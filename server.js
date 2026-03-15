@@ -99,7 +99,7 @@ async function start() {
     app.get('*', (req, res) => res.sendFile(path.join(distPath, 'index.html')));
     app.listen(PORT, '0.0.0.0', () => console.log(`GU Engine at http://localhost:${PORT}`));
   } else {
-    const vite = await createViteServer({ server: { middlewareMode: true }, appType: 'spa' });
+    const vite = await createViteServer({ server: { middlewareMode: true, allowedHosts: 'all' }, appType: 'spa' });
     app.use(vite.middlewares);
     app.listen(PORT, '0.0.0.0', () => console.log(`GU Engine (dev) at http://localhost:${PORT}`));
   }
