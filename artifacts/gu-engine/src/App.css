@@ -1,0 +1,615 @@
+/* =============================================
+   GU ENGINE — COMPREHENSIVE STYLESHEET
+   ============================================= */
+
+/* === CSS CUSTOM PROPERTIES (THEMING) === */
+:root {
+  /* Light theme (default) */
+  --bg-primary: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f1f5f9;
+  --bg-hover: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-input: #ffffff;
+  --bg-chat: #f8fafc;
+  --bg-user-msg: #1e293b;
+  --bg-gradient: linear-gradient(135deg, #f0f4ff 0%, #f8fafc 50%, #fdf4ff 100%);
+  --text-primary: #1e293b;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-muted: #94a3b8;
+  --text-inverse: #ffffff;
+  --border-primary: #e2e8f0;
+  --border-secondary: #f1f5f9;
+  --border-focus: #818cf8;
+  --accent-primary: #4338ca;
+  --accent-primary-light: #e0e7ff;
+  --accent-secondary: #6366f1;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+  --shadow-accent: 0 4px 12px rgba(99, 102, 241, 0.3);
+  --selection-bg: #c7d2fe;
+  --scrollbar-track: #f1f5f9;
+  --scrollbar-thumb: #cbd5e1;
+  --overlay-bg: rgba(0, 0, 0, 0.3);
+}
+
+/* Dark theme */
+[data-theme="dark"] {
+  --bg-primary: #0f172a;
+  --bg-secondary: #1e293b;
+  --bg-tertiary: #334155;
+  --bg-hover: #1e293b;
+  --bg-card: #1e293b;
+  --bg-input: #1e293b;
+  --bg-chat: #0f172a;
+  --bg-user-msg: #312e81;
+  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1a1a2e 50%, #16213e 100%);
+  --text-primary: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-tertiary: #94a3b8;
+  --text-muted: #64748b;
+  --text-inverse: #0f172a;
+  --border-primary: #334155;
+  --border-secondary: #1e293b;
+  --border-focus: #818cf8;
+  --accent-primary: #818cf8;
+  --accent-primary-light: #312e81;
+  --accent-secondary: #a5b4fc;
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --shadow-accent: 0 4px 12px rgba(129, 140, 248, 0.3);
+  --selection-bg: #4338ca;
+  --scrollbar-track: #1e293b;
+  --scrollbar-thumb: #475569;
+  --overlay-bg: rgba(0, 0, 0, 0.6);
+}
+
+/* === BASE RESET & TYPOGRAPHY === */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: var(--bg-gradient);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+button {
+  font-family: inherit;
+}
+
+input, textarea, select {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--selection-bg);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* === ANIMATIONS === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+/* New animations */
+@keyframes gradientShift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes heroGlow {
+  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.1); }
+  50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.25); }
+}
+
+@keyframes badgePulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
+}
+
+@keyframes radarDraw {
+  from {
+    stroke-dashoffset: 1000;
+    opacity: 0;
+  }
+  to {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+@keyframes radarFill {
+  from { opacity: 0; }
+  to { opacity: 0.2; }
+}
+
+@keyframes cardEntrance {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes confettiPop {
+  0% { transform: scale(0) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.2) rotate(180deg); opacity: 1; }
+  100% { transform: scale(0) rotate(360deg); opacity: 0; }
+}
+
+@keyframes scoreReveal {
+  0% { transform: scale(0.5); opacity: 0; }
+  60% { transform: scale(1.1); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes tabSlide {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes counterTick {
+  0% { transform: translateY(0); opacity: 1; }
+  50% { transform: translateY(-4px); opacity: 0.5; }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+@keyframes shimmerLoading {
+  0% { background-position: -400% 0; }
+  100% { background-position: 400% 0; }
+}
+
+.fade-in {
+  animation: fadeIn 0.35s ease forwards;
+}
+
+.fade-in-scale {
+  animation: fadeInScale 0.3s ease forwards;
+}
+
+.pulse {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.shimmer {
+  background: linear-gradient(90deg,
+    var(--bg-tertiary) 25%,
+    var(--border-primary) 50%,
+    var(--bg-tertiary) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+.slide-in-right {
+  animation: slideInRight 0.3s ease forwards;
+}
+
+.card-entrance {
+  animation: cardEntrance 0.4s ease forwards;
+}
+
+.tab-content-enter {
+  animation: tabSlide 0.3s ease forwards;
+}
+
+/* Shimmer loading skeleton — enhanced */
+.shimmer-loading {
+  background: linear-gradient(90deg,
+    var(--bg-tertiary) 0%,
+    var(--border-primary) 20%,
+    var(--bg-tertiary) 40%,
+    var(--bg-tertiary) 100%
+  );
+  background-size: 400% 100%;
+  animation: shimmerLoading 1.8s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* Radar chart animation */
+.radar-polygon {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  animation: radarDraw 1.2s ease forwards 0.3s;
+}
+
+.radar-fill {
+  opacity: 0;
+  animation: radarFill 0.8s ease forwards 0.8s;
+}
+
+/* Score reveal */
+.score-reveal {
+  animation: scoreReveal 0.5s ease forwards;
+}
+
+/* Badge pulse */
+.badge-pulse {
+  animation: badgePulse 2s ease-in-out infinite;
+}
+
+/* Hero glow */
+.hero-glow {
+  animation: heroGlow 3s ease-in-out infinite;
+}
+
+/* Gradient text animation */
+.gradient-text-animated {
+  background-size: 200% 200%;
+  animation: gradientShift 4s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Button hover/active effects */
+.btn-interactive {
+  transition: all 0.2s ease;
+}
+.btn-interactive:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+.btn-interactive:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Score button click feedback */
+.score-btn {
+  transition: all 0.15s ease;
+}
+.score-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+.score-btn:active {
+  transform: scale(0.95);
+}
+
+/* === LOADING SKELETON === */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg,
+    transparent 25%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
+}
+
+/* === ONBOARDING OVERLAY === */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  animation: fadeIn 0.3s ease;
+}
+
+.onboarding-card {
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 36px 32px;
+  max-width: 480px;
+  width: 90%;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+  animation: fadeInScale 0.4s ease;
+}
+
+/* === PRINT STYLES === */
+@media print {
+  body {
+    background: white !important;
+    color: black !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide interactive elements */
+  .no-print,
+  .history-drawer,
+  .theme-toggle,
+  .tab-bar,
+  .input-area,
+  .sample-buttons,
+  .profile-selector,
+  .chat-area,
+  .cross-profile-section,
+  .start-new-btn,
+  .manual-override-controls,
+  .slider-control,
+  .hero-section,
+  footer {
+    display: none !important;
+  }
+
+  /* Show print-only elements */
+  .print-only {
+    display: block !important;
+  }
+
+  /* Reset layout for print */
+  .app-container {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 20px !important;
+  }
+
+  /* Ensure colors print */
+  .gu-hero,
+  .tier-badge,
+  .score-card,
+  .risk-card {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Page breaks */
+  .contract-analysis-section {
+    page-break-before: auto;
+    page-break-inside: avoid;
+  }
+
+  .dimension-scores-section {
+    page-break-before: auto;
+  }
+
+  .print-header {
+    display: flex !important;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 16px;
+    border-bottom: 2px solid #1e293b;
+    margin-bottom: 24px;
+  }
+
+  .print-footer {
+    display: block !important;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    padding: 8px;
+    font-size: 10px;
+    color: #94a3b8;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  /* Clean up borders and shadows for print */
+  * {
+    box-shadow: none !important;
+  }
+}
+
+/* Hidden by default, shown only in print */
+.print-only {
+  display: none;
+}
+
+/* === RESPONSIVE BREAKPOINTS === */
+
+/* Tablets and smaller */
+@media (max-width: 768px) {
+  .app-container {
+    padding: 12px 10px !important;
+  }
+
+  .app-title {
+    font-size: 22px !important;
+  }
+
+  .tab-bar {
+    gap: 4px !important;
+  }
+
+  .tab-bar button {
+    padding: 8px 14px !important;
+    font-size: 12px !important;
+  }
+
+  /* Make grids single column */
+  .two-col-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .profile-cards-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  .tier-detail-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* History drawer full width on mobile */
+  .history-drawer {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Touch-friendly sliders */
+  input[type="range"] {
+    height: 8px !important;
+    cursor: pointer;
+  }
+
+  input[type="range"]::-webkit-slider-thumb {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Larger tap targets */
+  button {
+    min-height: 36px;
+  }
+
+  .hero-section h1 {
+    font-size: 28px !important;
+  }
+
+  .comparison-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+  .app-container {
+    padding: 10px 8px !important;
+  }
+
+  .app-title {
+    font-size: 20px !important;
+  }
+
+  .app-subtitle {
+    font-size: 12px !important;
+  }
+
+  .gu-hero-score {
+    font-size: 38px !important;
+  }
+
+  .gu-hero-tier {
+    font-size: 22px !important;
+  }
+
+  .profile-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .sample-buttons {
+    flex-direction: column !important;
+  }
+
+  .sample-buttons button {
+    width: 100% !important;
+    text-align: left !important;
+  }
+
+  /* Stack input area */
+  .input-row {
+    flex-direction: column !important;
+  }
+
+  .input-row button {
+    width: 100% !important;
+  }
+}
+
+/* === UTILITY CLASSES === */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
