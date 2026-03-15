@@ -1,6 +1,6 @@
 import { Router } from "express";
 import multer from "multer";
-import Anthropic from "@anthropic-ai/sdk";
+import { anthropic } from "@workspace/integrations-anthropic-ai";
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
@@ -138,13 +138,9 @@ When scoring, respond ONLY with this JSON:
 - For energy projects, always consider the full project lifecycle: development, construction, operation, decommissioning.`;
 
 async function analyzeContract(conversationHistory: any[], _context: any = {}) {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error("ANTHROPIC_API_KEY not configured");
-  }
-  const client = new Anthropic();
-  const message = await client.messages.create({
-    model: "claude-sonnet-4-20250514",
-    max_tokens: 4000,
+  const message = await anthropic.messages.create({
+    model: "claude-sonnet-4-6",
+    max_tokens: 8192,
     temperature: 0,
     system: SYSTEM_PROMPT,
     messages: conversationHistory,
@@ -172,12 +168,6 @@ async function analyzeContract(conversationHistory: any[], _context: any = {}) {
 }
 
 router.post("/analyze", upload.single("file"), async (req, res) => {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    return res.status(503).json({
-      error: "Anthropic API key not configured. Please set ANTHROPIC_API_KEY.",
-    });
-  }
-
   try {
     let messages: any[];
     let context: any;
