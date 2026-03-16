@@ -80,6 +80,26 @@ First carbon credit offtake for this buyer. Seller has 3 prior Verra projects (t
   },
 ];
 
+// Maps API score keys → config dimension keys
+const API_SCORE_MAP = {
+  financial_exposure: 'financial',
+  reversibility: 'reversibility',
+  regulatory_compliance: 'regulatory',
+  reputational_impact: 'reputational',
+  precedent_setting: 'precedent',
+  stakeholder_complexity: 'complexity',
+};
+
+function normalizeScores(apiScores) {
+  if (!apiScores) return {};
+  const out = {};
+  for (const [k, v] of Object.entries(apiScores)) {
+    const key = API_SCORE_MAP[k] || k;
+    out[key] = v;
+  }
+  return out;
+}
+
 const DIM_LABELS = {
   financial: 'Financial',
   reversibility: 'Reversibility',
@@ -380,13 +400,38 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
         setApiHistory(prev => [...prev, { role: 'assistant', content: assistantContent }]);
         setChat(prev => [...prev, { from: 'ai', type: 'questions', data: data.data }]);
       } else if (data.status === 'scored') {
+        // Normalize score keys from API format → config dimension keys
+        if (data.analysis?.scores) {
+          data.analysis.scores = normalizeScores(data.analysis.scores);
+        }
         const assistantContent = JSON.stringify(data.analysis);
         setApiHistory(prev => [...prev, { role: 'assistant', content: assistantContent }]);
         setResult(data);
         setChat(prev => [...prev, { from: 'done' }]);
       } else if (data.status === 'fallback') {
-        setApiHistory(prev => [...prev, { role: 'assistant', content: data.rawText }]);
-        setChat(prev => [...prev, { from: 'ai', type: 'text', text: data.rawText }]);
+        // Try to recover scored data from raw text (server may have missed JSON extraction)
+        let recovered = null;
+        try {
+          const match = data.rawText.match(/\{[\s\S]*\}/);
+          if (match) {
+            const parsed = JSON.parse(match[0]);
+            if (parsed.scores || parsed.status === 'scored') {
+              recovered = { status: 'scored', analysis: parsed };
+            }
+          }
+        } catch { /* ignore */ }
+
+        if (recovered) {
+          if (recovered.analysis?.scores) {
+            recovered.analysis.scores = normalizeScores(recovered.analysis.scores);
+          }
+          setApiHistory(prev => [...prev, { role: 'assistant', content: JSON.stringify(recovered.analysis) }]);
+          setResult(recovered);
+          setChat(prev => [...prev, { from: 'done' }]);
+        } else {
+          setApiHistory(prev => [...prev, { role: 'assistant', content: data.rawText }]);
+          setChat(prev => [...prev, { from: 'ai', type: 'text', text: data.rawText }]);
+        }
       }
     } catch (err) {
       const msg = err.message;
@@ -659,10 +704,10 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                   </div>
                 )}
 
-                {a.contract_analysis.assumptions_made?.length > 0 && (
+                {(a.contract_analysis.assumptions_made?.length > 0 || a.contract_analysis.assumptions?.length > 0) && (
                   <div style={{ padding: 10, borderRadius: 8, background: 'var(--bg-tertiary)', border: '1px dashed var(--border-primary)' }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Assumptions Made</div>
-                    {a.contract_analysis.assumptions_made.map((x, i) => <div key={i} style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>- {x}</div>)}
+                    {(a.contract_analysis.assumptions_made || a.contract_analysis.assumptions || []).map((x, i) => <div key={i} style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>- {x}</div>)}
                   </div>
                 )}
               </div>
@@ -681,7 +726,8 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               <p className="no-print" style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 14px' }}>Drag sliders to override the AI scoring. GU recalculates live.</p>
               {Object.entries(aiScores).map(([k, v]) => {
                 const m = anchors[k]; if (!m) return null;
-                const aiScore = v.score;
+                const aiScore = typeof v === 'number' ? v : (v?.score ?? 1);
+                const levelLabel = v?.level || m.points?.slice().reverse().find(p => p.score <= aiScore)?.label || '';
                 const currentScore = manualScores?.[k] ?? aiScore;
                 const isOverridden = manualScores?.[k] !== undefined;
                 const bd = liveGU.primary.breakdown.find(b => b.dimension === k);
@@ -701,7 +747,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                           AI: {aiScore}
                         </button>
                       )}
-                      <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', padding: '2px 6px', background: 'var(--bg-tertiary)', borderRadius: 3 }}>{v.level}</span>
+                      {levelLabel && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', padding: '2px 6px', background: 'var(--bg-tertiary)', borderRadius: 3 }}>{levelLabel}</span>}
                       {bd && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-primary)' }}>{bd.weighted.toFixed(1)} GU</span>}
                     </div>
                     {/* Slider */}
@@ -718,27 +764,40 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                     <div className="print-only" style={{ display: 'none', marginBottom: 6 }}>
                       <ScoreBar score={currentScore} />
                     </div>
-                    <div style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>{v.rationale}</div>
+                    {v?.rationale && <div style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>{v.rationale}</div>}
                   </div>
                 );
               })}
             </div>
 
             {/* Flags + Conditions */}
-            <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-              {a.key_risk_flags?.length > 0 && (
-                <div className="risk-card card-entrance" style={{ background: '#fef2f2', borderRadius: 12, padding: 14, border: '1px solid #fecaca' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', marginBottom: 6 }}>Key Risks</div>
-                  {a.key_risk_flags.map((f, i) => <div key={i} style={{ fontSize: 12, color: '#991b1b', padding: '3px 0' }}>- {f}</div>)}
+            {(() => {
+              const keyRisks = a.key_risk_flags || a.key_risks || [];
+              const conditions = a.recommended_conditions || a.approval_conditions || [];
+              const recommendations = a.key_recommendations || [];
+              const narrative = a.overall_risk_narrative || a.risk_narrative || '';
+              const hasRisks = keyRisks.length > 0 || recommendations.length > 0 || narrative;
+              const hasConditions = conditions.length > 0;
+              if (!hasRisks && !hasConditions) return null;
+              return (
+                <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                  {(keyRisks.length > 0 || recommendations.length > 0 || narrative) && (
+                    <div className="risk-card card-entrance" style={{ background: '#fef2f2', borderRadius: 12, padding: 14, border: '1px solid #fecaca' }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', marginBottom: 6 }}>Key Risks</div>
+                      {narrative && <div style={{ fontSize: 12, color: '#991b1b', padding: '3px 0', marginBottom: 4, fontStyle: 'italic' }}>{narrative}</div>}
+                      {keyRisks.map((f, i) => <div key={i} style={{ fontSize: 12, color: '#991b1b', padding: '3px 0' }}>- {f}</div>)}
+                      {recommendations.map((r, i) => <div key={`r${i}`} style={{ fontSize: 12, color: '#991b1b', padding: '3px 0' }}>- {r}</div>)}
+                    </div>
+                  )}
+                  {conditions.length > 0 && (
+                    <div className="risk-card card-entrance" style={{ background: '#ecfdf5', borderRadius: 12, padding: 14, border: '1px solid #a7f3d0', animationDelay: '0.1s' }}>
+                      <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', marginBottom: 6 }}>Conditions for Approval</div>
+                      {conditions.map((c, i) => <div key={i} style={{ fontSize: 12, color: '#065f46', padding: '3px 0' }}>- {c}</div>)}
+                    </div>
+                  )}
                 </div>
-              )}
-              {a.recommended_conditions?.length > 0 && (
-                <div className="risk-card card-entrance" style={{ background: '#ecfdf5', borderRadius: 12, padding: 14, border: '1px solid #a7f3d0', animationDelay: '0.1s' }}>
-                  <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', marginBottom: 6 }}>Conditions for Approval</div>
-                  {a.recommended_conditions.map((c, i) => <div key={i} style={{ fontSize: 12, color: '#065f46', padding: '3px 0' }}>- {c}</div>)}
-                </div>
-              )}
-            </div>
+              );
+            })()}
 
             {/* Cross-profile comparison */}
             <div className="cross-profile-section" style={{ ...cardStyle, padding: 20, marginBottom: 14 }}>
