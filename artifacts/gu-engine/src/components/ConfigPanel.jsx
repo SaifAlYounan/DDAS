@@ -1,6 +1,123 @@
 import { useState } from 'react';
 
 const DIMS = ['financial', 'reversibility', 'regulatory', 'reputational', 'precedent', 'complexity'];
+
+const AI_SCORING_SCALES = [
+  {
+    key: 'financial',
+    label: 'Financial Exposure',
+    icon: '💰',
+    desc: 'Total monetary value at risk',
+    levels: [
+      { score: 1,  text: '< $100K — office supplies, routine maintenance spare parts, feasibility study' },
+      { score: 2,  text: '$100K–$1M — consultancy engagement, site survey, small rooftop solar' },
+      { score: 3,  text: '$1M–$10M — BESS installation, grid connection works, carbon credit offtake' },
+      { score: 4,  text: '$10M–$50M — small utility-scale solar, equipment procurement' },
+      { score: 5,  text: '$50M–$100M — medium solar/wind EPC, substation upgrade' },
+      { score: 6,  text: '$100M–$250M — large utility-scale project, significant EPC' },
+      { score: 7,  text: '$250M–$500M — major EPC contract, large PPA portfolio' },
+      { score: 8,  text: '$500M–$1B — large-scale renewable portfolio, major concession' },
+      { score: 9,  text: '$1B–$3B — green hydrogen facility, major JV, infrastructure mega-project' },
+      { score: 10, text: '> $3B — sovereign-scale infrastructure, multi-GW program, transformational M&A' },
+    ],
+  },
+  {
+    key: 'reversibility',
+    label: 'Reversibility',
+    icon: '🔄',
+    desc: 'How easily can this decision be undone?',
+    levels: [
+      { score: 1,  text: 'Fully reversible — NDA, MoU with no binding obligations, feasibility study' },
+      { score: 2,  text: 'Easily reversible — short-term consultancy with 30-day notice, equipment reservation' },
+      { score: 3,  text: 'Mostly reversible — service contract with termination-for-convenience, pilot project' },
+      { score: 4,  text: 'Reversible with cost — EPC contract with T-for-C clause, break fees apply' },
+      { score: 5,  text: 'Partially reversible — mid-term PPA with break clause, equipment already ordered' },
+      { score: 6,  text: 'Difficult to reverse — long-term PPA, construction underway, significant sunk costs' },
+      { score: 7,  text: 'Very difficult — commissioned plant, operational commitments, staff hired' },
+      { score: 8,  text: 'Mostly irreversible — JV with shared assets, M&A with deferred consideration, long-term concession' },
+      { score: 9,  text: 'Nearly irreversible — permanent infrastructure built, sovereign guarantees issued' },
+      { score: 10, text: 'Irreversible — permanent land transfer, irreversible environmental impact, sovereign guarantee called' },
+    ],
+  },
+  {
+    key: 'regulatory',
+    label: 'Regulatory & Compliance',
+    icon: '⚖️',
+    desc: 'Exposure to regulatory, legal, or compliance risk',
+    levels: [
+      { score: 1,  text: 'None — internal procurement, no permits needed' },
+      { score: 2,  text: 'Minimal — standard business license renewal, routine filing' },
+      { score: 3,  text: 'Low — standard EWEC registration, routine EAD permits, established regulatory path' },
+      { score: 4,  text: 'Low-moderate — multiple standard permits, cross-department coordination' },
+      { score: 5,  text: 'Moderate — cross-emirate regulatory coordination, ADNOC procurement framework, technology certification' },
+      { score: 6,  text: 'Moderate-high — new permit categories, regulatory pre-approval needed, multiple agencies' },
+      { score: 7,  text: 'High — cross-border regulatory requirements, multiple jurisdictions, novel license categories' },
+      { score: 8,  text: 'Very high — novel regulatory framework, cross-border JV structures, DIFC/onshore interplay, sanctions screening' },
+      { score: 9,  text: 'Critical — first-of-kind regulatory pathway, potential for regulatory challenge, policy uncertainty' },
+      { score: 10, text: 'Extreme — license-to-operate risk, novel hydrogen regulations, nuclear-adjacent, sovereign immunity implications' },
+    ],
+  },
+  {
+    key: 'reputational',
+    label: 'Reputational Impact',
+    icon: '📢',
+    desc: 'Potential impact on brand, stakeholders, or public trust',
+    levels: [
+      { score: 1,  text: 'Internal only — back-office procurement, no external visibility' },
+      { score: 2,  text: 'Minimal external — routine vendor engagement, no press interest' },
+      { score: 3,  text: 'Limited — small industry circle aware, trade publication mention possible' },
+      { score: 4,  text: 'Moderate-low — industry event visibility, partner announcement' },
+      { score: 5,  text: 'Moderate — industry conference visibility, trade press coverage, JV announcements' },
+      { score: 6,  text: 'Moderate-high — national media interest possible, government stakeholder awareness' },
+      { score: 7,  text: 'Significant — international press likely, ESG scrutiny, brand association risk' },
+      { score: 8,  text: 'High — Masdar/sovereign brand association, COP/climate summit visibility, sovereign wealth fund involvement' },
+      { score: 9,  text: 'Very high — front-page risk, parliamentary/regulatory inquiry possible, ESG rating impact' },
+      { score: 10, text: 'Severe — international incident risk, greenwashing allegations, sovereign relationship damage, activist targeting' },
+    ],
+  },
+  {
+    key: 'precedent',
+    label: 'Precedent Setting',
+    icon: '📐',
+    desc: 'Does this create a new pattern others will follow?',
+    levels: [
+      { score: 1,  text: 'Routine — repeat procurement, standard terms, done many times before' },
+      { score: 2,  text: 'Near-routine — minor variation on established approach' },
+      { score: 3,  text: 'Minor variation — slightly modified PPA terms, new supplier for existing category' },
+      { score: 4,  text: 'Some novelty — new geography for existing product, adapted contract structure' },
+      { score: 5,  text: 'New approach — first project in new emirate, new technology deployment, new contract structure' },
+      { score: 6,  text: 'Significant novelty — first use of new commercial model, new partnership structure' },
+      { score: 7,  text: 'Major precedent — new market entry, first large-scale deployment of emerging technology' },
+      { score: 8,  text: 'Org-wide precedent — first green hydrogen project, new JV governance model, new market entry strategy' },
+      { score: 9,  text: 'Industry precedent — first-of-kind in UAE/GCC, novel methodology, potential to reshape market' },
+      { score: 10, text: 'Global precedent — first-of-kind globally, industry-shaping deal, new regulatory paradigm' },
+    ],
+  },
+  {
+    key: 'complexity',
+    label: 'Stakeholder Complexity',
+    icon: '🕸️',
+    desc: 'Number and diversity of affected parties',
+    levels: [
+      { score: 1,  text: 'Single team — one department, one counterparty, simple approval' },
+      { score: 2,  text: 'Two teams — buyer + seller, straightforward negotiation' },
+      { score: 3,  text: 'Cross-functional — engineering + procurement + legal, multiple internal teams' },
+      { score: 4,  text: 'Multi-department — 3–4 internal teams, external advisors involved' },
+      { score: 5,  text: 'Cross-BU — multiple business units, shared infrastructure, internal politics' },
+      { score: 6,  text: 'Multiple external — 3+ external counterparties, advisors, consultants' },
+      { score: 7,  text: 'Complex external — JV partners, lenders, government entity, EPC contractor' },
+      { score: 8,  text: 'Highly complex — multiple government entities, regulators, lenders, JV partners, community stakeholders' },
+      { score: 9,  text: 'Multi-sovereign — sovereign stakeholders from multiple countries, multilateral development banks' },
+      { score: 10, text: 'Ecosystem-wide — international consortium, multiple sovereigns, multilateral institutions, global supply chain' },
+    ],
+  },
+];
+
+function scoreColor(score) {
+  if (score <= 3) return { bg: '#f0fdf4', border: '#bbf7d0', numColor: '#15803d', textColor: '#166534' };
+  if (score <= 6) return { bg: '#fefce8', border: '#fde68a', numColor: '#a16207', textColor: '#92400e' };
+  return { bg: '#fef2f2', border: '#fecaca', numColor: '#b91c1c', textColor: '#991b1b' };
+}
 const DIM_COLORS = {
   financial: '#4338ca',
   reversibility: '#3b82f6',
@@ -25,6 +142,52 @@ function Section({ title, desc, children, defaultOpen = false }) {
         <span style={{ fontSize: 18, color: 'var(--text-muted)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }}>{'\u25BE'}</span>
       </button>
       {open && <div className="card-entrance" style={{ padding: '0 18px 18px' }}>{children}</div>}
+    </div>
+  );
+}
+
+function DimScaleCard({ dim }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{ marginBottom: 8, borderRadius: 10, border: '1px solid var(--border-secondary)', overflow: 'hidden', background: 'var(--bg-hover)' }}>
+      <button onClick={() => setOpen(o => !o)} className="btn-interactive" style={{
+        width: '100%', padding: '11px 14px', display: 'flex', alignItems: 'center', gap: 8,
+        background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+      }}>
+        <span style={{ fontSize: 16 }}>{dim.icon}</span>
+        <div style={{ flex: 1 }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>{dim.label}</span>
+          <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>{dim.desc}</span>
+        </div>
+        <div style={{ display: 'flex', gap: 2, marginRight: 8 }}>
+          {[1,2,3,4,5,6,7,8,9,10].map(s => (
+            <div key={s} style={{ width: 6, height: 14, borderRadius: 2, background: s <= 3 ? '#22c55e' : s <= 6 ? '#eab308' : '#ef4444', opacity: 0.75 }} />
+          ))}
+        </div>
+        <span style={{ fontSize: 14, color: 'var(--text-muted)', display: 'inline-block', transform: open ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.25s' }}>▾</span>
+      </button>
+      {open && (
+        <div className="card-entrance" style={{ padding: '2px 14px 12px' }}>
+          {dim.levels.map(({ score, text }) => {
+            const c = scoreColor(score);
+            const dashIdx = text.indexOf(' — ');
+            const label = dashIdx > -1 ? text.slice(0, dashIdx) : text;
+            const example = dashIdx > -1 ? text.slice(dashIdx + 3) : null;
+            return (
+              <div key={score} style={{
+                display: 'flex', alignItems: 'flex-start', gap: 10, padding: '6px 10px', marginBottom: 4,
+                borderRadius: 7, background: c.bg, border: `1px solid ${c.border}`,
+              }}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: c.numColor, minWidth: 20, paddingTop: 1 }}>{score}</span>
+                <div style={{ flex: 1 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: c.textColor }}>{label}</span>
+                  {example && <span style={{ fontSize: 11, color: c.textColor, opacity: 0.72 }}> — {example}</span>}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -258,6 +421,14 @@ export default function ConfigPanel({ config, setConfig }) {
             </div>
           );
         })}
+      </Section>
+
+      {/* AI SCORING SCALES */}
+      <Section title="AI Scoring Scales" desc="The full 1–10 scale the AI uses for each dimension. Read-only — sourced from the system prompt. Use this as a reference when reviewing or overriding AI scores.">
+        <div style={{ marginBottom: 12, padding: '8px 12px', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe', fontSize: 12, color: '#1e40af' }}>
+          These scales are embedded in the AI system prompt. Each score has UAE renewable energy examples calibrated for Masdar-scale transactions. Click any dimension to expand.
+        </div>
+        {AI_SCORING_SCALES.map(dim => <DimScaleCard key={dim.key} dim={dim} />)}
       </Section>
 
       {/* FLOOR RULES */}
