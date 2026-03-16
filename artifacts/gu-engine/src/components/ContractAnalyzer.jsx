@@ -704,10 +704,18 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                   </div>
                 )}
 
-                {(a.contract_analysis.assumptions_made?.length > 0 || a.contract_analysis.assumptions?.length > 0) && (
+                {(a.contract_analysis.assumptions?.length > 0 || a.contract_analysis.assumptions_made?.length > 0) && (
                   <div style={{ padding: 10, borderRadius: 8, background: 'var(--bg-tertiary)', border: '1px dashed var(--border-primary)' }}>
                     <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Assumptions Made</div>
-                    {(a.contract_analysis.assumptions_made || a.contract_analysis.assumptions || []).map((x, i) => <div key={i} style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>- {x}</div>)}
+                    {(a.contract_analysis.assumptions || a.contract_analysis.assumptions_made || []).map((x, i) => {
+                      if (typeof x === 'string') return <div key={i} style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '2px 0' }}>- {x}</div>;
+                      return (
+                        <div key={i} style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '3px 0' }}>
+                          <span style={{ fontWeight: 600 }}>- {x.assumption}</span>
+                          {x.impact && <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}> — {x.impact}</span>}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
