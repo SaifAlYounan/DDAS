@@ -16,7 +16,7 @@ Land: 400ha, 30-year usufruct from RAK Municipality.
 Regulatory: EWEC generation license, FEWA grid connection agreement, EAD environmental permit approved.
 Insurance: CAR policy $150M minimum, 3rd party liability $20M.
 Governing law: UAE Federal Law, DIAC arbitration (Dubai).
-JV: 60% Masdar / 40% sovereign wealth fund partner.
+JV: 60% CleanCo / 40% sovereign wealth fund partner.
 EPC warranty: 2-year defects liability, 10-year structural. Modules: 25-year linear degradation warranty.
 First utility-scale project with this JV structure and contractor.`
   },
@@ -24,7 +24,7 @@ First utility-scale project with this JV structure and contractor.`
     label: 'Wind Farm PPA',
     icon: '\uD83C\uDF2C\uFE0F',
     text: `Power Purchase Agreement: 400MW onshore wind farm, Dhafra region, Abu Dhabi.
-Seller: Al Riyah Clean Energy LLC (SPV, 70% Masdar / 30% international utility).
+Seller: Al Riyah Clean Energy LLC (SPV, 70% CleanCo / 30% international utility).
 Buyer: EWEC (Emirates Water & Electricity Company) — sovereign-backed offtaker.
 Term: 25 years from COD, with 5-year extension option at buyer's election.
 Pricing: AED 0.085/kWh base tariff, indexed to UAE CPI annually (cap 2.5%), floor at base.
@@ -41,16 +41,16 @@ Turbine technology: Vestas V150-4.2 (proven platform, 5-year full-service agreem
     label: 'Green Hydrogen JV',
     icon: '\uD83D\uDFE2',
     text: `Joint Venture Agreement: Green Hydrogen Production Facility, Ruwais Industrial City, Abu Dhabi.
-Parties: Masdar (40%), ADNOC (40%), international electrolyzer OEM (20% — technology partner).
+Parties: CleanCo (40%), ADNOC (40%), international electrolyzer OEM (20% — technology partner).
 Facility: 200MW electrolyzer, producing 25,000 tonnes green H2/year.
 Total investment: $2.1B over 4-year development + construction period.
 Offtake: 100% to ADNOC refining operations (captive demand, 15-year take-or-pay).
 Technology: PEM electrolysis (Plug Power / Siemens — final selection pending). Technology risk: largest PEM deployment in MENA.
-Power supply: Dedicated 200MW solar farm (separate PPA with Masdar Clean Energy).
+Power supply: Dedicated 200MW solar farm (separate PPA with CleanCo Energy).
 Water: Desalinated seawater from existing ADNOC facility (supply agreement required).
 Regulatory: Novel — no existing UAE hydrogen regulatory framework. Abu Dhabi DOE hydrogen strategy applies. ADNOC HSE standards.
 Land: ADNOC industrial zone allocation, 30-year renewable lease.
-Governance: Board of 5 (2 Masdar, 2 ADNOC, 1 tech partner). Unanimous consent for: capex > $50M, technology changes, new offtake agreements.
+Governance: Board of 5 (2 CleanCo, 2 ADNOC, 1 tech partner). Unanimous consent for: capex > $50M, technology changes, new offtake agreements.
 Exit: 3-year lock-in. ROFR on transfers. Drag-along at 75%.
 Carbon credits: Project to be registered under Verra VCS. Credits owned by JV, allocated pro-rata.
 FEED completed. FID targeted Q3 2025.`
@@ -60,7 +60,7 @@ FEED completed. FID targeted Q3 2025.`
     icon: '\uD83D\uDCC4',
     text: `Carbon Credit Offtake Agreement: Forward purchase of Verified Carbon Units (VCUs).
 Seller: East African Reforestation Trust (Kenyan entity, Verra-registered project developer).
-Buyer: Masdar Clean Energy (Abu Dhabi entity).
+Buyer: CleanCo Energy (Abu Dhabi entity).
 Volume: 500,000 VCUs over 5 years (100K/year), vintage 2025-2029.
 Price: $12/VCU fixed for Year 1-2, then indexed to S&P Global Platts Voluntary Carbon Market benchmark (floor $10, cap $25).
 Methodology: Verra VCS VM0047 (Afforestation, Reforestation, Revegetation). Project ID: VCS-4521.

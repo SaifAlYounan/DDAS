@@ -70,7 +70,7 @@ const AI_SCORING_SCALES = [
       { score: 5,  text: 'Moderate — industry conference visibility, trade press coverage, JV announcements' },
       { score: 6,  text: 'Moderate-high — national media interest possible, government stakeholder awareness' },
       { score: 7,  text: 'Significant — international press likely, ESG scrutiny, brand association risk' },
-      { score: 8,  text: 'High — Masdar/sovereign brand association, COP/climate summit visibility, sovereign wealth fund involvement' },
+      { score: 8,  text: 'High — sovereign/national champion brand association, COP/climate summit visibility, sovereign wealth fund involvement' },
       { score: 9,  text: 'Very high — front-page risk, parliamentary/regulatory inquiry possible, ESG rating impact' },
       { score: 10, text: 'Severe — international incident risk, greenwashing allegations, sovereign relationship damage, activist targeting' },
     ],
@@ -426,7 +426,7 @@ export default function ConfigPanel({ config, setConfig }) {
       {/* AI SCORING SCALES */}
       <Section title="AI Scoring Scales" desc="The full 1–10 scale the AI uses for each dimension. Read-only — sourced from the system prompt. Use this as a reference when reviewing or overriding AI scores.">
         <div style={{ marginBottom: 12, padding: '8px 12px', background: '#eff6ff', borderRadius: 8, border: '1px solid #bfdbfe', fontSize: 12, color: '#1e40af' }}>
-          These scales are embedded in the AI system prompt. Each score has UAE renewable energy examples calibrated for Masdar-scale transactions. Click any dimension to expand.
+          These scales are embedded in the AI system prompt. Each score has UAE renewable energy examples calibrated for large-scale transactions. Click any dimension to expand.
         </div>
         {AI_SCORING_SCALES.map(dim => <DimScaleCard key={dim.key} dim={dim} />)}
       </Section>
