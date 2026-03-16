@@ -131,7 +131,7 @@ You MUST use the FULL 1-10 range for each dimension. Do NOT cluster all scores b
 - 5 = Moderate (industry conference visibility, trade press coverage, JV announcements)
 - 6 = Moderate-high (national media interest possible, government stakeholder awareness)
 - 7 = Significant (international press likely, ESG scrutiny, brand association risk)
-- 8 = High (Masdar/sovereign brand association, COP/climate summit visibility, sovereign wealth fund involvement)
+- 8 = High (sovereign/national champion brand association, COP/climate summit visibility, sovereign wealth fund involvement)
 - 9 = Very high (front-page risk, parliamentary/regulatory inquiry possible, ESG rating impact)
 - 10 = Severe (international incident risk, greenwashing allegations, sovereign relationship damage, activist targeting)
 
