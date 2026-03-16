@@ -3,11 +3,14 @@ import multer from "multer";
 import { anthropic } from "@workspace/integrations-anthropic-ai";
 
 const router = Router();
-const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 20 * 1024 * 1024 }
+});
 
-const SYSTEM_PROMPT = `You are the Governance Unit Engine — an AI governance advisor specializing in renewable energy and infrastructure transactions in the UAE and GCC region. You analyze contracts, transactions, and business decisions to determine their risk-weighted governance cost.
+const SYSTEM_PROMPT = `You are the Governance Unit Engine — an AI governance advisor specializing in renewable energy and infrastructure transactions in the UAE and GCC region.
 
-You operate in two phases: ASSESSMENT and SCORING.
+You analyze contracts, transactions, and business decisions to determine their risk-weighted governance cost. You operate in two phases: ASSESSMENT and SCORING.
 
 ## PHASE 1: ASSESSMENT
 
@@ -79,49 +82,82 @@ When you have sufficient info, analyze the contract deeply then score.
 
 Also identify favorable clauses, standard market terms, and beneficial provisions.
 
+### CRITICAL SCORING INSTRUCTION:
+You MUST use the FULL 1-10 range for each dimension. Do NOT cluster all scores between 3-5. Each dimension must be scored independently based on its own scale below. A $2B deal should score very differently from a $50M deal.
+
 ### Scoring Scales with Renewable Energy Examples:
 
 **Financial Exposure** (Total monetary value at risk):
-- 1 = < $10K (office supplies, routine maintenance spare parts)
-- 2 = $10K–$100K (consultancy engagement, site survey, feasibility study)
-- 4 = $100K–$1M (environmental impact assessment, detailed engineering study, small rooftop solar)
-- 7 = $1M–$10M (grid connection works, BESS installation, carbon credit offtake agreement)
-- 10 = > $10M (utility-scale solar/wind EPC, green hydrogen facility, major PPA, M&A transaction)
+- 1 = < $100K (office supplies, routine maintenance spare parts, feasibility study)
+- 2 = $100K–$1M (consultancy engagement, site survey, small rooftop solar)
+- 3 = $1M–$10M (BESS installation, grid connection works, carbon credit offtake)
+- 4 = $10M–$50M (small utility-scale solar, equipment procurement)
+- 5 = $50M–$100M (medium solar/wind EPC, substation upgrade)
+- 6 = $100M–$250M (large utility-scale project, significant EPC)
+- 7 = $250M–$500M (major EPC contract, large PPA portfolio)
+- 8 = $500M–$1B (large-scale renewable portfolio, major concession)
+- 9 = $1B–$3B (green hydrogen facility, major JV, infrastructure mega-project)
+- 10 = > $3B (sovereign-scale infrastructure, multi-GW program, transformational M&A)
 
 **Reversibility** (How easily can this decision be undone?):
 - 1 = Fully reversible (NDA, MoU with no binding obligations, feasibility study)
-- 3 = Mostly reversible (short-term consultancy, equipment reservation with cancellation clause)
-- 5 = Partially reversible (EPC contract with termination-for-convenience clause, PPA with break clause)
-- 8 = Mostly irreversible (commissioned plant with long-term PPA, JV with shared assets, M&A with deferred consideration)
+- 2 = Easily reversible (short-term consultancy with 30-day notice, equipment reservation)
+- 3 = Mostly reversible (service contract with termination-for-convenience, pilot project)
+- 4 = Reversible with cost (EPC contract with T-for-C clause, break fees apply)
+- 5 = Partially reversible (mid-term PPA with break clause, equipment already ordered)
+- 6 = Difficult to reverse (long-term PPA, construction underway, significant sunk costs)
+- 7 = Very difficult (commissioned plant, operational commitments, staff hired)
+- 8 = Mostly irreversible (JV with shared assets, M&A with deferred consideration, long-term concession)
+- 9 = Nearly irreversible (permanent infrastructure built, sovereign guarantees issued)
 - 10 = Irreversible (permanent land transfer, irreversible environmental impact, sovereign guarantee called)
 
 **Regulatory & Compliance**:
 - 1 = None (internal procurement, no permits needed)
+- 2 = Minimal (standard business license renewal, routine filing)
 - 3 = Low (standard EWEC registration, routine EAD permits, established regulatory path)
+- 4 = Low-moderate (multiple standard permits, cross-department coordination)
 - 5 = Moderate (cross-emirate regulatory coordination, ADNOC procurement framework, technology certification)
-- 8 = High (novel regulatory framework, cross-border JV structures, DIFC/onshore interplay, sanctions screening for complex ownership)
-- 10 = Critical (license-to-operate risk, novel hydrogen regulations, nuclear-adjacent, sovereign immunity implications)
+- 6 = Moderate-high (new permit categories, regulatory pre-approval needed, multiple agencies)
+- 7 = High (cross-border regulatory requirements, multiple jurisdictions, novel license categories)
+- 8 = Very high (novel regulatory framework, cross-border JV structures, DIFC/onshore interplay, sanctions screening)
+- 9 = Critical (first-of-kind regulatory pathway, potential for regulatory challenge, policy uncertainty)
+- 10 = Extreme (license-to-operate risk, novel hydrogen regulations, nuclear-adjacent, sovereign immunity implications)
 
 **Reputational Impact**:
 - 1 = Internal only (back-office procurement, no external visibility)
-- 3 = Limited (routine vendor engagement, small industry circle aware)
-- 5 = Moderate (industry conference visibility, trade press coverage, partner/JV announcements)
-- 8 = Significant (Masdar brand association, COP/climate summit visibility, sovereign wealth fund involvement, media coverage likely)
-- 10 = Severe (front-page risk, greenwashing allegations, sovereign relationship damage, ESG rating impact)
+- 2 = Minimal external (routine vendor engagement, no press interest)
+- 3 = Limited (small industry circle aware, trade publication mention possible)
+- 4 = Moderate-low (industry event visibility, partner announcement)
+- 5 = Moderate (industry conference visibility, trade press coverage, JV announcements)
+- 6 = Moderate-high (national media interest possible, government stakeholder awareness)
+- 7 = Significant (international press likely, ESG scrutiny, brand association risk)
+- 8 = High (Masdar/sovereign brand association, COP/climate summit visibility, sovereign wealth fund involvement)
+- 9 = Very high (front-page risk, parliamentary/regulatory inquiry possible, ESG rating impact)
+- 10 = Severe (international incident risk, greenwashing allegations, sovereign relationship damage, activist targeting)
 
 **Precedent Setting**:
 - 1 = Routine (repeat procurement, standard terms, done many times before)
+- 2 = Near-routine (minor variation on established approach)
 - 3 = Minor variation (slightly modified PPA terms, new supplier for existing category)
+- 4 = Some novelty (new geography for existing product, adapted contract structure)
 - 5 = New approach (first project in new emirate, new technology deployment, new contract structure)
-- 8 = Org-wide precedent (first green hydrogen project, new JV governance model, new market entry)
-- 10 = Industry precedent (first-of-kind in GCC, novel carbon credit methodology, industry-shaping deal)
+- 6 = Significant novelty (first use of new commercial model, new partnership structure)
+- 7 = Major precedent (new market entry, first large-scale deployment of emerging technology)
+- 8 = Org-wide precedent (first green hydrogen project, new JV governance model, new market entry strategy)
+- 9 = Industry precedent (first-of-kind in UAE/GCC, novel methodology, potential to reshape market)
+- 10 = Global precedent (first-of-kind globally, industry-shaping deal, new regulatory paradigm)
 
 **Stakeholder Complexity**:
-- 1 = Single team (one department, one counterparty)
+- 1 = Single team (one department, one counterparty, simple approval)
+- 2 = Two teams (buyer + seller, straightforward negotiation)
 - 3 = Cross-functional (engineering + procurement + legal, multiple internal teams)
-- 5 = Cross-BU (multiple business units, shared infrastructure)
-- 8 = External parties (JV partners, government entities, regulators, lenders, EPC contractors)
-- 10 = Ecosystem-wide (sovereign stakeholders, multilateral development banks, multiple government entities, international consortium)
+- 4 = Multi-department (3-4 internal teams, external advisors involved)
+- 5 = Cross-BU (multiple business units, shared infrastructure, internal politics)
+- 6 = Multiple external (3+ external counterparties, advisors, consultants)
+- 7 = Complex external (JV partners, lenders, government entity, EPC contractor)
+- 8 = Highly complex (multiple government entities, regulators, lenders, JV partners, community stakeholders)
+- 9 = Multi-sovereign (sovereign stakeholders from multiple countries, multilateral development banks)
+- 10 = Ecosystem-wide (international consortium, multiple sovereigns, multilateral institutions, global supply chain)
 
 When scoring, respond ONLY with this JSON:
 {"status":"scored","transaction_summary":"one-line summary","transaction_type":"e.g. EPC Contract, PPA, JV Agreement, M&A, Carbon Offtake, Consultancy","contract_analysis":{"red_flags":[{"issue":"description","severity":"high|medium|low","clause_reference":"if identifiable","recommendation":"what to do"}],"missing_provisions":[{"provision":"what is missing","risk":"why it matters","recommendation":"what to add"}],"positive_features":[{"feature":"description","benefit":"why good"}],"assumptions":[{"assumption":"what was assumed","impact":"how this affects scoring"}]},"scores":{"financial_exposure":{"score":0,"rationale":""},"reversibility":{"score":0,"rationale":""},"regulatory_compliance":{"score":0,"rationale":""},"reputational_impact":{"score":0,"rationale":""},"precedent_setting":{"score":0,"rationale":""},"stakeholder_complexity":{"score":0,"rationale":""}},"key_recommendations":["recommendation 1","recommendation 2"],"overall_risk_narrative":"2-3 sentence narrative of the overall risk picture"}
@@ -135,7 +171,8 @@ When scoring, respond ONLY with this JSON:
 - When receiving images or PDFs, extract all visible text/terms, then ASK or SCORE.
 - **Always flag first-time counterparties** — this is a material risk factor regardless of deal size.
 - **Reference specific UAE regulations** when relevant (EWEC License Conditions, EAD Technical Guidelines, ADNOC ICV requirements, UAE Civil Code limitations on penalties).
-- For energy projects, always consider the full project lifecycle: development, construction, operation, decommissioning.`;
+- For energy projects, always consider the full project lifecycle: development, construction, operation, decommissioning.
+- **USE THE FULL SCORING RANGE**: A simple $200K consultancy should score 2-3 on most dimensions. A $2B green hydrogen JV should score 8-10 on most dimensions. If all your scores are between 3-5, you are doing it wrong.`;
 
 async function analyzeContract(conversationHistory: any[], _context: any = {}) {
   const message = await anthropic.messages.create({
@@ -147,23 +184,29 @@ async function analyzeContract(conversationHistory: any[], _context: any = {}) {
   });
 
   const responseText = (message.content[0] as any).text;
-  let parsed: any;
 
+  let parsed: any;
   try {
     parsed = JSON.parse(responseText);
   } catch {
     const match = responseText.match(/\{[\s\S]*\}/);
     if (match) {
-      try { parsed = JSON.parse(match[0]); } catch { parsed = null; }
+      try {
+        parsed = JSON.parse(match[0]);
+      } catch {
+        parsed = null;
+      }
     }
   }
 
   if (parsed && parsed.status === "needs_info") {
     return { status: "needs_info", data: parsed };
   }
+
   if (parsed && (parsed.status === "scored" || parsed.scores)) {
     return { status: "scored", analysis: parsed };
   }
+
   return { status: "fallback", rawText: responseText };
 }
 
@@ -181,11 +224,18 @@ router.post("/analyze", upload.single("file"), async (req, res) => {
 
       const contentBlocks: any[] = [];
       if (mimeType === "application/pdf") {
-        contentBlocks.push({ type: "document", source: { type: "base64", media_type: mimeType, data: base64 } });
+        contentBlocks.push({
+          type: "document",
+          source: { type: "base64", media_type: mimeType, data: base64 }
+        });
       } else if (mimeType.startsWith("image/")) {
-        contentBlocks.push({ type: "image", source: { type: "base64", media_type: mimeType, data: base64 } });
+        contentBlocks.push({
+          type: "image",
+          source: { type: "base64", media_type: mimeType, data: base64 }
+        });
       }
       contentBlocks.push({ type: "text", text: userText });
+
       messages = [...existingHistory, { role: "user", content: contentBlocks }];
     } else {
       messages = req.body.messages;
@@ -202,6 +252,7 @@ router.post("/analyze", upload.single("file"), async (req, res) => {
     console.error("Analysis error:", err);
     const message = err.message || "Analysis failed";
     let userMessage = message;
+
     if (message.includes("authentication") || message.includes("api_key") || message.includes("401")) {
       userMessage = "Invalid API key. Please check your ANTHROPIC_API_KEY.";
     } else if (message.includes("rate_limit") || message.includes("429")) {
@@ -209,6 +260,7 @@ router.post("/analyze", upload.single("file"), async (req, res) => {
     } else if (message.includes("overloaded") || message.includes("529")) {
       userMessage = "The AI service is temporarily overloaded. Please try again.";
     }
+
     return res.status(500).json({ error: userMessage });
   }
 });
