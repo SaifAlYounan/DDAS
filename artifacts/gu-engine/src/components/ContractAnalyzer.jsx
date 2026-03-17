@@ -894,8 +894,11 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
       {/* Demo box: org profile + sample contracts (idle state only) */}
       {!active && (
         <div className="profile-selector no-print" style={{ ...cardStyle, marginBottom: 14, padding: '12px 14px', borderStyle: 'dashed' }}>
-          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.8, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 10 }}>
-            For the demo version only
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: '#dc2626', textTransform: 'uppercase', marginBottom: 3 }}>
+            For demo version only
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.5 }}>
+            Choose your organization profile for automatic calibration. In the &ldquo;real world&rdquo; this part is approved by the Board of Directors.
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Select the type of your organization:</span>
