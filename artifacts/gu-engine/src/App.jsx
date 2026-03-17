@@ -339,9 +339,6 @@ function HowItWorks() {
               {SECTION_ICONS[s.n]}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 9, fontWeight: 700, color: s.color, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 5 }}>
-                Section {s.n}
-              </div>
               <h2 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 10px', lineHeight: 1.4 }}>
                 {s.title}
               </h2>
