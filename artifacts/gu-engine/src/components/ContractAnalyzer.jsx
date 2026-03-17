@@ -806,7 +806,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             For the demo version only
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Org profile:</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Select the type of your organization:</span>
             {Object.entries(config.profiles).map(([id, prof]) => (
               <button key={id} onClick={() => setProfile(id)} className="btn-interactive" style={{
                 padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
@@ -818,7 +818,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             ))}
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Try:</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Upload your own contract or try one of these:</span>
             {SAMPLES.map((s, i) => (
               <button key={i} onClick={() => { reset(); setTimeout(() => setInput(s.text), 30); }} className="btn-interactive" style={{
                 padding: '5px 12px', borderRadius: 7, border: '1.5px solid var(--border-primary)',
