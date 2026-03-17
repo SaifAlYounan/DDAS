@@ -387,7 +387,7 @@ function GovernanceMemo({ result, liveGU, tier }) {
         </div>
         <div style={{ ...rowSt }}>
           <span style={labelSt}>Required Signatures</span>
-          <span style={valueSt}>{liveGU.primary.tier.signatures}</span>
+          <span style={valueSt}>{result?.analysis?.required_signatories || liveGU.primary.tier.signatures}</span>
         </div>
         <div style={{ ...rowSt }}>
           <span style={labelSt}>Estimated SLA</span>
@@ -618,7 +618,7 @@ ${sh('Assessment Outcome')}
           </tr>
           <tr>
             <th style="background:none;border:none;border-bottom:1px solid #e5e7eb;padding:5px 0;font-size:10px">Required Signatures</th>
-            <td style="border:none;border-bottom:1px solid #e5e7eb;padding:5px 0">${escHtml(tier.signatures || '—')}</td>
+            <td style="border:none;border-bottom:1px solid #e5e7eb;padding:5px 0">${escHtml(a.required_signatories || tier.signatures || '—')}</td>
           </tr>
           <tr>
             <th style="background:none;border:none;padding:5px 0;font-size:10px">Estimated SLA</th>
