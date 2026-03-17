@@ -439,15 +439,37 @@ function GovernanceMemo({ result, liveGU, tier }) {
         </div>
       </div>
 
-      {/* Required signatories row */}
-      <div style={{ padding: '10px 22px', borderTop: '1px solid var(--border-secondary)' }}>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
-          <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', minWidth: 130, paddingTop: 2, flexShrink: 0 }}>
-            Required Signatories
+      {/* Approver + Endorsements rows */}
+      <div style={{ borderTop: '1px solid var(--border-secondary)' }}>
+        {/* Approver row */}
+        <div style={{ padding: '9px 22px', borderBottom: '1px solid var(--border-secondary)', display: 'flex', gap: 16, alignItems: 'center' }}>
+          <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', minWidth: 130, flexShrink: 0 }}>
+            Approving Authority
           </span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.5 }}>
-            {result?.analysis?.required_signatories || liveGU.primary.tier.signatures}
+          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
+            {tier.approver}
           </span>
+        </div>
+        {/* Endorsements row */}
+        <div style={{ padding: '9px 22px', display: 'flex', gap: 16, alignItems: 'center' }}>
+          <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', minWidth: 130, flexShrink: 0 }}>
+            Endorsements Required
+          </span>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+            {(result?.analysis?.endorsing_functions?.length > 0
+              ? result.analysis.endorsing_functions
+              : tier.signatures.split(/[+,·]/).map(s => s.trim()).filter(s => s && s.toLowerCase() !== 'signatures' && !s.match(/^\d/))
+            ).map((fn, i) => (
+              <span key={i} style={{
+                fontSize: 11, fontWeight: 700, padding: '3px 10px',
+                background: 'var(--bg-tertiary)',
+                border: '1px solid var(--border-primary)',
+                borderRadius: 20, color: 'var(--text-secondary)',
+              }}>
+                {fn}
+              </span>
+            ))}
+          </div>
         </div>
       </div>
 
@@ -778,8 +800,13 @@ ${sh('Assessment Outcome')}
             <td style="border:none;border-bottom:1px solid #e5e7eb;padding:5px 0">${escHtml(tier.approver)}</td>
           </tr>
           <tr>
-            <th style="background:none;border:none;border-bottom:1px solid #e5e7eb;padding:5px 0;font-size:10px">Required Signatures</th>
-            <td style="border:none;border-bottom:1px solid #e5e7eb;padding:5px 0">${escHtml(a.required_signatories || tier.signatures || '—')}</td>
+            <th style="background:none;border:none;border-bottom:1px solid #e5e7eb;padding:5px 0;font-size:10px">Endorsements Required</th>
+            <td style="border:none;border-bottom:1px solid #e5e7eb;padding:5px 0">${
+              (a.endorsing_functions && a.endorsing_functions.length > 0
+                ? a.endorsing_functions
+                : tier.signatures.split(/[+,·]/).map(s => s.trim()).filter(s => s && !s.match(/^\d/))
+              ).join(' · ')
+            }</td>
           </tr>
           <tr>
             <th style="background:none;border:none;padding:5px 0;font-size:10px">Estimated SLA</th>
@@ -795,9 +822,9 @@ ${sh('Assessment Outcome')}
   </div>
 </div>
 
-<!-- RISK ASSESSMENT SUMMARY -->
-${a.overall_risk_narrative ? `${sh('Risk Assessment Summary')}
-<div style="padding:14px 16px;border-left:4px solid #0f2644;background:#f9fafb;font-size:13px;line-height:1.8;color:#1f2937">${escHtml(a.overall_risk_narrative)}</div>` : ''}
+<!-- GOVERNANCE RATIONALE -->
+${(a.risk_rationale || a.overall_risk_narrative) ? `${sh('Governance Rationale')}
+<div style="padding:10px 14px;border-left:4px solid #0f2644;background:#f9fafb;font-size:12px;line-height:1.7;color:#1f2937;font-style:italic">${escHtml(a.risk_rationale || a.overall_risk_narrative)}</div>` : ''}
 
 <!-- RISK DIMENSION ANALYSIS -->
 ${sh('Risk Dimension Analysis')}
@@ -840,11 +867,12 @@ ${assumptions.length > 0 ? `${sh('Scoring Assumptions')}
   <tbody>${assumptionRows}</tbody>
 </table>` : ''}
 
-<!-- KEY RECOMMENDATIONS -->
-${(a.key_recommendations || []).length > 0 ? `${sh('Key Recommendations')}
-<ol style="padding-left:20px;margin-bottom:4px">
-  ${(a.key_recommendations || []).map(r => `<li style="margin-bottom:7px;font-size:13px;line-height:1.65">${escHtml(r)}</li>`).join('')}
-</ol>` : ''}
+<!-- CONTRACTUAL CONDITIONS BEFORE EXECUTION -->
+${(a.approval_conditions || []).length > 0 ? `${sh('Contractual Conditions Before Execution')}
+<div style="background:#fffbeb;border:1px solid #fde68a;border-left:4px solid #f59e0b;padding:12px 16px;border-radius:4px">
+<ol style="padding-left:20px;margin:0">
+  ${(a.approval_conditions || []).map(c => `<li style="margin-bottom:7px;font-size:12px;line-height:1.65;color:#78350f">${escHtml(c)}</li>`).join('')}
+</ol></div>` : ''}
 
 <!-- CROSS-PROFILE COMPARISON -->
 ${Object.keys(liveGU.allProfiles || {}).length > 1 ? `${sh('Cross-Profile Comparison')}
@@ -1409,31 +1437,39 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               })}
             </div>
 
-            {/* Flags + Conditions */}
+            {/* Risk rationale + Conditions Before Execution */}
             {(() => {
-              const keyRisks = a.key_risk_flags || a.key_risks || [];
-              const conditions = a.recommended_conditions || a.approval_conditions || [];
-              const recommendations = a.key_recommendations || [];
-              const narrative = a.overall_risk_narrative || a.risk_narrative || '';
-              const hasRisks = keyRisks.length > 0 || recommendations.length > 0 || narrative;
-              const hasConditions = conditions.length > 0;
-              if (!hasRisks && !hasConditions) return null;
+              const rationale = a.risk_rationale || a.overall_risk_narrative || '';
+              const conditions = a.approval_conditions || a.recommended_conditions || a.approval_conditions_before_execution || [];
+              if (!rationale && conditions.length === 0) return null;
               return (
                 <>
-                <MemoSection label="Key Findings" />
-                <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-                  {(keyRisks.length > 0 || recommendations.length > 0 || narrative) && (
-                    <div className="risk-card card-entrance" style={{ background: '#fef2f2', borderRadius: 12, padding: 14, border: '1px solid #fecaca' }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', marginBottom: 6 }}>Key Risks</div>
-                      {narrative && <div style={{ fontSize: 12, color: '#991b1b', padding: '3px 0', marginBottom: 4, fontStyle: 'italic' }}>{narrative}</div>}
-                      {keyRisks.map((f, i) => <div key={i} style={{ fontSize: 12, color: '#991b1b', padding: '3px 0' }}>- {f}</div>)}
-                      {recommendations.map((r, i) => <div key={`r${i}`} style={{ fontSize: 12, color: '#991b1b', padding: '3px 0' }}>- {r}</div>)}
+                <MemoSection label="Governance Rationale" />
+                <div style={{ marginBottom: 14 }}>
+                  {rationale && (
+                    <div style={{
+                      padding: '10px 16px', marginBottom: conditions.length > 0 ? 10 : 0,
+                      background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)',
+                      borderLeft: '3px solid var(--accent-primary)',
+                      borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.65,
+                    }}>
+                      {rationale}
                     </div>
                   )}
                   {conditions.length > 0 && (
-                    <div className="risk-card card-entrance" style={{ background: '#ecfdf5', borderRadius: 12, padding: 14, border: '1px solid #a7f3d0', animationDelay: '0.1s' }}>
-                      <div style={{ fontSize: 11, fontWeight: 700, color: '#059669', marginBottom: 6 }}>Conditions for Approval</div>
-                      {conditions.map((c, i) => <div key={i} style={{ fontSize: 12, color: '#065f46', padding: '3px 0' }}>- {c}</div>)}
+                    <div className="card-entrance" style={{
+                      background: '#fffbeb', borderRadius: 10, padding: '12px 16px',
+                      border: '1px solid #fde68a', borderLeft: '3px solid #f59e0b',
+                    }}>
+                      <div style={{ fontSize: 10, fontWeight: 800, color: '#92400e', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 }}>
+                        Contractual Conditions Before Execution
+                      </div>
+                      {conditions.map((c, i) => (
+                        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '3px 0', fontSize: 12, color: '#78350f', lineHeight: 1.6 }}>
+                          <span style={{ fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
+                          <span>{c}</span>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
