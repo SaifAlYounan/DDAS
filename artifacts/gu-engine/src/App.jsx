@@ -35,9 +35,10 @@ function HowItWorks({ onGetStarted, onMethodology }) {
     'Fully confidential — nothing is stored at the application level',
   ];
   const steps = [
-    { n: '1', title: 'Describe or Upload', desc: 'Paste an action description or upload a supporting document. The system extracts what it needs.' },
-    { n: '2', title: 'DDAS Scores Risk', desc: 'DDAS scores 6 risk dimensions, identifies red flags, missing clauses, and precedent risk.' },
-    { n: '3', title: 'Get a Governance Decision', desc: 'Receive an instant approval tier, required signatories, and endorsing functions — with rationale.' },
+    { n: '1', title: 'Board Approves Risk Matrix & Risk Appetite', desc: 'The Board of Directors formally approves the organisation\'s risk dimensions, weighting profiles, and risk appetite thresholds — establishing the governance foundation.' },
+    { n: '2', title: 'Describe or Upload', desc: 'Paste an action description or upload a supporting document. The system extracts what it needs.' },
+    { n: '3', title: 'DDAS Scores Risk', desc: 'DDAS scores 6 risk dimensions, identifies red flags, missing clauses, and precedent risk.' },
+    { n: '4', title: 'Get a Governance Decision', desc: 'Receive an instant approval tier, required signatories, and endorsing functions — with rationale.' },
   ];
   const comparison = [
     { criteria: 'Approval Basis', old: 'Dollar threshold', neu: 'Multi-dimensional risk score' },
@@ -156,15 +157,25 @@ function HowItWorks({ onGetStarted, onMethodology }) {
       {/* ── How It Works ── */}
       <div id="how-it-works" style={{ maxWidth: 900, margin: '0 auto 64px', padding: '0 24px', textAlign: 'center' }}>
         <h2 style={{ fontSize: 30, fontWeight: 800, color: '#1e293b', marginBottom: 8 }}>How It Works</h2>
-        <p style={{ fontSize: 15, color: '#64748b', marginBottom: 40 }}>Three steps from action description to governance decision.</p>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
+        <p style={{ fontSize: 15, color: '#64748b', marginBottom: 40 }}>Four steps from board-approved risk appetite to governance decision.</p>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
           {steps.map((s, i) => (
-            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+            <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14,
+              padding: '24px 20px', background: '#fff', borderRadius: 12,
+              border: i === 0 ? `2px solid ${NAV}` : '1px solid #e5e7eb',
+              boxShadow: i === 0 ? `0 4px 16px rgba(15,38,68,0.12)` : '0 1px 4px rgba(0,0,0,0.04)',
+            }}>
               <div style={{
-                width: 52, height: 52, borderRadius: '50%', background: NAV,
+                width: 52, height: 52, borderRadius: '50%',
+                background: i === 0 ? '#7c3aed' : NAV,
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 color: '#fff', fontWeight: 800, fontSize: 20,
               }}>{s.n}</div>
+              {i === 0 && (
+                <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: '#7c3aed', background: '#f5f3ff', padding: '2px 10px', borderRadius: 20 }}>
+                  Board Level
+                </div>
+              )}
               <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b' }}>{s.title}</div>
               <div style={{ fontSize: 13.5, color: '#64748b', lineHeight: 1.65, textAlign: 'center' }}>{s.desc}</div>
             </div>
