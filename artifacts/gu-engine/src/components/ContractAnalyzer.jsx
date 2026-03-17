@@ -898,7 +898,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             For demo version only
           </div>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.5 }}>
-            Choose your organization profile for automatic calibration. In the &ldquo;real world&rdquo; this part is approved by the Board of Directors.
+            Choose your organization profile for automatic calibration. In the &ldquo;real world&rdquo; this part is approved by the Board of Directors and hardwired in the Configuration section, which you can consult above.
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Select the type of your organization:</span>
