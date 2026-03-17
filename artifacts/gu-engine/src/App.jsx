@@ -36,7 +36,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
   ];
   const steps = [
     { n: '1', title: 'Describe or Upload', desc: 'Paste an action description or upload a supporting document. The system extracts what it needs.' },
-    { n: '2', title: 'AI Scores Risk', desc: 'Claude AI scores 6 risk dimensions, identifies red flags, missing clauses, and precedent risk.' },
+    { n: '2', title: 'DDAS Scores Risk', desc: 'DDAS scores 6 risk dimensions, identifies red flags, missing clauses, and precedent risk.' },
     { n: '3', title: 'Get a Governance Decision', desc: 'Receive an instant approval tier, required signatories, and endorsing functions — with rationale.' },
   ];
   const comparison = [
@@ -62,7 +62,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
             width: 34, height: 34, borderRadius: 7, background: NAV,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             color: '#fff', fontWeight: 800, fontSize: 14, letterSpacing: 0.5,
-          }}>GU</div>
+          }}>DA</div>
           <span style={{ fontWeight: 700, fontSize: 15, color: '#1e293b' }}>Dynamic Delegation of Authority System</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
@@ -141,7 +141,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
           </div>
           <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1e293b', marginBottom: 10 }}>Dynamic, Risk-Weighted Governance</h3>
           <p style={{ fontSize: 13.5, color: '#64748b', lineHeight: 1.7, marginBottom: 16 }}>
-            The GU Engine scores every transaction across 6 risk dimensions and routes it to the right approver automatically.
+            DDAS scores every transaction across 6 risk dimensions and routes it to the right approver automatically.
           </p>
           {solutionItems.map((t, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8, fontSize: 13.5, color: '#374151', lineHeight: 1.55 }}>
@@ -174,7 +174,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
       {/* ── Comparison Table ── */}
       <div style={{ maxWidth: 900, margin: '0 auto 64px', padding: '0 24px' }}>
         <h2 style={{ fontSize: 30, fontWeight: 800, color: '#1e293b', marginBottom: 8, textAlign: 'center' }}>Static DoA vs Dynamic Governance</h2>
-        <p style={{ fontSize: 15, color: '#64748b', marginBottom: 32, textAlign: 'center' }}>See exactly what changes when you move from a DoA matrix to a GU-based system.</p>
+        <p style={{ fontSize: 15, color: '#64748b', marginBottom: 32, textAlign: 'center' }}>See exactly what changes when you move from a DoA matrix to a DDAS-based system.</p>
         <div style={{ background: '#fff', borderRadius: 12, overflow: 'hidden', boxShadow: '0 1px 6px rgba(0,0,0,0.06)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr' }}>
             <div style={{ padding: '12px 20px', fontSize: 10, fontWeight: 800, letterSpacing: 1.8, textTransform: 'uppercase', color: '#94a3b8', borderBottom: '1px solid #f1f5f9' }}>CRITERIA</div>
@@ -291,10 +291,10 @@ function HistoryDrawer({ history, onSelect, onClear, isOpen, onClose }) {
 
 const METHODOLOGY_SECTIONS = [
   { label: '01 — The Problem', title: 'The Problem with Traditional DoAs', body: 'A Delegation of Authority table is a static lookup: action type → dollar threshold → approver. It treats a routine $500K equipment replacement the same as a $500K investment in an untested market. The procedural cost is identical, even though the risk profiles are completely different. This leads to two failure modes: over-governance of routine matters (slowing the organization), and under-governance of novel risks that happen to fall below a dollar threshold.' },
-  { label: '02 — The Model', title: 'The GU Model', body: 'Instead of mapping actions to approvers, we map risk profiles to a single scalar: Governance Units. The GU cost is a weighted composite of multiple risk dimensions — financial exposure, reversibility, regulatory complexity, reputational impact, precedent-setting nature, and stakeholder complexity. The weights are tunable per organization type. A regulated bank will weight compliance risk higher; a startup will weight financial exposure and speed.' },
-  { label: '03 — The Algorithm', title: 'From Table to Algorithm', body: 'The traditional DoA is a lookup table maintained in a policy document. The GU model is an algorithm that can be embedded in any workflow system. When someone initiates a purchase order, contract, or investment, the system scores the risk dimensions and computes the GU cost. The approval pathway is determined dynamically. No table to maintain. No ambiguity about which row applies.' },
+  { label: '02 — The Model', title: 'The DDAS Model', body: 'Instead of mapping actions to approvers, we map risk profiles to a single scalar: Governance Units. The governance cost is a weighted composite of multiple risk dimensions — financial exposure, reversibility, regulatory complexity, reputational impact, precedent-setting nature, and stakeholder complexity. The weights are tunable per organization type. A regulated bank will weight compliance risk higher; a startup will weight financial exposure and speed.' },
+  { label: '03 — The Algorithm', title: 'From Table to Algorithm', body: 'The traditional DoA is a lookup table maintained in a policy document. The DDAS model is an algorithm that can be embedded in any workflow system. When someone initiates a purchase order, contract, or investment, the system scores the risk dimensions and computes the governance cost. The approval pathway is determined dynamically. No table to maintain. No ambiguity about which row applies.' },
   { label: '04 — AI Integration', title: 'Where AI Comes In', body: "AI can auto-score several dimensions by analyzing transaction metadata: financial exposure from the amount, regulatory risk from contract clauses or counterparty jurisdiction, precedent from historical transaction matching, and stakeholder complexity from org-chart analysis. The human only validates or adjusts the AI's assessment, reducing friction on routine transactions to near-zero while ensuring novel risks get the scrutiny they deserve." },
-  { label: '05 — Calibration', title: 'Continuous Calibration', body: "Unlike a static DoA that's reviewed annually, a GU model can learn. If transactions scored at 25 GU consistently require no escalation beyond manager review, the tier boundaries can be adjusted. If a class of transactions scored low later turns out to cause problems, the weighting model can be retrained. The governance framework becomes a living system." },
+  { label: '05 — Calibration', title: 'Continuous Calibration', body: "Unlike a static DoA that's reviewed annually, a DDAS model can learn. If transactions scored at 25 consistently require no escalation beyond manager review, the tier boundaries can be adjusted. If a class of transactions scored low later turns out to cause problems, the weighting model can be retrained. The governance framework becomes a living system." },
 ];
 
 function WhyUseful() {
@@ -303,7 +303,7 @@ function WhyUseful() {
       <div style={{ padding: '20px 24px', marginBottom: 18, background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', borderLeft: '5px solid #0f2644', boxShadow: '0 1px 4px rgba(15,38,68,0.07)' }}>
         <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', color: '#5b8fbe', marginBottom: 10 }}>Concept · Whitepaper</div>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', margin: '0 0 10px' }}>Why a Dynamic Delegation of Authority?</h1>
-        <p style={{ fontSize: 13.5, color: '#475569', lineHeight: 1.75, margin: 0 }}>A technical overview of the GU scoring model — from the limitations of traditional DoA frameworks to a risk-weighted, AI-assisted governance algorithm.</p>
+        <p style={{ fontSize: 13.5, color: '#475569', lineHeight: 1.75, margin: 0 }}>A technical overview of the DDAS scoring model — from the limitations of traditional DoA frameworks to a risk-weighted, AI-assisted governance algorithm.</p>
       </div>
       <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(15,38,68,0.07)', overflow: 'hidden' }}>
         {METHODOLOGY_SECTIONS.map((s, i) => (
@@ -363,7 +363,7 @@ function AppSidebar({ view, setView, history, onHistoryOpen, theme, toggleTheme,
       {/* Logo */}
       <div style={{ padding: '16px 16px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 6, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 13 }}>GU</div>
+          <div style={{ width: 30, height: 30, borderRadius: 6, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 10 }}>DA</div>
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: 1, textTransform: 'uppercase' }}>DDAS</div>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>Governance Tool</div>

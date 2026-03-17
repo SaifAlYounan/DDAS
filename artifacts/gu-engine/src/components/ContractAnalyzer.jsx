@@ -252,7 +252,7 @@ function LoadingSkeleton() {
   return (
     <div className="fade-in" style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 10 }}>
       <div style={{ width: '80%', padding: 16, borderRadius: 12, background: 'var(--bg-card)', border: '1px solid var(--border-primary)' }}>
-        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent-primary)', marginBottom: 10 }}>GU ADVISOR</div>
+        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent-primary)', marginBottom: 10 }}>DDAS</div>
         <div className="shimmer-loading" style={{ height: 12, marginBottom: 8, width: '90%' }} />
         <div className="shimmer-loading" style={{ height: 12, marginBottom: 8, width: '75%' }} />
         <div className="shimmer-loading" style={{ height: 12, marginBottom: 8, width: '85%' }} />
@@ -433,7 +433,7 @@ function GovernanceMemo({ result, liveGU, tier }) {
               {tier.name}
             </div>
             <div style={{ fontSize: 28, fontWeight: 900, color: tier.color, lineHeight: 1 }}>{gu}</div>
-            <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2 }}>GU / 100</div>
+            <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2 }}>Score / 100</div>
           </div>
           <div style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.4 }}>
             SLA: <strong style={{ color: 'var(--text-secondary)' }}>{liveGU.primary.tier.sla}</strong>
@@ -528,7 +528,7 @@ function DocSidebar({ liveGU, tier, handleExport, reset }) {
         </div>
         <div style={{ padding: '12px 14px' }}>
           <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 4 }}>
-            GU Score
+            Score
           </div>
           <div style={{ fontSize: 30, fontWeight: 900, color: tier.color, lineHeight: 1, marginBottom: 8 }}>
             {liveGU.primary.gu}
@@ -648,7 +648,7 @@ function generateReportHTML({ result, liveGU, config, profile = 'default' }) {
   const ca = a.contract_analysis || {};
   const { tier, gu, floorApplied, breakdown = [] } = liveGU.primary;
   const { tiers, anchors } = config;
-  const reportId = `GU-${Date.now().toString(36).toUpperCase()}`;
+  const reportId = `DDAS-${Date.now().toString(36).toUpperCase()}`;
   const generated = new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
   const dateOnly = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
@@ -785,7 +785,7 @@ ${sh('Assessment Outcome')}
 <div style="border:2px solid #0f2644">
   <div style="display:flex;border-bottom:1px solid #d1d5db">
     <div style="flex:1;padding:16px 20px;border-right:1px solid #d1d5db">
-      <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:5px">Governance Units (GU Score)</div>
+      <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:5px">Governance Score</div>
       <div style="font-family:Arial,sans-serif;font-size:52px;font-weight:800;color:#0f2644;line-height:1">${gu}</div>
       <div style="font-family:Arial,sans-serif;font-size:11px;color:#6b7280;margin-top:3px">out of 100 Governance Units</div>
       ${floorApplied ? `<div style="margin-top:10px;font-family:Arial,sans-serif;font-size:10px;font-weight:700;color:#b91c1c">&#9888; Floor rule applied: ${escHtml(floorApplied)}</div>` : ''}
@@ -880,7 +880,7 @@ ${(a.approval_conditions || []).length > 0 ? `${sh('Contractual Conditions Befor
 ${Object.keys(liveGU.allProfiles || {}).length > 1 ? `${sh('Cross-Profile Comparison')}
 <p style="font-size:12px;color:#6b7280;margin-bottom:9px">Same transaction scored under different organizational risk appetite profiles.</p>
 <table>
-  <thead><tr>${hcell('Organization Profile')}${hcell('GU Score', 'width:70px;text-align:center')}${hcell('Approval Tier', 'width:115px')}${hcell('Required Approver')}${hcell('SLA', 'width:120px')}</tr></thead>
+  <thead><tr>${hcell('Organization Profile')}${hcell('Score', 'width:70px;text-align:center')}${hcell('Approval Tier', 'width:115px')}${hcell('Required Approver')}${hcell('SLA', 'width:120px')}</tr></thead>
   <tbody>${profileRows}</tbody>
 </table>` : ''}
 
@@ -1119,7 +1119,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
         </div>
         <div style={{ textAlign: 'right', fontSize: 11, color: '#64748b' }}>
           <div>Generated: {new Date().toLocaleDateString()} {new Date().toLocaleTimeString()}</div>
-          <div>Report ID: GU-{Date.now().toString(36).toUpperCase()}</div>
+          <div>Report ID: DDAS-{Date.now().toString(36).toUpperCase()}</div>
         </div>
       </div>
 
@@ -1209,7 +1209,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
           if (msg.from === 'ai' && msg.type === 'text') return (
             <div key={i} className="card-entrance" style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 10 }}>
               <div style={{ maxWidth: '85%', padding: '12px 16px', borderRadius: 12, background: 'var(--bg-card)', border: '1px solid var(--border-primary)', fontSize: 13, lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent-primary)', marginBottom: 4 }}>GU ADVISOR</div>
+                <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent-primary)', marginBottom: 4 }}>DDAS</div>
                 {msg.text}
               </div>
             </div>
@@ -1219,7 +1219,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             return (
               <div key={i} className="card-entrance" style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 10 }}>
                 <div style={{ maxWidth: '90%', padding: '14px 16px', borderRadius: 12, background: 'var(--bg-card)', border: '1px solid var(--border-primary)', fontSize: 13, lineHeight: 1.6 }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent-primary)', marginBottom: 8 }}>GU ADVISOR</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent-primary)', marginBottom: 8 }}>DDAS</div>
 
                   {d.information_available?.length > 0 && (
                     <div style={{ padding: '8px 12px', background: 'var(--bg-hover)', borderRadius: 7, border: '1px solid var(--border-secondary)', marginBottom: 12 }}>
@@ -1418,7 +1418,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                   </button>
                 )}
               </div>
-              <p className="no-print" style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 14px' }}>Drag sliders to override the AI scoring. GU recalculates live.</p>
+              <p className="no-print" style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 14px' }}>Drag sliders to override the AI scoring. Score recalculates live.</p>
               {Object.entries(aiScores).map(([k, v]) => {
                 const m = anchors[k]; if (!m) return null;
                 const aiScore = typeof v === 'number' ? v : (v?.score ?? 1);
@@ -1443,7 +1443,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                         </button>
                       )}
                       {levelLabel && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', padding: '2px 6px', background: 'var(--bg-tertiary)', borderRadius: 3 }}>{levelLabel}</span>}
-                      {bd && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-primary)' }}>{bd.weighted.toFixed(1)} GU</span>}
+                      {bd && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-primary)' }}>{bd.weighted.toFixed(1)}</span>}
                     </div>
                     {/* Slider */}
                     <div className="slider-control no-print" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
@@ -1565,7 +1565,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             {/* Cross-profile comparison */}
             <div className="cross-profile-section" style={{ ...cardStyle, padding: 20, marginBottom: 14 }}>
               <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>Same Transaction, Different Organizations</div>
-              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 14px' }}>How the GU cost shifts by organizational risk appetite</p>
+              <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 14px' }}>How the score shifts by organizational risk appetite</p>
 
               {/* Mini bar chart comparison */}
               <div style={{ marginBottom: 16 }}>
