@@ -365,10 +365,7 @@ function AppSidebar({ view, setView, history, onHistoryOpen, theme, toggleTheme,
       <div style={{ padding: '16px 16px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
           <div style={{ width: 38, height: 30, borderRadius: 6, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 10, padding: '0 3px' }}>DDAS</div>
-          <div>
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: 1, textTransform: 'uppercase' }}>DDAS</div>
-            <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>Governance Tool</div>
-          </div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', lineHeight: 1.35 }}>Dynamic Delegation of Authority System</div>
         </div>
       </div>
 
