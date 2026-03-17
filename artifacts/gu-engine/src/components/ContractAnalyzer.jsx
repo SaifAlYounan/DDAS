@@ -1126,19 +1126,37 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
       {/* Demo box: org profile + sample contracts (idle state only) */}
       {!active && (
         <div className="profile-selector no-print" style={{ ...cardStyle, marginBottom: 14, padding: 0, overflow: 'hidden' }}>
-          {/* Header */}
+          {/* Header badge */}
           <div style={{ padding: '11px 16px', background: 'linear-gradient(135deg, rgba(15,38,68,0.07) 0%, rgba(30,74,122,0.10) 100%)', borderBottom: '1px solid rgba(30,74,122,0.14)', display: 'flex', alignItems: 'center', gap: 10 }}>
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px 3px 8px', borderRadius: 20, background: 'var(--bg-user-msg)' }}>
               <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-secondary)', flexShrink: 0 }} />
-              <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.8, color: 'rgba(255,255,255,0.92)', textTransform: 'uppercase' }}>Demo</span>
+              <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.8, color: 'rgba(255,255,255,0.92)', textTransform: 'uppercase' }}>Demo Version</span>
             </div>
-            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>Configure your organization profile before analysing an action</span>
           </div>
 
-          <div style={{ padding: '14px 16px' }}>
+          <div style={{ padding: '16px 18px' }}>
+            {/* Intro */}
+            <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.7, marginBottom: 16 }}>
+              This is a demo version of DDAS running on default calibrations. In a live deployment, your organisation's Board-approved Risk Matrix and Risk Appetite would be loaded into the system at setup — no manual configuration required thereafter.
+            </p>
+            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>
+              To try the demo:
+            </p>
+            <ol style={{ paddingLeft: 20, margin: '0 0 18px', display: 'flex', flexDirection: 'column', gap: 6 }}>
+              <li style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                <strong style={{ color: 'var(--text-primary)' }}>Choose an organisation type</strong> below — this selects a template calibration that approximates the risk appetite for that type of organisation.
+              </li>
+              <li style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                <strong style={{ color: 'var(--text-primary)' }}>Describe or upload your action</strong> — paste a contract, upload a PDF or image, or type a description of the transaction in the box below. You can also use our sample document.
+              </li>
+              <li style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
+                <strong style={{ color: 'var(--text-primary)' }}>Click Analyze</strong> — the system will score the action across 6 risk dimensions and return a governance decision instantly.
+              </li>
+            </ol>
+
             {/* Profile selector */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 }}>Organization type:</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 }}>Organisation type:</span>
               {Object.entries(config.profiles).map(([id, prof]) => (
                 <button key={id} onClick={() => setProfile(id)} className="btn-interactive" style={{
                   padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
@@ -1150,30 +1168,22 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               ))}
             </div>
 
-            {/* Sample contracts grid */}
-            <div style={{ borderTop: '1px solid var(--border-secondary)', paddingTop: 12 }}>
-              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1.3, textTransform: 'uppercase', marginBottom: 8 }}>
-                Try a sample transaction
-              </div>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
-                {[...SAMPLES, { label: 'Settlement Agreement', icon: '\u2696\uFE0F', text: DEMO_SETTLEMENT }].map((s, i) => (
-                  <button
-                    key={i}
-                    onClick={() => send(s.text, `${s.icon} Sample: ${s.label}`)}
-                    className="btn-interactive"
-                    style={{
-                      padding: '8px 10px', borderRadius: 8,
-                      border: '1.5px solid var(--border-primary)',
-                      background: 'var(--bg-card)', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center', gap: 7,
-                      textAlign: 'left',
-                    }}
-                  >
-                    <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1 }}>{s.icon}</span>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', lineHeight: 1.3 }}>{s.label}</span>
-                  </button>
-                ))}
-              </div>
+            {/* Single sample document */}
+            <div style={{ borderTop: '1px solid var(--border-secondary)', paddingTop: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>No document of your own?</span>
+              <button
+                onClick={() => send(DEMO_SETTLEMENT, '\u2696\uFE0F Sample: Settlement Agreement — Meridian Resources / Atlas Mining Services')}
+                className="btn-interactive"
+                style={{
+                  padding: '6px 14px', borderRadius: 8, cursor: 'pointer',
+                  border: '1.5px solid var(--border-primary)',
+                  background: 'var(--bg-card)',
+                  display: 'flex', alignItems: 'center', gap: 7,
+                }}
+              >
+                <span style={{ fontSize: 14, lineHeight: 1 }}>⚖️</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Try with our sample Settlement Agreement</span>
+              </button>
             </div>
           </div>
         </div>
