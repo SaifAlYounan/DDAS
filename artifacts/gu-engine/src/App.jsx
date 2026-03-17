@@ -653,8 +653,7 @@ export default function App() {
     setView('analyzer');
   }, []);
 
-  const tabs = [
-    { id: 'analyzer', label: 'AI Contract Scorer', icon: '📄' },
+  const secondaryTools = [
     { id: 'calculator', label: 'Manual Calculator', icon: '🧮' },
     { id: 'config', label: 'Configuration', icon: '⚙️' },
     { id: 'why', label: 'Why is this useful?', icon: '💡' },
@@ -681,28 +680,66 @@ export default function App() {
             </div>
           )}
 
-          {/* Tab bar — hidden on landing */}
+          {/* Navigation strip — hidden on landing */}
           {view !== 'landing' && (
-            <div className="tab-bar no-print" style={{
+            <div className="no-print" style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               background: 'var(--bg-card)', borderRadius: 10,
-              border: '1px solid var(--border-primary)', display: 'flex',
-              marginBottom: 24, overflow: 'hidden', padding: '0 6px',
+              border: '1px solid var(--border-primary)',
+              marginBottom: 24, padding: '0 6px 0 0',
               boxShadow: '0 1px 4px rgba(15,38,68,0.07)',
+              flexWrap: 'wrap', gap: 0, overflow: 'hidden',
             }}>
-              {tabs.map(tab => (
-                <button key={tab.id} onClick={() => { setView(tab.id); setRestoredResult(null); }} style={{
-                  padding: '11px 18px', background: 'transparent', cursor: 'pointer',
+              {/* Primary: AI Contract Scorer */}
+              <button
+                onClick={() => { setView('analyzer'); setRestoredResult(null); }}
+                className="btn-interactive"
+                style={{
+                  padding: '12px 20px', background: 'transparent', cursor: 'pointer',
                   border: 'none',
-                  borderBottom: view === tab.id ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                  color: view === tab.id ? 'var(--accent-primary)' : 'var(--text-tertiary)',
-                  fontSize: 13, fontWeight: view === tab.id ? 700 : 500,
-                  transition: 'all 0.2s', whiteSpace: 'nowrap',
-                  display: 'flex', alignItems: 'center', gap: 6,
-                }}>
-                  <span style={{ fontSize: 14, opacity: view === tab.id ? 1 : 0.6 }}>{tab.icon}</span>
-                  {tab.label}
-                </button>
-              ))}
+                  borderBottom: view === 'analyzer' ? '3px solid var(--accent-primary)' : '3px solid transparent',
+                  borderRight: '1px solid var(--border-primary)',
+                  color: view === 'analyzer' ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  fontSize: 14, fontWeight: 700,
+                  display: 'flex', alignItems: 'center', gap: 8, whiteSpace: 'nowrap',
+                  transition: 'all 0.2s',
+                }}
+              >
+                <span style={{ fontSize: 16 }}>📄</span>
+                AI Contract Scorer
+              </button>
+
+              {/* Divider label */}
+              <span style={{
+                fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase',
+                color: 'var(--text-muted)', padding: '0 14px', whiteSpace: 'nowrap', flexShrink: 0,
+              }}>
+                Resources
+              </span>
+
+              {/* Secondary tools: small ghost buttons */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                {secondaryTools.map(tool => (
+                  <button
+                    key={tool.id}
+                    onClick={() => { setView(tool.id); setRestoredResult(null); }}
+                    className="btn-interactive"
+                    style={{
+                      padding: '8px 13px', background: 'transparent', cursor: 'pointer',
+                      border: 'none',
+                      borderBottom: view === tool.id ? '3px solid var(--accent-primary)' : '3px solid transparent',
+                      borderRadius: 0,
+                      color: view === tool.id ? 'var(--accent-primary)' : 'var(--text-muted)',
+                      fontSize: 12, fontWeight: view === tool.id ? 700 : 500,
+                      display: 'flex', alignItems: 'center', gap: 5, whiteSpace: 'nowrap',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    <span style={{ fontSize: 13, opacity: view === tool.id ? 1 : 0.7 }}>{tool.icon}</span>
+                    {tool.label}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
 
