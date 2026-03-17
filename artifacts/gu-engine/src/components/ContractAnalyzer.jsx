@@ -1147,7 +1147,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             ))}
           </div>
           <div style={{ paddingTop: 10, borderTop: '1px solid var(--border-secondary)', fontSize: 12, color: 'var(--text-muted)' }}>
-            Don&rsquo;t have a contract to upload?{' '}
+            Don&rsquo;t have an action to describe?{' '}
             <button
               onClick={() => send(DEMO_SETTLEMENT, '\uD83D\uDCC4 Sample: Settlement Agreement — Meridian Resources / Atlas Mining Services')}
               className="btn-interactive"
@@ -1190,7 +1190,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
         {!active && !result && (
           <div onClick={() => fileRef.current?.click()} style={{ padding: 24, textAlign: 'center', cursor: 'pointer', transition: 'all 0.3s' }}>
             <div style={{ fontSize: 28 }}>{'\uD83D\uDCC4'}</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', marginTop: 4 }}>Drop a contract here, or click to upload</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', marginTop: 4 }}>Drop a document here, or click to upload</div>
             <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}>PDF, images — or type/paste text below</div>
           </div>
         )}
@@ -1619,7 +1619,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             <button onClick={() => fileRef.current?.click()} className="btn-interactive" style={{ padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--border-primary)', background: 'var(--bg-card)', cursor: 'pointer', fontSize: 16, color: 'var(--text-tertiary)', minHeight: 44 }}>{'\uD83D\uDCCE'}</button>
             <textarea
               value={input} onChange={e => setInput(e.target.value)} onKeyDown={onKey}
-              placeholder={active ? "Answer the advisor's questions..." : 'Paste contract text or describe a transaction...'}
+              placeholder={active ? "Answer the advisor's questions..." : 'Paste an action description, contract text, or describe a transaction...'}
               rows={active ? 2 : 4}
               style={{
                 flex: 1, padding: 12, borderRadius: 10, border: '1.5px solid var(--border-primary)',
