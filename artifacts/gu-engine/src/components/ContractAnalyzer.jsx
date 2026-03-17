@@ -1092,12 +1092,14 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
 
       {/* Demo box: org profile + sample contracts (idle state only) */}
       {!active && (
-        <div className="profile-selector no-print" style={{ ...cardStyle, marginBottom: 14, padding: '12px 14px', borderStyle: 'dashed' }}>
-          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, color: '#dc2626', textTransform: 'uppercase', marginBottom: 3 }}>
-            For demo version only
+        <div className="profile-selector no-print" style={{ ...cardStyle, marginBottom: 14, padding: 0, overflow: 'hidden' }}>
+          <div style={{ padding: '8px 14px', background: 'rgba(30,74,122,0.06)', borderBottom: '1px solid rgba(30,74,122,0.12)', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 12 }}>🔵</span>
+            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.4, color: '#1e4a7a', textTransform: 'uppercase' }}>Demo Environment</span>
           </div>
+          <div style={{ padding: '12px 14px' }}>
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.5 }}>
-            Choose your organization profile for automatic calibration. In the &ldquo;real world&rdquo; this part is approved by the Board of Directors and hardwired in the Configuration section, which you can consult above.
+            Choose your organization profile for automatic calibration. In a live deployment this is approved by the Board of Directors and hardwired in the Configuration section.
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Select the type of your organization:</span>
@@ -1124,6 +1126,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             >
               Click here to try with a sample settlement agreement.
             </button>
+          </div>
           </div>
         </div>
       )}

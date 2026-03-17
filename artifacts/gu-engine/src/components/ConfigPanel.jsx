@@ -130,18 +130,21 @@ const DIM_COLORS = {
 function Section({ title, desc, children, defaultOpen = false }) {
   const [open, setOpen] = useState(defaultOpen);
   return (
-    <div style={{ background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-primary)', marginBottom: 14, overflow: 'hidden' }}>
+    <div style={{ background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-primary)', marginBottom: 14, overflow: 'hidden', boxShadow: '0 1px 4px rgba(15,38,68,0.07)' }}>
       <button onClick={() => setOpen(!open)} className="btn-interactive" style={{
-        width: '100%', padding: '14px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        background: 'none', border: 'none', cursor: 'pointer', textAlign: 'left',
+        width: '100%', padding: '13px 18px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        background: open ? 'rgba(30,74,122,0.04)' : 'none',
+        borderBottom: open ? '1px solid rgba(30,74,122,0.1)' : '1px solid transparent',
+        border: 'none', cursor: 'pointer', textAlign: 'left',
+        transition: 'background 0.2s',
       }}>
         <div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)' }}>{title}</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: open ? '#1e4a7a' : 'var(--text-primary)', transition: 'color 0.2s' }}>{title}</div>
           {desc && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{desc}</div>}
         </div>
-        <span style={{ fontSize: 18, color: 'var(--text-muted)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s' }}>{'\u25BE'}</span>
+        <span style={{ fontSize: 16, color: open ? '#1e4a7a' : 'var(--text-muted)', transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.3s, color 0.2s' }}>{'\u25BE'}</span>
       </button>
-      {open && <div className="card-entrance" style={{ padding: '0 18px 18px' }}>{children}</div>}
+      {open && <div className="card-entrance" style={{ padding: '14px 18px 18px' }}>{children}</div>}
     </div>
   );
 }
@@ -298,17 +301,22 @@ export default function ConfigPanel({ config, setConfig }) {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-        <div>
-          <h2 style={{ fontSize: 18, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Configuration</h2>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '4px 0 0' }}>Customize scoring parameters, weights, tier boundaries, and governance rules. All changes apply immediately.</p>
+      <div style={{ marginBottom: 20, padding: '16px 20px', background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-primary)', borderLeft: '4px solid #1e4a7a', boxShadow: '0 1px 4px rgba(15,38,68,0.07)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{ width: 38, height: 38, borderRadius: 9, background: 'rgba(30,74,122,0.08)', border: '1px solid rgba(30,74,122,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1e4a7a', flexShrink: 0 }}>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49M7.76 7.76a6 6 0 0 0 0 8.49"/></svg>
+          </div>
+          <div>
+            <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>⚙️ Configuration</h2>
+            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '3px 0 0' }}>Scoring parameters, weights, tier boundaries, and governance rules. Changes apply immediately.</p>
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
-          <button onClick={exportConfig} className="btn-interactive" style={{ padding: '6px 14px', borderRadius: 6, border: '1.5px solid var(--border-primary)', background: 'var(--bg-card)', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>
-            Export Config
+          <button onClick={exportConfig} className="btn-interactive" style={{ padding: '6px 14px', borderRadius: 6, border: '1.5px solid var(--border-primary)', background: 'var(--bg-card)', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 13 }}>⬇</span> Export
           </button>
-          <label className="btn-interactive" style={{ padding: '6px 14px', borderRadius: 6, border: '1.5px solid var(--border-primary)', background: 'var(--bg-card)', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center' }}>
-            Import Config
+          <label className="btn-interactive" style={{ padding: '6px 14px', borderRadius: 6, border: '1.5px solid var(--border-primary)', background: 'var(--bg-card)', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)', display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+            <span style={{ fontSize: 13 }}>⬆</span> Import
             <input type="file" accept=".json" onChange={importConfig} style={{ display: 'none' }} />
           </label>
         </div>
