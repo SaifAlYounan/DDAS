@@ -1128,9 +1128,9 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
         <div className="profile-selector no-print" style={{ ...cardStyle, marginBottom: 14, padding: 0, overflow: 'hidden' }}>
           {/* Header */}
           <div style={{ padding: '11px 16px', background: 'linear-gradient(135deg, rgba(15,38,68,0.07) 0%, rgba(30,74,122,0.10) 100%)', borderBottom: '1px solid rgba(30,74,122,0.14)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px 3px 8px', borderRadius: 20, background: '#0f2644' }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#5b8fbe', flexShrink: 0 }} />
-              <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.8, color: '#fff', textTransform: 'uppercase' }}>Demo</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px 3px 8px', borderRadius: 20, background: 'var(--bg-user-msg)' }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-secondary)', flexShrink: 0 }} />
+              <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.8, color: 'rgba(255,255,255,0.92)', textTransform: 'uppercase' }}>Demo</span>
             </div>
             <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>Configure your organization profile before analysing an action</span>
           </div>
@@ -1246,8 +1246,6 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
         display: active ? 'block' : 'none',
         transition: 'all 0.3s',
       }}>
-        {false && null /* dropzone removed — now rendered above as standalone */}
-
         {chat.map((msg, i) => {
           if (msg.from === 'user') return (
             <div key={i} style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 10 }}>
