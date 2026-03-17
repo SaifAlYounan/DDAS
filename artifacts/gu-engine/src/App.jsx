@@ -325,23 +325,25 @@ function HowItWorks({ onGetStarted }) {
       <div>
         {HOW_IT_WORKS_SECTIONS.map((s, i) => (
           <div key={s.n} className="card-entrance" style={{
-            display: 'flex', gap: 20, marginBottom: 16,
-            padding: '22px 24px', background: 'var(--bg-card)', borderRadius: 12,
-            border: '1px solid var(--border-primary)', borderLeft: `4px solid ${s.color}`,
+            display: 'flex', gap: 20, marginBottom: 14,
+            padding: '20px 24px', background: 'var(--bg-card)', borderRadius: 12,
+            border: '1px solid var(--border-primary)', borderLeft: '4px solid #1e4a7a',
+            boxShadow: '0 1px 4px rgba(15,38,68,0.07)',
             animationDelay: `${i * 0.07}s`, animationFillMode: 'backwards',
           }}>
             <div style={{
               width: 42, height: 42, borderRadius: 10,
-              background: s.bg, border: `1px solid ${s.color}33`,
+              background: 'rgba(30,74,122,0.08)', border: '1px solid rgba(30,74,122,0.18)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0, color: s.color,
+              flexShrink: 0, color: '#1e4a7a',
             }}>
               {SECTION_ICONS[s.n]}
             </div>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <h2 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 10px', lineHeight: 1.4 }}>
-                {s.title}
-              </h2>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', color: '#5b8fbe', background: 'rgba(91,143,190,0.1)', padding: '2px 7px', borderRadius: 4 }}>{i + 1} / {HOW_IT_WORKS_SECTIONS.length}</span>
+                <h2 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', margin: 0, lineHeight: 1.4 }}>{s.title}</h2>
+              </div>
               <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.8, margin: 0 }}>
                 {s.body}
               </p>
@@ -449,9 +451,9 @@ export default function App() {
   }, []);
 
   const tabs = [
-    { id: 'analyzer', label: 'AI Contract Scorer' },
-    { id: 'calculator', label: 'Manual Calculator' },
-    { id: 'config', label: 'Configuration' },
+    { id: 'analyzer', label: 'AI Contract Scorer', icon: '📄' },
+    { id: 'calculator', label: 'Manual Calculator', icon: '🧮' },
+    { id: 'config', label: 'Configuration', icon: '⚙️' },
   ];
 
   return (
@@ -479,17 +481,20 @@ export default function App() {
             <div className="tab-bar no-print" style={{
               background: 'var(--bg-card)', borderRadius: 10,
               border: '1px solid var(--border-primary)', display: 'flex',
-              marginBottom: 24, overflow: 'hidden', padding: '0 8px',
+              marginBottom: 24, overflow: 'hidden', padding: '0 6px',
+              boxShadow: '0 1px 4px rgba(15,38,68,0.07)',
             }}>
               {tabs.map(tab => (
                 <button key={tab.id} onClick={() => { setView(tab.id); setRestoredResult(null); }} style={{
-                  padding: '11px 20px', background: 'transparent', cursor: 'pointer',
+                  padding: '11px 18px', background: 'transparent', cursor: 'pointer',
                   border: 'none',
                   borderBottom: view === tab.id ? '2px solid var(--accent-primary)' : '2px solid transparent',
                   color: view === tab.id ? 'var(--accent-primary)' : 'var(--text-tertiary)',
                   fontSize: 13, fontWeight: view === tab.id ? 700 : 500,
                   transition: 'all 0.2s', whiteSpace: 'nowrap',
+                  display: 'flex', alignItems: 'center', gap: 6,
                 }}>
+                  <span style={{ fontSize: 14, opacity: view === tab.id ? 1 : 0.6 }}>{tab.icon}</span>
                   {tab.label}
                 </button>
               ))}

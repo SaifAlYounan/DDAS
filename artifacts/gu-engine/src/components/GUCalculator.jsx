@@ -311,10 +311,22 @@ export default function GUCalculator({ config }) {
 
   const cardStyle = {
     background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-primary)',
+    boxShadow: '0 1px 4px rgba(15,38,68,0.07)',
   };
 
   return (
     <div>
+      {/* Page header */}
+      <div style={{ marginBottom: 20, padding: '16px 20px', background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-primary)', borderLeft: '4px solid #1e4a7a', boxShadow: '0 1px 4px rgba(15,38,68,0.07)', display: 'flex', alignItems: 'center', gap: 14 }}>
+        <div style={{ width: 38, height: 38, borderRadius: 9, background: 'rgba(30,74,122,0.08)', border: '1px solid rgba(30,74,122,0.18)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1e4a7a', flexShrink: 0 }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        </div>
+        <div>
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>🧮 Manual GU Calculator</h2>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '3px 0 0' }}>Select risk levels for each dimension to compute your Governance Unit score and required approval tier.</p>
+        </div>
+      </div>
+
       {/* Weight Preset Selector */}
       <div style={{
         ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20,
