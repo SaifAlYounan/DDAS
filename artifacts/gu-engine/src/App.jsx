@@ -30,8 +30,8 @@ function HowItWorks({ onGetStarted, onMethodology }) {
   ];
   const solutionItems = [
     'Board-approved risk appetite dynamically applied to every deal',
-    'Governance proportional to actual risk — not dollar thresholds',
-    'AI analysis scores 6 dimensions and identifies red flags in seconds',
+    'Governance proportional to actual risk — not just dollar thresholds',
+    'No more need to update the Delegation of Authority annually, no more friction between Management and Board.',
     'Fully confidential — nothing is stored at the application level',
   ];
   const steps = [
