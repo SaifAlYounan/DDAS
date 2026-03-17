@@ -89,7 +89,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
           <span style={{ color: '#3b82f6' }}>outdated.</span>
         </h1>
         <p style={{ fontSize: 17, color: '#64748b', lineHeight: 1.7, margin: '0 0 36px', maxWidth: 540, marginLeft: 'auto', marginRight: 'auto' }}>
-          This system replaces it — with AI-powered governance proportional to what's actually in front of you.
+          DDAS scores every transaction across 6 risk dimensions against the Board-approved risk appetite and routes it to the right approver automatically.
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
           <button onClick={onGetStarted} style={{
