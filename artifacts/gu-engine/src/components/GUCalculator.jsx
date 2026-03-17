@@ -213,7 +213,7 @@ function BeforeAfterComparison() {
       background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border-primary)',
       padding: 20, marginTop: 24, marginBottom: 8,
     }}>
-      <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px', textAlign: 'center' }}>Why GU Engine?</h3>
+      <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-primary)', margin: '0 0 4px', textAlign: 'center' }}>Why DDAS?</h3>
       <p style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', margin: '0 0 16px' }}>
         From one-dimensional dollar thresholds to multidimensional risk intelligence
       </p>
@@ -255,7 +255,7 @@ function BeforeAfterComparison() {
         <div style={{ borderRadius: 10, overflow: 'hidden', border: '2px solid var(--accent-primary)' }}>
           <div style={{ padding: '10px 14px', background: 'var(--accent-primary-light)', borderBottom: '1px solid var(--accent-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ fontSize: 14 }}>{'\u{1F916}'}</span>
-            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-primary)' }}>GU Engine</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-primary)' }}>DDAS</span>
             <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, color: '#059669', padding: '1px 6px', background: '#ecfdf5', borderRadius: 3 }}>DYNAMIC</span>
           </div>
           <div style={{ padding: 10 }}>

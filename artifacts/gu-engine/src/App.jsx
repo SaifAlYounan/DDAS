@@ -46,7 +46,7 @@ function OnboardingOverlay({ onDismiss }) {
       <div className="onboarding-card">
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
           <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: 'var(--accent-primary)', textTransform: 'uppercase', marginBottom: 8 }}>Welcome to</div>
-          <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px' }}>Governance Unit Engine</h2>
+          <h2 style={{ fontSize: 24, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 4px' }}>Dynamic Delegation of Authority System</h2>
           <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Dynamic, AI-powered risk scoring in 3 steps</p>
         </div>
 
@@ -118,10 +118,10 @@ function CorporateHeader({ theme, toggleTheme, history, onHistoryOpen }) {
           </div>
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2.5, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', lineHeight: 1 }}>
-              Governance Unit Engine
+              DDAS — Internal Governance Tool
             </div>
             <div style={{ fontSize: 16, fontWeight: 700, color: '#ffffff', marginTop: 4, letterSpacing: 0.2 }}>
-              Contract Risk Assessment
+              Dynamic Delegation of Authority System
             </div>
           </div>
         </div>
@@ -364,7 +364,7 @@ export default function App() {
             textAlign: 'center', marginTop: 40, padding: '16px 0',
             borderTop: '1px solid var(--border-primary)', fontSize: 11, color: 'var(--text-muted)',
           }}>
-            Governance Unit Engine — Dynamic Contract Risk Assessment — Internal Use Only
+            Dynamic Delegation of Authority System — Internal Use Only
           </footer>
         </div>
 
