@@ -590,9 +590,7 @@ function HowItWorks({ onGetStarted }) {
 }
 
 export default function App() {
-  const [view, setView] = useState(() =>
-    sessionStorage.getItem('gu-engine-onboarded') ? 'analyzer' : 'landing'
-  );
+  const [view, setView] = useState('landing');
   const [config, setConfig] = useState(DEFAULT_CONFIG);
 
   // Theme state
@@ -611,7 +609,6 @@ export default function App() {
   const [restoredResult, setRestoredResult] = useState(null);
 
   const handleGetStarted = useCallback(() => {
-    sessionStorage.setItem('gu-engine-onboarded', 'true');
     setView('analyzer');
   }, []);
 
