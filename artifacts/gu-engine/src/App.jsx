@@ -36,7 +36,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
   ];
   const steps = [
     { n: '1', title: 'Describe or Upload', desc: 'Paste an action description or upload a supporting document. The system extracts what it needs.' },
-    { n: '2', title: 'DDAS Scores Risk', desc: 'DDAS scores 6 risk dimensions, identifies red flags, missing clauses, and precedent risk.' },
+    { n: '2', title: 'DDAS Scores Risk', desc: <>DDAS scores 6 risk dimensions, identifies red flags, missing clauses, and precedent risk, on the basis of the <strong style={{ textDecoration: 'underline' }}>Board-approved</strong> Risk Matrix and Risk Appetite.</> },
     { n: '3', title: 'Get a Governance Decision', desc: 'Receive an instant approval tier, required signatories, and endorsing functions — with rationale.' },
   ];
   const comparison = [
