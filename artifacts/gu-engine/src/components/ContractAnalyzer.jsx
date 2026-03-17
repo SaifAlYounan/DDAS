@@ -307,13 +307,23 @@ function MiniBarChart({ profiles, currentProfile, getTier }) {
   );
 }
 
+const SECTION_ICONS = {
+  'Governance Assessment': '📋',
+  'Risk Profile': '📊',
+  'Contract Analysis': '🔍',
+  'Risk Dimensions': '⚖️',
+  'Key Findings': '🎯',
+  'Cross-Profile Comparison': '🔄',
+};
+
 function MemoSection({ label }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, marginTop: 4 }}>
-      <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: 'var(--text-muted)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, marginTop: 8 }}>
+      {SECTION_ICONS[label] && <span style={{ fontSize: 13, lineHeight: 1 }}>{SECTION_ICONS[label]}</span>}
+      <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: 'var(--text-secondary)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
         {label}
       </span>
-      <div style={{ flex: 1, height: 1, background: 'var(--border-primary)' }} />
+      <div style={{ flex: 1, height: 1, background: 'linear-gradient(90deg, var(--border-primary), transparent)' }} />
     </div>
   );
 }
@@ -321,92 +331,243 @@ function MemoSection({ label }) {
 function GovernanceMemo({ result, liveGU, tier }) {
   const a = result.analysis;
   const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+  const gu = liveGU.primary.gu;
+  const docRef = `GOV-${String(gu).padStart(3, '0')}${tier.name.slice(0, 2).toUpperCase()}-${new Date().getFullYear()}`;
 
-  const labelSt = {
-    fontSize: 10, fontWeight: 700, color: 'var(--text-muted)',
-    textTransform: 'uppercase', letterSpacing: 1.2,
-    minWidth: 148, paddingRight: 16, paddingTop: 1, flexShrink: 0,
-  };
-  const valueSt = { fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.5 };
-  const rowSt = {
-    display: 'flex', alignItems: 'flex-start',
-    padding: '9px 0', borderBottom: '1px solid var(--border-secondary)',
-  };
+  const memoRows = [
+    ['TO', tier.approver],
+    ['FROM', 'Governance Unit Engine · DDAS'],
+    ['DATE', today],
+    a.transaction_summary ? ['RE', a.transaction_summary] : null,
+    a.transaction_type ? ['TYPE', a.transaction_type] : null,
+  ].filter(Boolean);
 
   return (
     <div style={{
-      background: 'var(--bg-card)', border: '1.5px solid var(--border-primary)',
-      borderLeft: `4px solid ${tier.color}`, borderRadius: 10,
-      marginBottom: 20, overflow: 'hidden',
+      background: 'var(--bg-card)',
+      border: '1px solid var(--border-primary)',
+      borderRadius: 12,
+      marginBottom: 20,
+      overflow: 'hidden',
+      boxShadow: '0 2px 12px rgba(15,38,68,0.10)',
     }}>
+      {/* Navy document header */}
       <div style={{
-        padding: '12px 20px', background: 'var(--bg-secondary, #f8fafc)',
-        borderBottom: '1.5px solid var(--border-primary)',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+        background: 'linear-gradient(135deg, #0f2644 0%, #1e4a7a 100%)',
+        padding: '14px 22px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
       }}>
         <div>
-          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 3 }}>Internal Governance Document</div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: 0.2 }}>Governance Assessment Memo</div>
+          <div style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 5 }}>
+            Internal Governance Document
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontSize: 18 }}>📄</span>
+            <span style={{ fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: 0.3 }}>
+              Governance Assessment Memo
+            </span>
+          </div>
         </div>
+        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+          <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.45)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>
+            Document Ref
+          </div>
+          <div style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: 1.5 }}>
+            {docRef}
+          </div>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', marginTop: 4, letterSpacing: 1 }}>
+            🔒 CONFIDENTIAL
+          </div>
+        </div>
+      </div>
+
+      {/* Memo body: left fields + right approval stamp */}
+      <div style={{ display: 'flex' }}>
+        {/* Left: TO/FROM/DATE/RE/TYPE */}
+        <div style={{ flex: 1, padding: '14px 22px 12px' }}>
+          {memoRows.map(([label, value], i) => (
+            <div key={label} style={{
+              display: 'flex', gap: 16, alignItems: 'flex-start',
+              padding: '7px 0',
+              borderBottom: i < memoRows.length - 1 ? '1px solid var(--border-secondary)' : 'none',
+            }}>
+              <span style={{
+                fontSize: 9, fontWeight: 800, color: 'var(--text-muted)',
+                letterSpacing: 1.5, textTransform: 'uppercase',
+                minWidth: 40, paddingTop: 2, flexShrink: 0,
+              }}>
+                {label}
+              </span>
+              <span style={{
+                fontSize: label === 'RE' ? 13 : 12,
+                fontWeight: label === 'RE' ? 700 : 500,
+                color: 'var(--text-primary)', lineHeight: 1.5, flex: 1,
+              }}>
+                {value}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Right: approval stamp */}
         <div style={{
-          padding: '5px 13px', borderRadius: 6,
-          background: tier.bg, border: `1.5px solid ${tier.border}`,
-          fontSize: 11, fontWeight: 800, color: tier.color,
-          textTransform: 'uppercase', letterSpacing: 0.8, whiteSpace: 'nowrap',
+          flexShrink: 0, width: 148,
+          padding: '16px 18px',
+          borderLeft: '1px solid var(--border-secondary)',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', gap: 8,
         }}>
-          {tier.name} Approval
+          <div style={{
+            border: `2px solid ${tier.color}`,
+            borderRadius: 10,
+            padding: '10px 12px',
+            textAlign: 'center', width: '100%',
+            background: tier.bg,
+          }}>
+            <div style={{ fontSize: 7, fontWeight: 800, color: tier.color, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 5 }}>
+              Approval Required
+            </div>
+            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+              {tier.name}
+            </div>
+            <div style={{ fontSize: 28, fontWeight: 900, color: tier.color, lineHeight: 1 }}>{gu}</div>
+            <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2 }}>GU / 100</div>
+          </div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.4 }}>
+            SLA: <strong style={{ color: 'var(--text-secondary)' }}>{liveGU.primary.tier.sla}</strong>
+          </div>
         </div>
       </div>
 
-      <div style={{ padding: '2px 20px 0' }}>
-        {a.transaction_summary && (
-          <div style={{ ...rowSt }}>
-            <span style={labelSt}>Transaction</span>
-            <span style={{ ...valueSt, fontSize: 14 }}>{a.transaction_summary}</span>
-          </div>
-        )}
-        {a.transaction_type && (
-          <div style={{ ...rowSt }}>
-            <span style={labelSt}>Type</span>
-            <span style={valueSt}>{a.transaction_type}</span>
-          </div>
-        )}
-        <div style={{ ...rowSt }}>
-          <span style={labelSt}>GU Score</span>
-          <span style={valueSt}>
-            <span style={{ fontSize: 20, fontWeight: 800, color: tier.color, lineHeight: 1 }}>{liveGU.primary.gu}</span>
-            <span style={{ fontSize: 13, color: 'var(--text-tertiary)', fontWeight: 600 }}>&thinsp;/ 100</span>
+      {/* Required signatories row */}
+      <div style={{ padding: '10px 22px', borderTop: '1px solid var(--border-secondary)' }}>
+        <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+          <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', minWidth: 130, paddingTop: 2, flexShrink: 0 }}>
+            Required Signatories
           </span>
-        </div>
-        <div style={{ ...rowSt }}>
-          <span style={labelSt}>Required Approval</span>
-          <span style={valueSt}>
-            <span style={{ color: tier.color, fontWeight: 800 }}>{tier.name}</span>
-            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}> · {liveGU.primary.tier.approver}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.5 }}>
+            {result?.analysis?.required_signatories || liveGU.primary.tier.signatures}
           </span>
-        </div>
-        <div style={{ ...rowSt }}>
-          <span style={labelSt}>Required Signatures</span>
-          <span style={valueSt}>{result?.analysis?.required_signatories || liveGU.primary.tier.signatures}</span>
-        </div>
-        <div style={{ ...rowSt }}>
-          <span style={labelSt}>Estimated SLA</span>
-          <span style={valueSt}>{liveGU.primary.tier.sla}</span>
-        </div>
-        <div style={{ ...rowSt, borderBottom: 'none' }}>
-          <span style={labelSt}>Date</span>
-          <span style={valueSt}>{today}</span>
         </div>
       </div>
 
+      {/* Confidentiality footer */}
       <div style={{
-        padding: '7px 20px', borderTop: '1px solid var(--border-secondary)',
-        fontSize: 10, fontWeight: 600, color: 'var(--text-muted)',
-        letterSpacing: 0.8, textTransform: 'uppercase',
-        display: 'flex', gap: 8, alignItems: 'center',
+        padding: '7px 22px',
+        background: 'var(--bg-tertiary)',
+        borderTop: '1px solid var(--border-secondary)',
+        display: 'flex', gap: 7, alignItems: 'center',
+        fontSize: 9, fontWeight: 700, color: 'var(--text-muted)',
+        letterSpacing: 1, textTransform: 'uppercase',
       }}>
-        <span style={{ fontSize: 11 }}>&#9888;</span>
-        <span>Confidential — For Internal Use Only · DDAS</span>
+        <span>⚠</span>
+        <span>Confidential — For Internal Use Only · Dynamic Delegation of Authority System</span>
+      </div>
+    </div>
+  );
+}
+
+function DocSidebar({ liveGU, tier, handleExport, reset }) {
+  const sections = [
+    { label: 'Governance Assessment', icon: '📋' },
+    { label: 'Risk Profile', icon: '📊' },
+    { label: 'Contract Analysis', icon: '🔍' },
+    { label: 'Risk Dimensions', icon: '⚖️' },
+    { label: 'Key Findings', icon: '🎯' },
+    { label: 'Cross-Profile Comparison', icon: '🔄' },
+  ];
+
+  return (
+    <div className="doc-sidebar no-print" style={{
+      width: 210, flexShrink: 0,
+      position: 'sticky', top: 16,
+      maxHeight: 'calc(100vh - 32px)', overflowY: 'auto',
+      display: 'flex', flexDirection: 'column', gap: 10,
+    }}>
+      {/* Status card */}
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border-primary)',
+        borderRadius: 12, overflow: 'hidden',
+        boxShadow: '0 1px 4px rgba(15,38,68,0.07)',
+      }}>
+        <div style={{
+          background: 'linear-gradient(135deg, #0f2644, #1e4a7a)',
+          padding: '11px 14px',
+        }}>
+          <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.45)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 5 }}>
+            Document Status
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+            <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10b981', flexShrink: 0, boxShadow: '0 0 0 2px rgba(16,185,129,0.3)' }} />
+            <span style={{ fontSize: 11, fontWeight: 700, color: '#fff' }}>Analysis Complete</span>
+          </div>
+        </div>
+        <div style={{ padding: '12px 14px' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 4 }}>
+            GU Score
+          </div>
+          <div style={{ fontSize: 30, fontWeight: 900, color: tier.color, lineHeight: 1, marginBottom: 8 }}>
+            {liveGU.primary.gu}
+            <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-muted)' }}> / 100</span>
+          </div>
+          <div style={{
+            display: 'inline-flex', padding: '3px 10px', borderRadius: 20,
+            background: tier.bg, border: `1.5px solid ${tier.border}`,
+            fontSize: 10, fontWeight: 800, color: tier.color,
+            textTransform: 'uppercase', letterSpacing: 0.8,
+          }}>
+            {tier.name} Tier
+          </div>
+        </div>
+      </div>
+
+      {/* Section navigation */}
+      <div style={{
+        background: 'var(--bg-card)', border: '1px solid var(--border-primary)',
+        borderRadius: 12, overflow: 'hidden',
+        boxShadow: '0 1px 4px rgba(15,38,68,0.07)',
+      }}>
+        <div style={{
+          padding: '9px 14px 8px',
+          fontSize: 9, fontWeight: 800, color: 'var(--text-muted)',
+          letterSpacing: 2, textTransform: 'uppercase',
+          borderBottom: '1px solid var(--border-secondary)',
+        }}>
+          Contents
+        </div>
+        {sections.map(({ label, icon }, i) => (
+          <div key={label} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '7px 14px',
+            borderBottom: i < sections.length - 1 ? '1px solid var(--border-secondary)' : 'none',
+            fontSize: 11, color: 'var(--text-secondary)', fontWeight: 500,
+          }}>
+            <span style={{ fontSize: 11, flexShrink: 0 }}>{icon}</span>
+            <span style={{ lineHeight: 1.3 }}>{label}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Action buttons */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+        <button onClick={handleExport} className="btn-interactive" style={{
+          padding: '10px 14px', borderRadius: 10,
+          border: 'none', background: '#0f2644',
+          color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          width: '100%', boxShadow: '0 2px 8px rgba(15,38,68,0.25)',
+        }}>
+          📥 Download PDF
+        </button>
+        <button onClick={reset} className="btn-interactive" style={{
+          padding: '9px 14px', borderRadius: 10,
+          border: '1.5px solid var(--border-primary)', background: 'var(--bg-card)',
+          color: 'var(--text-secondary)', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+          width: '100%',
+        }}>
+          ↩ New Analysis
+        </button>
       </div>
     </div>
   );
@@ -910,7 +1071,9 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
   const active = chat.length > 0;
 
   const cardStyle = {
-    background: 'var(--bg-card)', borderRadius: 14, border: '1px solid var(--border-primary)',
+    background: 'var(--bg-card)', borderRadius: 12,
+    border: '1px solid var(--border-primary)',
+    boxShadow: '0 1px 4px rgba(15,38,68,0.07)',
   };
 
   return (
@@ -1060,17 +1223,10 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
           <div className="card-entrance" style={{ position: 'relative' }}>
             <Confetti show={showConfetti} />
 
-            {/* PDF Export + Actions Bar */}
-            <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 10 }}>
-              <button onClick={handleExport} className="btn-interactive" style={{
-                padding: '6px 14px', borderRadius: 8, border: '1.5px solid var(--border-primary)',
-                background: 'var(--bg-card)', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4,
-              }}>
-                {'\uD83D\uDCE5'} Download as PDF
-              </button>
-            </div>
+            <div className="doc-layout" style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
+              <DocSidebar liveGU={liveGU} tier={tier} handleExport={handleExport} reset={reset} />
 
+              <div style={{ flex: 1, minWidth: 0 }}>
             <GovernanceMemo result={result} liveGU={liveGU} tier={tier} />
 
             <MemoSection label="Governance Assessment" />
@@ -1313,13 +1469,12 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               </div>
             </div>
 
-            <div className="start-new-btn no-print" style={{ textAlign: 'center' }}>
-              <button onClick={reset} className="btn-interactive" style={{ padding: '10px 24px', borderRadius: 10, border: 'none', cursor: 'pointer', background: 'var(--accent-primary)', color: '#fff', fontSize: 13, fontWeight: 700, boxShadow: 'var(--shadow-md)' }}>Start New Analysis</button>
-            </div>
-
             {/* Print footer */}
             <div className="print-only print-footer" style={{ display: 'none' }}>
               Generated by DDAS | {new Date().toLocaleDateString()} | Confidential
+            </div>
+
+              </div>
             </div>
           </div>
         );
