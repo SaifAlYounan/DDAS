@@ -142,7 +142,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
           </div>
           <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1e293b', marginBottom: 10 }}>Dynamic, Risk-Weighted Governance</h3>
           <p style={{ fontSize: 13.5, color: '#64748b', lineHeight: 1.7, marginBottom: 16 }}>
-            DDAS scores every transaction across 6 risk dimensions and routes it to the right approver automatically.
+            DDAS scores every transaction across 6 risk dimensions against the Board-approved Risk Matrix and Risk Appetite, and routes it to the right approver automatically.
           </p>
           {solutionItems.map((t, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8, fontSize: 13.5, color: '#374151', lineHeight: 1.55 }}>
