@@ -29,9 +29,9 @@ function HowItWorks({ onGetStarted, onMethodology }) {
     'Ambiguous on novel deal types that fall between categories',
   ];
   const solutionItems = [
+    'Board-approved risk appetite dynamically applied to every deal',
     'Governance proportional to actual risk — not dollar thresholds',
     'AI analysis scores 6 dimensions and identifies red flags in seconds',
-    'Board-approved risk appetite dynamically applied to every deal',
     'Fully confidential — nothing is stored at the application level',
   ];
   const steps = [
