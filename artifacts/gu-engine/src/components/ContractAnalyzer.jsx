@@ -421,162 +421,254 @@ function buildRadarSVG(scores, size = 260) {
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">${grid}${axes}<path d="${poly}" fill="#0f2644" fill-opacity="0.15" stroke="#0f2644" stroke-width="2.5" stroke-linejoin="round"/>${dots}${lbls}</svg>`;
 }
 
-function generateReportHTML({ result, liveGU, config }) {
+function generateReportHTML({ result, liveGU, config, profile = 'default' }) {
   const a = result.analysis || {};
   const scores = a.scores || {};
   const ca = a.contract_analysis || {};
   const { tier, gu, floorApplied, breakdown = [] } = liveGU.primary;
   const { tiers, anchors } = config;
   const reportId = `GU-${Date.now().toString(36).toUpperCase()}`;
-  const generated = new Date().toLocaleString();
+  const generated = new Date().toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  const dateOnly = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
 
-  const scoreBar = (score) => {
-    const h = scoreHue(score);
-    return `<div style="display:flex;align-items:center;gap:8px;margin-top:4px">
-      <div style="flex:1;height:7px;background:#e2e8f0;border-radius:4px;overflow:hidden">
-        <div style="width:${(score / 10) * 100}%;height:100%;background:hsl(${h},70%,50%);border-radius:4px"></div>
-      </div>
-      <span style="font-size:13px;font-weight:800;color:hsl(${h},55%,38%);min-width:24px;text-align:right">${score}</span>
-    </div>`;
+  // ── helpers ──────────────────────────────────────────────────────────────
+
+  const cell = (content, style = '') =>
+    `<td style="padding:9px 12px;border:1px solid #d1d5db;vertical-align:top;${style}">${content}</td>`;
+
+  const hcell = (content, style = '') =>
+    `<th style="padding:7px 12px;border:1px solid #d1d5db;background:#f3f4f6;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;font-family:Arial,sans-serif;${style}">${content}</th>`;
+
+  const sevLabel = (sev) => {
+    if (sev === 'high')   return `<span style="font-weight:800;color:#b91c1c;font-size:10px;letter-spacing:0.5px">&#9679; HIGH</span>`;
+    if (sev === 'low')    return `<span style="font-weight:800;color:#92400e;font-size:10px;letter-spacing:0.5px">&#9679; LOW</span>`;
+    return `<span style="font-weight:800;color:#c2410c;font-size:10px;letter-spacing:0.5px">&#9679; MEDIUM</span>`;
   };
 
-  const sevColors = (sev) => {
-    if (sev === 'high') return ['#fef2f2', '#fecaca', '#dc2626'];
-    if (sev === 'low')  return ['#fefce8', '#fef08a', '#a16207'];
-    return ['#fff7ed', '#fed7aa', '#ea580c'];
-  };
-
-  const tierBar = tiers.map((t, i) => {
+  // ── section: tier scale bar ───────────────────────────────────────────────
+  const tierBar = tiers.map(t => {
     const active = t.name === tier.name;
-    const r = i === 0 ? '5px 0 0 5px' : i === tiers.length - 1 ? '0 5px 5px 0' : '0';
-    return `<div style="flex:1;padding:4px 2px;text-align:center;background:${active ? tier.color : '#f1f5f9'};border-radius:${r}">
-      <div style="font-size:8px;font-weight:700;color:${active ? '#fff' : '#94a3b8'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escHtml(t.name)}</div>
+    return `<div style="flex:1;padding:5px 3px;text-align:center;background:${active ? '#0f2644' : '#f3f4f6'};border:1px solid ${active ? '#0f2644' : '#d1d5db'}">
+      <div style="font-size:9px;font-weight:${active ? 700 : 500};color:${active ? '#fff' : '#6b7280'};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:Arial,sans-serif">${escHtml(t.name)}</div>
     </div>`;
   }).join('');
 
-  const dimRows = DIM_ORDER.map(k => {
+  // ── section: dimension score table rows ───────────────────────────────────
+  const dimTableRows = DIM_ORDER.map(k => {
     const v = scores[k]; const m = anchors[k]; if (!v || !m) return '';
     const score = typeof v === 'number' ? v : (v?.score ?? 1);
-    const h = scoreHue(score);
-    const lvl = m.points?.slice().reverse().find(p => p.score <= score)?.label || '';
     const bd = breakdown.find(b => b.dimension === k);
-    return `<div style="padding:12px;margin-bottom:8px;border-radius:8px;background:#f8fafc;border:1px solid #e2e8f0;break-inside:avoid">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-        <span style="font-size:15px">${m.icon || ''}</span>
-        <span style="font-size:13px;font-weight:700;color:#1e293b;flex:1">${escHtml(m.label)}</span>
-        ${lvl ? `<span style="font-size:10px;font-weight:600;color:#64748b;padding:2px 6px;background:#e2e8f0;border-radius:3px">${escHtml(lvl)}</span>` : ''}
-        ${bd ? `<span style="font-size:12px;font-weight:700;color:hsl(${h},60%,40%)">${bd.weighted.toFixed(1)} GU</span>` : ''}
+    const bar = `<div style="display:flex;align-items:center;gap:6px">
+      <div style="width:72px;height:5px;background:#e5e7eb;display:inline-block">
+        <div style="width:${(score / 10) * 100}%;height:100%;background:#1f2937"></div>
       </div>
-      ${scoreBar(score)}
-      ${v?.rationale ? `<div style="font-size:12px;color:#475569;line-height:1.6;margin-top:6px">${escHtml(v.rationale)}</div>` : ''}
+      <span style="font-weight:800;font-size:14px;font-family:Arial,sans-serif">${score}<span style="font-size:10px;font-weight:400;color:#6b7280">/10</span></span>
+      ${bd ? `<span style="font-size:10px;color:#6b7280">(${bd.weighted.toFixed(1)} GU)</span>` : ''}
     </div>`;
+    return `<tr>
+      ${cell(`<span style="font-weight:600;font-size:13px">${escHtml(m.label)}</span>`, 'width:155px')}
+      ${cell(bar, 'white-space:nowrap;width:165px')}
+      ${cell(v?.rationale ? `<span style="font-size:12px;line-height:1.65;color:#374151">${escHtml(v.rationale)}</span>` : '—')}
+    </tr>`;
   }).join('');
 
-  const flagsHTML = (ca.red_flags || []).map(f => {
-    const [bg, border, badge] = sevColors(f.severity);
-    return `<div style="padding:12px;margin-bottom:6px;border-radius:8px;background:${bg};border:1px solid ${border};break-inside:avoid">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-        <span style="font-size:10px;font-weight:700;text-transform:uppercase;color:${badge};padding:2px 8px;background:white;border:1px solid ${border};border-radius:4px">${escHtml(f.severity || 'medium')}</span>
-        ${f.clause_reference ? `<span style="font-size:10px;color:#94a3b8">${escHtml(f.clause_reference)}</span>` : ''}
-      </div>
-      <div style="font-size:13px;font-weight:600;color:#1e293b">${escHtml(f.issue)}</div>
-      ${f.recommendation ? `<div style="font-size:12px;color:#059669;font-style:italic;margin-top:3px">${escHtml(f.recommendation)}</div>` : ''}
-    </div>`;
+  // ── section: red flags table rows ─────────────────────────────────────────
+  const flagRows = (ca.red_flags || []).map((f, i) => `<tr style="${i % 2 ? 'background:#f9fafb' : ''}">
+    ${cell(`<div style="font-weight:600;font-size:13px;margin-bottom:3px">${escHtml(f.issue)}</div>${f.clause_reference ? `<div style="font-size:10px;color:#6b7280">${escHtml(f.clause_reference)}</div>` : ''}`)}
+    ${cell(sevLabel(f.severity), 'text-align:center;white-space:nowrap;width:85px')}
+    ${cell(f.recommendation ? `<span style="font-size:12px;line-height:1.6">${escHtml(f.recommendation)}</span>` : '—', 'width:38%')}
+  </tr>`).join('');
+
+  // ── section: missing provisions rows ─────────────────────────────────────
+  const missingRows = (ca.missing_provisions || []).map((mp, i) => `<tr style="${i % 2 ? 'background:#f9fafb' : ''}">
+    ${cell(`<span style="font-weight:600;font-size:13px">${escHtml(mp.provision)}</span>`, 'width:30%')}
+    ${cell(mp.risk ? `<span style="font-size:12px">${escHtml(mp.risk)}</span>` : '—')}
+    ${cell(mp.recommendation ? `<span style="font-size:12px">${escHtml(mp.recommendation)}</span>` : '—', 'width:35%')}
+  </tr>`).join('');
+
+  // ── section: positive features rows ──────────────────────────────────────
+  const posRows = (ca.positive_features || []).map((pf, i) => `<tr style="${i % 2 ? 'background:#f9fafb' : ''}">
+    ${cell(`<span style="font-weight:600;font-size:13px">${escHtml(pf.feature)}</span>`, 'width:38%')}
+    ${cell(pf.benefit ? `<span style="font-size:12px">${escHtml(pf.benefit)}</span>` : '—')}
+  </tr>`).join('');
+
+  // ── section: cross-profile comparison rows ────────────────────────────────
+  const profileRows = Object.entries(liveGU.allProfiles || {}).map(([n, d], i) => {
+    const t = tiers.find(t2 => d.gu <= t2.maxGU) || tiers[tiers.length - 1];
+    const isActive = n === profile;
+    const prof = config.profiles[n];
+    return `<tr style="${i % 2 ? 'background:#f9fafb' : ''}${isActive ? ';font-weight:700' : ''}">
+      ${cell(`${escHtml(prof?.label || n)}${isActive ? ' <span style="font-size:10px;color:#0f2644">(active)</span>' : ''}`, 'font-size:13px')}
+      ${cell(`<span style="font-weight:800;font-size:15px;font-family:Arial,sans-serif">${d.gu}</span>`, 'text-align:center;width:70px')}
+      ${cell(escHtml(t.name), 'width:115px')}
+      ${cell(escHtml(t.approver))}
+      ${cell(escHtml(t.sla), 'width:120px')}
+    </tr>`;
   }).join('');
 
-  const missingHTML = (ca.missing_provisions || []).map(mp =>
-    `<div style="padding:12px;margin-bottom:6px;border-radius:8px;background:#fffbeb;border:1px solid #fde68a;break-inside:avoid">
-      <div style="font-size:13px;font-weight:600;color:#92400e">${escHtml(mp.provision)}</div>
-      ${mp.risk ? `<div style="font-size:12px;color:#a16207;margin-top:2px">${escHtml(mp.risk)}</div>` : ''}
-      ${mp.recommendation ? `<div style="font-size:12px;color:#059669;font-style:italic;margin-top:2px">${escHtml(mp.recommendation)}</div>` : ''}
-    </div>`).join('');
+  // ── section: assumptions rows ─────────────────────────────────────────────
+  const assumptions = ca.assumptions || [];
+  const assumptionRows = assumptions.map((as, i) => `<tr style="${i % 2 ? 'background:#f9fafb' : ''}">
+    ${cell(`<span style="font-size:12px">${escHtml(as.assumption)}</span>`, 'width:45%')}
+    ${cell(`<span style="font-size:12px">${escHtml(as.impact || '—')}</span>`)}
+  </tr>`).join('');
 
-  const posHTML = (ca.positive_features || []).map(pf =>
-    `<div style="padding:10px;margin-bottom:6px;border-radius:8px;background:#ecfdf5;border:1px solid #a7f3d0;break-inside:avoid">
-      <div style="font-size:13px;font-weight:600;color:#065f46">${escHtml(pf.feature)}</div>
-      ${pf.benefit ? `<div style="font-size:12px;color:#047857;margin-top:2px">${escHtml(pf.benefit)}</div>` : ''}
-    </div>`).join('');
+  // ── section heading helper ────────────────────────────────────────────────
+  const sh = (label) => `<div style="font-family:Arial,sans-serif;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#374151;border-bottom:1.5px solid #111827;padding-bottom:4px;margin:28px 0 13px">${label}</div>`;
 
-  const recsHTML = (a.key_recommendations || []).map(r =>
-    `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #e2e8f0">
-      <span style="color:#0f2644;font-weight:700;font-size:16px;line-height:1.4">›</span>
-      <span style="font-size:13px;color:#1e293b;line-height:1.6">${escHtml(r)}</span>
-    </div>`).join('');
-
-  const narrativeHTML = a.overall_risk_narrative
-    ? `<div style="padding:14px;background:#eff6ff;border-radius:8px;border:1px solid #bfdbfe;font-size:13px;color:#1e40af;line-height:1.7;margin-bottom:24px">${escHtml(a.overall_risk_narrative)}</div>`
-    : '';
-
+  // ─────────────────────────────────────────────────────────────────────────
   return `<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>GU Report — ${escHtml(a.transaction_summary || reportId)}</title>
+<title>DDAS Governance Memo — ${escHtml(a.transaction_summary || reportId)}</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:system-ui,-apple-system,'Segoe UI',sans-serif;background:#fff;color:#1e293b;font-size:14px;line-height:1.6;padding:32px 40px;max-width:860px;margin:0 auto;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-h2{font-size:16px;font-weight:700;color:#1e293b;margin-bottom:12px}
-section{margin-bottom:28px}
-@media print{body{padding:20px 24px} section{break-inside:avoid} @page{margin:1.5cm}}
+body{font-family:Georgia,'Times New Roman',serif;font-size:13px;line-height:1.55;color:#111827;background:#fff;max-width:820px;margin:0 auto;padding:40px 48px;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+table{width:100%;border-collapse:collapse;margin-bottom:6px}
+th,td{padding:9px 12px;border:1px solid #d1d5db;vertical-align:top}
+th{background:#f3f4f6;font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-family:Arial,sans-serif}
+@media print{body{padding:0} @page{margin:1.8cm 1.5cm;size:A4}}
 </style>
 </head><body>
 
-<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:16px;border-bottom:2px solid #1e293b;margin-bottom:24px">
-  <div>
-    <div style="font-size:18px;font-weight:800;color:#1e293b">Dynamic Delegation of Authority System</div>
-    <div style="font-size:11px;color:#64748b;margin-top:2px">DDAS — Governance Assessment Report</div>
-  </div>
-  <div style="text-align:right;font-size:11px;color:#64748b">
-    <div>Generated: ${escHtml(generated)}</div>
-    <div>Report ID: ${reportId}</div>
-  </div>
-</div>
-
-<section style="background:${tier.bg};border-radius:12px;padding:20px 24px;border:2px solid ${tier.border}">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px">
+<!-- DOCUMENT HEADER -->
+<div style="border-top:5px solid #0f2644;padding-top:16px;margin-bottom:22px">
+  <div style="display:flex;justify-content:space-between;align-items:flex-start">
     <div>
-      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1.5px">Governance Cost</div>
-      <div style="font-size:52px;font-weight:800;color:${tier.color};line-height:1.1">${gu}<span style="font-size:22px;font-weight:600"> GU</span></div>
+      <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#6b7280;margin-bottom:5px">Dynamic Delegation of Authority System</div>
+      <div style="font-family:Arial,sans-serif;font-size:21px;font-weight:800;color:#0f2644;letter-spacing:.3px">Governance Assessment Memo</div>
     </div>
-    <div style="text-align:right">
-      <div style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1.5px">Required Tier</div>
-      <div style="font-size:28px;font-weight:800;color:${tier.color}">${escHtml(tier.name)}</div>
-      <div style="font-size:12px;color:#64748b;margin-top:2px">${escHtml(tier.approver)}</div>
-      <div style="font-size:11px;color:#94a3b8">SLA: ${escHtml(tier.sla)}</div>
-      ${floorApplied ? `<div style="margin-top:6px;font-size:10px;font-weight:700;color:#dc2626;padding:2px 8px;background:#fef2f2;border-radius:4px;display:inline-block">Floor rule: ${escHtml(floorApplied)}</div>` : ''}
+    <div style="text-align:right;font-family:Arial,sans-serif;font-size:10px;color:#6b7280;line-height:1.8">
+      <div style="font-weight:700;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#b91c1c;margin-bottom:4px">Confidential — Internal Use Only</div>
+      <div>Document Ref: <strong style="color:#111827;font-family:monospace;font-size:11px">${reportId}</strong></div>
+      <div>Date: <strong style="color:#111827">${dateOnly}</strong></div>
+      <div>Generated: ${generated}</div>
     </div>
   </div>
-  <div style="display:flex;margin-top:16px;gap:2px">${tierBar}</div>
-  ${a.transaction_summary ? `<div style="margin-top:14px;padding:12px;background:#fff;border-radius:8px;border:1px solid #e2e8f0">
-    <div style="font-size:14px;font-weight:600;color:#1e293b">${escHtml(a.transaction_summary)}</div>
-    ${a.transaction_type ? `<span style="display:inline-block;margin-top:6px;padding:2px 8px;background:#f1f5f9;border-radius:4px;font-size:11px;font-weight:600;color:#475569">${escHtml(a.transaction_type)}</span>` : ''}
-  </div>` : ''}
-</section>
-
-${narrativeHTML}
-
-<section style="text-align:center">
-  <h2 style="text-align:center">Risk Profile</h2>
-  <div style="display:inline-block;padding:12px;background:#f8fafc;border-radius:12px;border:1px solid #e2e8f0">${buildRadarSVG(scores)}</div>
-</section>
-
-<section>
-  <h2>Risk Dimension Scores</h2>
-  ${dimRows || '<p style="color:#94a3b8;font-size:13px">No scores available.</p>'}
-</section>
-
-${(ca.red_flags || []).length > 0 ? `<section><h2 style="color:#dc2626">Red Flags (${ca.red_flags.length})</h2>${flagsHTML}</section>` : ''}
-
-${(ca.missing_provisions || []).length > 0 ? `<section><h2 style="color:#d97706">&#9888; Missing Provisions (${ca.missing_provisions.length})</h2>${missingHTML}</section>` : ''}
-
-${(ca.positive_features || []).length > 0 ? `<section><h2 style="color:#059669">&#10003; Positive Features</h2>${posHTML}</section>` : ''}
-
-${(a.key_recommendations || []).length > 0 ? `<section><h2 style="color:#0f2644">Key Recommendations</h2>${recsHTML}</section>` : ''}
-
-<div style="margin-top:32px;padding-top:12px;border-top:1px solid #e2e8f0;text-align:center;font-size:10px;color:#94a3b8">
-  DDAS &mdash; ${reportId} &mdash; Confidential &amp; Privileged &mdash; Not for external distribution
+  <div style="border-top:1px solid #d1d5db;margin-top:14px"></div>
 </div>
-<script>window.onload=function(){setTimeout(function(){window.print();},600);};</script>
+
+<!-- TRANSACTION DETAILS -->
+${a.transaction_summary ? `${sh('Transaction Details')}
+<table>
+  <tbody>
+    <tr><th style="width:165px">Transaction</th><td style="font-size:14px;font-weight:600;color:#0f2644;font-family:Arial,sans-serif">${escHtml(a.transaction_summary)}</td></tr>
+    ${a.transaction_type ? `<tr><th>Contract Type</th><td>${escHtml(a.transaction_type)}</td></tr>` : ''}
+    <tr><th>Assessment Date</th><td>${dateOnly}</td></tr>
+    <tr><th>Assessment Method</th><td>AI-Assisted Contract Risk Assessment (DDAS)</td></tr>
+  </tbody>
+</table>` : ''}
+
+<!-- ASSESSMENT OUTCOME -->
+${sh('Assessment Outcome')}
+<div style="border:2px solid #0f2644">
+  <div style="display:flex;border-bottom:1px solid #d1d5db">
+    <div style="flex:1;padding:16px 20px;border-right:1px solid #d1d5db">
+      <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:5px">Governance Units (GU Score)</div>
+      <div style="font-family:Arial,sans-serif;font-size:52px;font-weight:800;color:#0f2644;line-height:1">${gu}</div>
+      <div style="font-family:Arial,sans-serif;font-size:11px;color:#6b7280;margin-top:3px">out of 100 Governance Units</div>
+      ${floorApplied ? `<div style="margin-top:10px;font-family:Arial,sans-serif;font-size:10px;font-weight:700;color:#b91c1c">&#9888; Floor rule applied: ${escHtml(floorApplied)}</div>` : ''}
+    </div>
+    <div style="flex:2;padding:16px 20px">
+      <table style="margin-bottom:0">
+        <tbody>
+          <tr>
+            <th style="background:none;border:none;border-bottom:1px solid #e5e7eb;padding:5px 0;width:160px;font-size:10px">Required Approval Tier</th>
+            <td style="border:none;border-bottom:1px solid #e5e7eb;padding:5px 0;font-size:17px;font-weight:800;color:#0f2644;font-family:Arial,sans-serif">${escHtml(tier.name)}</td>
+          </tr>
+          <tr>
+            <th style="background:none;border:none;border-bottom:1px solid #e5e7eb;padding:5px 0;font-size:10px">Approving Authority</th>
+            <td style="border:none;border-bottom:1px solid #e5e7eb;padding:5px 0">${escHtml(tier.approver)}</td>
+          </tr>
+          <tr>
+            <th style="background:none;border:none;border-bottom:1px solid #e5e7eb;padding:5px 0;font-size:10px">Required Signatures</th>
+            <td style="border:none;border-bottom:1px solid #e5e7eb;padding:5px 0">${escHtml(tier.signatures || '—')}</td>
+          </tr>
+          <tr>
+            <th style="background:none;border:none;padding:5px 0;font-size:10px">Estimated SLA</th>
+            <td style="border:none;padding:5px 0">${escHtml(tier.sla)}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div style="padding:10px 14px;background:#f3f4f6">
+    <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:5px">Approval Tier Scale</div>
+    <div style="display:flex;gap:0">${tierBar}</div>
+  </div>
+</div>
+
+<!-- RISK ASSESSMENT SUMMARY -->
+${a.overall_risk_narrative ? `${sh('Risk Assessment Summary')}
+<div style="padding:14px 16px;border-left:4px solid #0f2644;background:#f9fafb;font-size:13px;line-height:1.8;color:#1f2937">${escHtml(a.overall_risk_narrative)}</div>` : ''}
+
+<!-- RISK DIMENSION ANALYSIS -->
+${sh('Risk Dimension Analysis')}
+<table>
+  <thead><tr>${hcell('Dimension', 'width:155px')}${hcell('Score', 'width:165px')}${hcell('AI Rationale')}</tr></thead>
+  <tbody>${dimTableRows || `<tr><td colspan="3" style="color:#6b7280;font-style:italic;padding:12px">No dimension scores available.</td></tr>`}</tbody>
+</table>
+
+<!-- RADAR CHART -->
+<div style="text-align:center;margin:24px 0;padding:20px 20px 14px;border:1px solid #e5e7eb;background:#fafafa">
+  <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:10px">Risk Profile — Radar View</div>
+  ${buildRadarSVG(scores, 240)}
+</div>
+
+<!-- RED FLAGS -->
+${(ca.red_flags || []).length > 0 ? `${sh(`Red Flags (${ca.red_flags.length})`)}
+<table>
+  <thead><tr>${hcell('Issue')}${hcell('Severity', 'width:85px;text-align:center')}${hcell('Recommendation', 'width:38%')}</tr></thead>
+  <tbody>${flagRows}</tbody>
+</table>` : ''}
+
+<!-- MISSING PROVISIONS -->
+${(ca.missing_provisions || []).length > 0 ? `${sh(`Missing Provisions (${ca.missing_provisions.length})`)}
+<table>
+  <thead><tr>${hcell('Provision', 'width:30%')}${hcell('Risk')}${hcell('Recommendation', 'width:35%')}</tr></thead>
+  <tbody>${missingRows}</tbody>
+</table>` : ''}
+
+<!-- POSITIVE FEATURES -->
+${(ca.positive_features || []).length > 0 ? `${sh('Positive Features')}
+<table>
+  <thead><tr>${hcell('Feature', 'width:38%')}${hcell('Benefit')}</tr></thead>
+  <tbody>${posRows}</tbody>
+</table>` : ''}
+
+<!-- SCORING ASSUMPTIONS -->
+${assumptions.length > 0 ? `${sh('Scoring Assumptions')}
+<table>
+  <thead><tr>${hcell('Assumption', 'width:45%')}${hcell('Impact on Score')}</tr></thead>
+  <tbody>${assumptionRows}</tbody>
+</table>` : ''}
+
+<!-- KEY RECOMMENDATIONS -->
+${(a.key_recommendations || []).length > 0 ? `${sh('Key Recommendations')}
+<ol style="padding-left:20px;margin-bottom:4px">
+  ${(a.key_recommendations || []).map(r => `<li style="margin-bottom:7px;font-size:13px;line-height:1.65">${escHtml(r)}</li>`).join('')}
+</ol>` : ''}
+
+<!-- CROSS-PROFILE COMPARISON -->
+${Object.keys(liveGU.allProfiles || {}).length > 1 ? `${sh('Cross-Profile Comparison')}
+<p style="font-size:12px;color:#6b7280;margin-bottom:9px">Same transaction scored under different organizational risk appetite profiles.</p>
+<table>
+  <thead><tr>${hcell('Organization Profile')}${hcell('GU Score', 'width:70px;text-align:center')}${hcell('Approval Tier', 'width:115px')}${hcell('Required Approver')}${hcell('SLA', 'width:120px')}</tr></thead>
+  <tbody>${profileRows}</tbody>
+</table>` : ''}
+
+<!-- DOCUMENT FOOTER -->
+<div style="margin-top:40px;padding-top:12px;border-top:2px solid #0f2644;display:flex;justify-content:space-between;align-items:flex-end;font-family:Arial,sans-serif;font-size:9px;color:#6b7280">
+  <div>
+    <div style="font-weight:700;color:#0f2644;margin-bottom:2px">Dynamic Delegation of Authority System (DDAS)</div>
+    <div>This document is generated by an AI-assisted governance tool. Results should be reviewed by qualified legal and risk professionals before action is taken.</div>
+  </div>
+  <div style="text-align:right;white-space:nowrap;margin-left:20px">
+    <div style="font-weight:700;font-family:monospace;font-size:10px;color:#374151">${reportId}</div>
+    <div>Confidential &amp; Privileged</div>
+  </div>
+</div>
+<script>window.onload=function(){setTimeout(function(){window.print();},650);};</script>
 </body></html>`;
 }
 
@@ -765,7 +857,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
 
   const handleExport = useCallback(() => {
     if (!result || !liveGU) return;
-    const html = generateReportHTML({ result, liveGU, config });
+    const html = generateReportHTML({ result, liveGU, config, profile });
     const win = window.open('', '_blank');
     if (!win) {
       alert('Pop-ups are blocked. Please allow pop-ups for this page to download the PDF report.');
@@ -776,7 +868,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
     setTimeout(() => {
       try { win.document.defaultView.print(); } catch (_) { /* inline script fallback */ }
     }, 650);
-  }, [result, liveGU, config]);
+  }, [result, liveGU, config, profile]);
 
   const onKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
   const active = chat.length > 0;
