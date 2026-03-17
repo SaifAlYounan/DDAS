@@ -307,7 +307,7 @@ const SECTION_ICONS = {
   ),
 };
 
-function HowItWorks() {
+function HowItWorks({ onGetStarted }) {
   return (
     <div style={{ maxWidth: 740, margin: '0 auto' }}>
       <div style={{ marginBottom: 32, paddingBottom: 24, borderBottom: '1px solid var(--border-primary)' }}>
@@ -357,14 +357,38 @@ function HowItWorks() {
       }}>
         <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Note:</span> This document describes the conceptual model underlying the DDAS. Configuration parameters — including dimension weights, tier thresholds, and scoring anchors — are adjustable in the <em>Configuration</em> tab.
       </div>
+
+      {onGetStarted && (
+        <div style={{ textAlign: 'center', marginTop: 40, paddingTop: 32, borderTop: '1px solid var(--border-primary)' }}>
+          <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 20 }}>
+            Ready to score a contract?
+          </p>
+          <button
+            onClick={onGetStarted}
+            className="btn-interactive"
+            style={{
+              padding: '14px 40px', borderRadius: 12, border: 'none', cursor: 'pointer',
+              background: 'var(--accent-primary)', color: '#fff',
+              fontSize: 16, fontWeight: 700, letterSpacing: 0.3,
+              boxShadow: 'var(--shadow-accent)', transition: 'all 0.2s',
+            }}
+          >
+            Try It Now →
+          </button>
+          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 12 }}>
+            You can always revisit this page from the header.
+          </p>
+        </div>
+      )}
     </div>
   );
 }
 
 export default function App() {
-  const [view, setView] = useState('analyzer');
+  const [view, setView] = useState(() =>
+    localStorage.getItem('gu-engine-onboarded') ? 'analyzer' : 'landing'
+  );
   const [config, setConfig] = useState(DEFAULT_CONFIG);
-  const [showOnboarding, setShowOnboarding] = useState(false);
 
   // Theme state
   const [theme, setTheme] = useState(() => {
@@ -381,16 +405,9 @@ export default function App() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [restoredResult, setRestoredResult] = useState(null);
 
-  // Check first visit for onboarding
-  useEffect(() => {
-    if (!localStorage.getItem('gu-engine-onboarded')) {
-      setShowOnboarding(true);
-    }
-  }, []);
-
-  const dismissOnboarding = useCallback(() => {
-    setShowOnboarding(false);
+  const handleGetStarted = useCallback(() => {
     localStorage.setItem('gu-engine-onboarded', 'true');
+    setView('analyzer');
   }, []);
 
   // Theme toggle
@@ -435,7 +452,6 @@ export default function App() {
     { id: 'analyzer', label: 'AI Contract Scorer' },
     { id: 'calculator', label: 'Manual Calculator' },
     { id: 'config', label: 'Configuration' },
-    { id: 'how-it-works', label: 'How It Works' },
   ];
 
   return (
@@ -451,33 +467,43 @@ export default function App() {
             onHistoryOpen={() => setHistoryOpen(true)}
           />
 
-          {/* Tab bar — document style */}
-          <div className="tab-bar no-print" style={{
-            background: 'var(--bg-card)', borderRadius: 10,
-            border: '1px solid var(--border-primary)', display: 'flex',
-            marginBottom: 24, overflow: 'hidden', padding: '0 8px',
-          }}>
-            {tabs.map(tab => (
-              <button key={tab.id} onClick={() => { setView(tab.id); setRestoredResult(null); }} style={{
-                padding: '11px 20px', background: 'transparent', cursor: 'pointer',
-                border: 'none',
-                borderBottom: view === tab.id ? '2px solid var(--accent-primary)' : '2px solid transparent',
-                color: view === tab.id ? 'var(--accent-primary)' : 'var(--text-tertiary)',
-                fontSize: 13, fontWeight: view === tab.id ? 700 : 500,
-                transition: 'all 0.2s', whiteSpace: 'nowrap',
-              }}>
-                {tab.label}
-              </button>
-            ))}
-          </div>
+          {/* Landing page — no tab bar */}
+          {view === 'landing' && (
+            <div key="landing" className="tab-content-enter">
+              <HowItWorks onGetStarted={handleGetStarted} />
+            </div>
+          )}
+
+          {/* Tab bar — hidden on landing */}
+          {view !== 'landing' && (
+            <div className="tab-bar no-print" style={{
+              background: 'var(--bg-card)', borderRadius: 10,
+              border: '1px solid var(--border-primary)', display: 'flex',
+              marginBottom: 24, overflow: 'hidden', padding: '0 8px',
+            }}>
+              {tabs.map(tab => (
+                <button key={tab.id} onClick={() => { setView(tab.id); setRestoredResult(null); }} style={{
+                  padding: '11px 20px', background: 'transparent', cursor: 'pointer',
+                  border: 'none',
+                  borderBottom: view === tab.id ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                  color: view === tab.id ? 'var(--accent-primary)' : 'var(--text-tertiary)',
+                  fontSize: 13, fontWeight: view === tab.id ? 700 : 500,
+                  transition: 'all 0.2s', whiteSpace: 'nowrap',
+                }}>
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          )}
 
           {/* Content with tab transition */}
-          <div key={view} className="tab-content-enter">
-            {view === 'analyzer' && <ContractAnalyzer config={config} restoredResult={restoredResult} onResultClear={() => setRestoredResult(null)} />}
-            {view === 'calculator' && <GUCalculator config={config} />}
-            {view === 'config' && <ConfigPanel config={config} setConfig={setConfig} />}
-            {view === 'how-it-works' && <HowItWorks />}
-          </div>
+          {view !== 'landing' && (
+            <div key={view} className="tab-content-enter">
+              {view === 'analyzer' && <ContractAnalyzer config={config} restoredResult={restoredResult} onResultClear={() => setRestoredResult(null)} />}
+              {view === 'calculator' && <GUCalculator config={config} />}
+              {view === 'config' && <ConfigPanel config={config} setConfig={setConfig} />}
+            </div>
+          )}
 
           {/* Footer */}
           <footer style={{
@@ -497,8 +523,6 @@ export default function App() {
           onClose={() => setHistoryOpen(false)}
         />
 
-        {/* Onboarding overlay */}
-        {showOnboarding && <OnboardingOverlay onDismiss={dismissOnboarding} />}
       </HistoryContext.Provider>
     </ThemeContext.Provider>
   );
