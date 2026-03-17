@@ -1147,7 +1147,21 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                 <strong style={{ color: 'var(--text-primary)' }}>Choose an organisation type</strong> below — this selects a template calibration that approximates the risk appetite for that type of organisation.
               </li>
               <li style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                <strong style={{ color: 'var(--text-primary)' }}>Describe or upload your action</strong> — paste a contract, upload a PDF or image, or type a description of the transaction in the box below. You can also use our sample document.
+                <strong style={{ color: 'var(--text-primary)' }}>Describe or upload your action</strong> — paste a contract, upload a PDF or image, or type a description of the transaction in the box below. No document of your own?{' '}
+                <button
+                  onClick={() => send(DEMO_SETTLEMENT, '\u2696\uFE0F Sample: Settlement Agreement — Meridian Resources / Atlas Mining Services')}
+                  className="btn-interactive"
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 5,
+                    padding: '2px 10px', borderRadius: 6, cursor: 'pointer',
+                    border: '1.5px solid var(--border-primary)',
+                    background: 'var(--bg-card)',
+                    verticalAlign: 'middle',
+                  }}
+                >
+                  <span style={{ fontSize: 13, lineHeight: 1 }}>⚖️</span>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-primary)' }}>Use our sample Settlement Agreement</span>
+                </button>
               </li>
               <li style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                 <strong style={{ color: 'var(--text-primary)' }}>Click Analyze</strong> — the system will score the action across 6 risk dimensions and return a governance decision instantly.
@@ -1168,23 +1182,6 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               ))}
             </div>
 
-            {/* Single sample document */}
-            <div style={{ borderTop: '1px solid var(--border-secondary)', paddingTop: 14, display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span style={{ fontSize: 12, color: 'var(--text-muted)', flexShrink: 0 }}>No document of your own?</span>
-              <button
-                onClick={() => send(DEMO_SETTLEMENT, '\u2696\uFE0F Sample: Settlement Agreement — Meridian Resources / Atlas Mining Services')}
-                className="btn-interactive"
-                style={{
-                  padding: '6px 14px', borderRadius: 8, cursor: 'pointer',
-                  border: '1.5px solid var(--border-primary)',
-                  background: 'var(--bg-card)',
-                  display: 'flex', alignItems: 'center', gap: 7,
-                }}
-              >
-                <span style={{ fontSize: 14, lineHeight: 1 }}>⚖️</span>
-                <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Try with our sample Settlement Agreement</span>
-              </button>
-            </div>
           </div>
         </div>
       )}
