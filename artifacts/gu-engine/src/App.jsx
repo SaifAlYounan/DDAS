@@ -24,7 +24,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
 
   const problemItems = [
     'Same approval path for a $50M routine purchase and a $50M risky JV',
-    'Governance cost is completely unrelated to actual deal risk',
+    'The bureaucratic cost / burden management has to go through to get an action approved is unrelated to the actual underlying risk',
     'Written years ago — never reflects today\'s regulatory complexity',
     'Ambiguous on novel deal types that fall between categories',
   ];
@@ -59,10 +59,11 @@ function HowItWorks({ onGetStarted, onMethodology }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <div style={{
-            width: 34, height: 34, borderRadius: 7, background: NAV,
+            width: 38, height: 34, borderRadius: 7, background: NAV,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            color: '#fff', fontWeight: 800, fontSize: 14, letterSpacing: 0.5,
-          }}>DA</div>
+            color: '#fff', fontWeight: 800, fontSize: 10, letterSpacing: 0.5,
+            padding: '0 4px',
+          }}>DDAS</div>
           <span style={{ fontWeight: 700, fontSize: 15, color: '#1e293b' }}>Dynamic Delegation of Authority System</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
@@ -363,7 +364,7 @@ function AppSidebar({ view, setView, history, onHistoryOpen, theme, toggleTheme,
       {/* Logo */}
       <div style={{ padding: '16px 16px 14px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
-          <div style={{ width: 30, height: 30, borderRadius: 6, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 10 }}>DA</div>
+          <div style={{ width: 38, height: 30, borderRadius: 6, background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 800, fontSize: 10, padding: '0 3px' }}>DDAS</div>
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: 1, textTransform: 'uppercase' }}>DDAS</div>
             <div style={{ fontSize: 12, fontWeight: 700, color: '#fff', lineHeight: 1.2 }}>Governance Tool</div>
