@@ -282,6 +282,100 @@ function MemoSection({ label }) {
   );
 }
 
+function GovernanceMemo({ result, liveGU, tier }) {
+  const a = result.analysis;
+  const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  const labelSt = {
+    fontSize: 10, fontWeight: 700, color: 'var(--text-muted)',
+    textTransform: 'uppercase', letterSpacing: 1.2,
+    minWidth: 148, paddingRight: 16, paddingTop: 1, flexShrink: 0,
+  };
+  const valueSt = { fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.5 };
+  const rowSt = {
+    display: 'flex', alignItems: 'flex-start',
+    padding: '9px 0', borderBottom: '1px solid var(--border-secondary)',
+  };
+
+  return (
+    <div style={{
+      background: 'var(--bg-card)', border: '1.5px solid var(--border-primary)',
+      borderLeft: `4px solid ${tier.color}`, borderRadius: 10,
+      marginBottom: 20, overflow: 'hidden',
+    }}>
+      <div style={{
+        padding: '12px 20px', background: 'var(--bg-secondary, #f8fafc)',
+        borderBottom: '1.5px solid var(--border-primary)',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12,
+      }}>
+        <div>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 3 }}>Internal Governance Document</div>
+          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', letterSpacing: 0.2 }}>Governance Assessment Memo</div>
+        </div>
+        <div style={{
+          padding: '5px 13px', borderRadius: 6,
+          background: tier.bg, border: `1.5px solid ${tier.border}`,
+          fontSize: 11, fontWeight: 800, color: tier.color,
+          textTransform: 'uppercase', letterSpacing: 0.8, whiteSpace: 'nowrap',
+        }}>
+          {tier.name} Approval
+        </div>
+      </div>
+
+      <div style={{ padding: '2px 20px 0' }}>
+        {a.transaction_summary && (
+          <div style={{ ...rowSt }}>
+            <span style={labelSt}>Transaction</span>
+            <span style={{ ...valueSt, fontSize: 14 }}>{a.transaction_summary}</span>
+          </div>
+        )}
+        {a.transaction_type && (
+          <div style={{ ...rowSt }}>
+            <span style={labelSt}>Type</span>
+            <span style={valueSt}>{a.transaction_type}</span>
+          </div>
+        )}
+        <div style={{ ...rowSt }}>
+          <span style={labelSt}>GU Score</span>
+          <span style={valueSt}>
+            <span style={{ fontSize: 20, fontWeight: 800, color: tier.color, lineHeight: 1 }}>{liveGU.primary.gu}</span>
+            <span style={{ fontSize: 13, color: 'var(--text-tertiary)', fontWeight: 600 }}>&thinsp;/ 100</span>
+          </span>
+        </div>
+        <div style={{ ...rowSt }}>
+          <span style={labelSt}>Required Approval</span>
+          <span style={valueSt}>
+            <span style={{ color: tier.color, fontWeight: 800 }}>{tier.name}</span>
+            <span style={{ color: 'var(--text-secondary)', fontWeight: 500 }}> · {liveGU.primary.tier.approver}</span>
+          </span>
+        </div>
+        <div style={{ ...rowSt }}>
+          <span style={labelSt}>Required Signatures</span>
+          <span style={valueSt}>{liveGU.primary.tier.signatures}</span>
+        </div>
+        <div style={{ ...rowSt }}>
+          <span style={labelSt}>Estimated SLA</span>
+          <span style={valueSt}>{liveGU.primary.tier.sla}</span>
+        </div>
+        <div style={{ ...rowSt, borderBottom: 'none' }}>
+          <span style={labelSt}>Date</span>
+          <span style={valueSt}>{today}</span>
+        </div>
+      </div>
+
+      <div style={{
+        padding: '7px 20px', borderTop: '1px solid var(--border-secondary)',
+        fontSize: 10, fontWeight: 600, color: 'var(--text-muted)',
+        letterSpacing: 0.8, textTransform: 'uppercase',
+        display: 'flex', gap: 8, alignItems: 'center',
+      }}>
+        <span style={{ fontSize: 11 }}>&#9888;</span>
+        <span>Confidential — For Internal Use Only · Governance Unit Engine</span>
+      </div>
+    </div>
+  );
+}
+
 // ── PDF / Print helpers ─────────────────────────────────────────────────────
 
 function escHtml(str) {
@@ -825,6 +919,8 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               </button>
             </div>
 
+            <GovernanceMemo result={result} liveGU={liveGU} tier={tier} />
+
             <MemoSection label="Governance Assessment" />
             {/* GU Hero */}
             <div className="gu-hero" style={{ background: tier.bg, borderRadius: 14, padding: 24, border: `2px solid ${tier.border}`, marginBottom: 14, position: 'relative', overflow: 'hidden' }}>
@@ -853,12 +949,6 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
                 {TIERS.map(t => <span key={t.name} style={{ fontSize: 9, fontWeight: 600, color: tier.name === t.name ? t.color : '#cbd5e1' }}>{t.name}</span>)}
               </div>
-              {a.transaction_summary && (
-                <div style={{ marginTop: 14, padding: 12, background: 'var(--bg-card)', borderRadius: 8, border: '1px solid var(--border-primary)' }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)' }}>{a.transaction_summary}</div>
-                  {a.transaction_type && <span style={{ display: 'inline-block', marginTop: 6, padding: '2px 8px', background: 'var(--bg-tertiary)', borderRadius: 4, fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)' }}>{a.transaction_type}</span>}
-                </div>
-              )}
             </div>
 
             <MemoSection label="Risk Profile" />
