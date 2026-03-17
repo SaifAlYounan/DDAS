@@ -122,7 +122,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
           </div>
           <h3 style={{ fontSize: 18, fontWeight: 800, color: '#1e293b', marginBottom: 10 }}>Your DoA Is Static. Your Risk Isn't.</h3>
           <p style={{ fontSize: 13.5, color: '#64748b', lineHeight: 1.7, marginBottom: 16 }}>
-            A static PDF that assigns approvers by dollar amount — written years ago and rarely updated.
+            A static PDF that assigns approvers by dollar amount — which is written in the abstract.
           </p>
           {problemItems.map((t, i) => (
             <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 8, fontSize: 13.5, color: '#374151', lineHeight: 1.55 }}>
