@@ -243,6 +243,127 @@ function HistoryDrawer({ history, onSelect, onClear, isOpen, onClose }) {
   );
 }
 
+const HOW_IT_WORKS_SECTIONS = [
+  {
+    n: 1, color: '#ef4444', bg: '#fef2f2',
+    title: 'The Problem with Traditional DoAs',
+    body: 'A Delegation of Authority table is a static lookup: action type → dollar threshold → approver. It treats a routine $500K equipment replacement the same as a $500K investment in an untested market. The procedural cost is identical, even though the risk profiles are completely different. This leads to two failure modes: over-governance of routine matters (slowing the organization), and under-governance of novel risks that happen to fall below a dollar threshold.',
+  },
+  {
+    n: 2, color: '#3b82f6', bg: '#eff6ff',
+    title: 'The GU Model',
+    body: 'Instead of mapping actions to approvers, we map risk profiles to a single scalar: Governance Units (GU). The GU cost is a weighted composite of multiple risk dimensions — financial exposure, reversibility, regulatory complexity, reputational impact, precedent-setting nature, and stakeholder complexity. The weights are tunable per organization type. A regulated bank will weight compliance risk higher; a startup will weight financial exposure and speed.',
+  },
+  {
+    n: 3, color: '#f59e0b', bg: '#fffbeb',
+    title: 'From Table to Algorithm',
+    body: 'The traditional DoA is a lookup table maintained in a policy document. The GU model is an algorithm that can be embedded in any workflow system. When someone initiates a purchase order, contract, or investment, the system scores the risk dimensions (some automatically from metadata, some via a short questionnaire) and computes the GU cost. The approval pathway is determined dynamically. No table to maintain. No ambiguity about which row applies.',
+  },
+  {
+    n: 4, color: '#10b981', bg: '#ecfdf5',
+    title: 'Where AI Comes In',
+    body: 'AI can auto-score several dimensions by analyzing transaction metadata: financial exposure from the amount, regulatory risk from contract clauses or counterparty jurisdiction, precedent from historical transaction matching, and stakeholder complexity from org-chart analysis. The human only validates or adjusts the AI\'s assessment, reducing friction on routine transactions to near-zero while ensuring novel risks get the scrutiny they deserve.',
+  },
+  {
+    n: 5, color: '#7c3aed', bg: '#f5f3ff',
+    title: 'Continuous Calibration',
+    body: 'Unlike a static DoA that\'s reviewed annually, a GU model can learn. If transactions scored at 25 GU consistently require no escalation beyond manager review, the tier boundaries can be adjusted. If a class of transactions scored low later turns out to cause problems, the weighting model can be retrained. The governance framework becomes a living system.',
+  },
+];
+
+const SECTION_ICONS = {
+  1: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 3v1M6.3 6.3 5.6 5.6M3 12h1M5.6 18.4l.7-.7M12 20v1M18.4 18.4l-.7-.7M21 12h-1M18.4 5.6l-.7.7"/>
+      <circle cx="12" cy="12" r="4"/>
+    </svg>
+  ),
+  2: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/>
+      <line x1="12" y1="2" x2="12" y2="22"/>
+      <line x1="2" y1="8.5" x2="22" y2="8.5"/>
+      <line x1="2" y1="15.5" x2="22" y2="15.5"/>
+    </svg>
+  ),
+  3: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="16 18 22 12 16 6"/>
+      <polyline points="8 6 2 12 8 18"/>
+    </svg>
+  ),
+  4: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="11" width="18" height="11" rx="2"/>
+      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      <circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+    </svg>
+  ),
+  5: (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+      <path d="M3 3v5h5"/>
+    </svg>
+  ),
+};
+
+function HowItWorks() {
+  return (
+    <div style={{ maxWidth: 740, margin: '0 auto' }}>
+      <div style={{ marginBottom: 32, paddingBottom: 24, borderBottom: '1px solid var(--border-primary)' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 10 }}>
+          Methodology
+        </div>
+        <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 12px', lineHeight: 1.25 }}>
+          How the Dynamic Delegation of Authority System Works
+        </h1>
+        <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.75, margin: 0 }}>
+          A technical overview of the GU scoring model — from the limitations of traditional DoA frameworks to a risk-weighted, AI-assisted governance algorithm.
+        </p>
+      </div>
+
+      <div>
+        {HOW_IT_WORKS_SECTIONS.map((s, i) => (
+          <div key={s.n} className="card-entrance" style={{
+            display: 'flex', gap: 20, marginBottom: 16,
+            padding: '22px 24px', background: 'var(--bg-card)', borderRadius: 12,
+            border: '1px solid var(--border-primary)', borderLeft: `4px solid ${s.color}`,
+            animationDelay: `${i * 0.07}s`, animationFillMode: 'backwards',
+          }}>
+            <div style={{
+              width: 42, height: 42, borderRadius: 10,
+              background: s.bg, border: `1px solid ${s.color}33`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              flexShrink: 0, color: s.color,
+            }}>
+              {SECTION_ICONS[s.n]}
+            </div>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: s.color, textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 5 }}>
+                Section {s.n}
+              </div>
+              <h2 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 10px', lineHeight: 1.4 }}>
+                {s.title}
+              </h2>
+              <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.8, margin: 0 }}>
+                {s.body}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div style={{
+        marginTop: 8, padding: '14px 20px', borderRadius: 10,
+        background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)',
+        fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.65,
+      }}>
+        <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Note:</span> This document describes the conceptual model underlying the DDAS. Configuration parameters — including dimension weights, tier thresholds, and scoring anchors — are adjustable in the <em>Configuration</em> tab.
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [view, setView] = useState('analyzer');
   const [config, setConfig] = useState(DEFAULT_CONFIG);
@@ -317,6 +438,7 @@ export default function App() {
     { id: 'analyzer', label: 'AI Contract Scorer' },
     { id: 'calculator', label: 'Manual Calculator' },
     { id: 'config', label: 'Configuration' },
+    { id: 'how-it-works', label: 'How It Works' },
   ];
 
   return (
@@ -357,6 +479,7 @@ export default function App() {
             {view === 'analyzer' && <ContractAnalyzer config={config} restoredResult={restoredResult} onResultClear={() => setRestoredResult(null)} />}
             {view === 'calculator' && <GUCalculator config={config} />}
             {view === 'config' && <ConfigPanel config={config} setConfig={setConfig} />}
+            {view === 'how-it-works' && <HowItWorks />}
           </div>
 
           {/* Footer */}
