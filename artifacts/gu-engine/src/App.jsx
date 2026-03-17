@@ -442,7 +442,7 @@ function HowItWorks({ onGetStarted }) {
 
 export default function App() {
   const [view, setView] = useState(() =>
-    localStorage.getItem('gu-engine-onboarded') ? 'analyzer' : 'landing'
+    sessionStorage.getItem('gu-engine-onboarded') ? 'analyzer' : 'landing'
   );
   const [config, setConfig] = useState(DEFAULT_CONFIG);
 
@@ -462,7 +462,7 @@ export default function App() {
   const [restoredResult, setRestoredResult] = useState(null);
 
   const handleGetStarted = useCallback(() => {
-    localStorage.setItem('gu-engine-onboarded', 'true');
+    sessionStorage.setItem('gu-engine-onboarded', 'true');
     setView('analyzer');
   }, []);
 
