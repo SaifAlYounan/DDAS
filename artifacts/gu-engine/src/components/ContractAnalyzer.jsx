@@ -271,6 +271,17 @@ function MiniBarChart({ profiles, currentProfile, getTier }) {
   );
 }
 
+function MemoSection({ label }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, marginTop: 4 }}>
+      <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, color: 'var(--text-muted)', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+        {label}
+      </span>
+      <div style={{ flex: 1, height: 1, background: 'var(--border-primary)' }} />
+    </div>
+  );
+}
+
 // ── PDF / Print helpers ─────────────────────────────────────────────────────
 
 function escHtml(str) {
@@ -313,7 +324,7 @@ function buildRadarSVG(scores, size = 260) {
     const lp = pt(i, 13.5);
     return `<text x="${lp.x.toFixed(1)}" y="${lp.y.toFixed(1)}" text-anchor="middle" dominant-baseline="middle" style="font-size:9px;font-weight:700;fill:#64748b;font-family:system-ui,sans-serif">${DIM_LABELS[d]}</text>`;
   }).join('');
-  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">${grid}${axes}<path d="${poly}" fill="#4338ca" fill-opacity="0.15" stroke="#4338ca" stroke-width="2.5" stroke-linejoin="round"/>${dots}${lbls}</svg>`;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">${grid}${axes}<path d="${poly}" fill="#0f2644" fill-opacity="0.15" stroke="#0f2644" stroke-width="2.5" stroke-linejoin="round"/>${dots}${lbls}</svg>`;
 }
 
 function generateReportHTML({ result, liveGU, config }) {
@@ -394,7 +405,7 @@ function generateReportHTML({ result, liveGU, config }) {
 
   const recsHTML = (a.key_recommendations || []).map(r =>
     `<div style="display:flex;gap:8px;padding:8px 0;border-bottom:1px solid #e2e8f0">
-      <span style="color:#4338ca;font-weight:700;font-size:16px;line-height:1.4">›</span>
+      <span style="color:#0f2644;font-weight:700;font-size:16px;line-height:1.4">›</span>
       <span style="font-size:13px;color:#1e293b;line-height:1.6">${escHtml(r)}</span>
     </div>`).join('');
 
@@ -466,7 +477,7 @@ ${(ca.missing_provisions || []).length > 0 ? `<section><h2 style="color:#d97706"
 
 ${(ca.positive_features || []).length > 0 ? `<section><h2 style="color:#059669">&#10003; Positive Features</h2>${posHTML}</section>` : ''}
 
-${(a.key_recommendations || []).length > 0 ? `<section><h2 style="color:#4338ca">Key Recommendations</h2>${recsHTML}</section>` : ''}
+${(a.key_recommendations || []).length > 0 ? `<section><h2 style="color:#0f2644">Key Recommendations</h2>${recsHTML}</section>` : ''}
 
 <div style="margin-top:32px;padding-top:12px;border-top:1px solid #e2e8f0;text-align:center;font-size:10px;color:#94a3b8">
   GU Engine &mdash; ${reportId} &mdash; Confidential &amp; Privileged &mdash; Not for external distribution
@@ -814,6 +825,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               </button>
             </div>
 
+            <MemoSection label="Governance Assessment" />
             {/* GU Hero */}
             <div className="gu-hero" style={{ background: tier.bg, borderRadius: 14, padding: 24, border: `2px solid ${tier.border}`, marginBottom: 14, position: 'relative', overflow: 'hidden' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
@@ -849,16 +861,16 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               )}
             </div>
 
+            <MemoSection label="Risk Profile" />
             {/* Radar Chart */}
             <div style={{ ...cardStyle, padding: 20, marginBottom: 14, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 12px', color: 'var(--text-primary)' }}>Risk Profile</h3>
               <RadarChart scores={aiScores} />
             </div>
 
             {/* Contract Analysis */}
             {a.contract_analysis && (
               <div className="contract-analysis-section" style={{ ...cardStyle, padding: 20, marginBottom: 14 }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, margin: '0 0 14px', color: 'var(--text-primary)' }}>Contract Analysis</h3>
+                <MemoSection label="Contract Analysis" />
 
                 {a.contract_analysis.red_flags?.length > 0 && (
                   <div style={{ marginBottom: 14 }}>
@@ -938,10 +950,11 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               </div>
             )}
 
+            <MemoSection label="Risk Dimensions" />
             {/* Editable Dimension Scores */}
             <div className="dimension-scores-section" style={{ ...cardStyle, padding: 20, marginBottom: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
-                <h3 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>Risk Dimension Scores</h3>
+                <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>Risk Dimension Scores</div>
                 {liveGU.hasOverrides && (
                   <button onClick={resetAllScores} className="no-print manual-override-controls btn-interactive" style={{ padding: '4px 10px', borderRadius: 5, border: '1px solid var(--border-primary)', background: 'var(--bg-card)', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: 'var(--text-tertiary)' }}>
                     Reset to AI scores
@@ -1005,6 +1018,8 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               const hasConditions = conditions.length > 0;
               if (!hasRisks && !hasConditions) return null;
               return (
+                <>
+                <MemoSection label="Key Findings" />
                 <div className="two-col-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
                   {(keyRisks.length > 0 || recommendations.length > 0 || narrative) && (
                     <div className="risk-card card-entrance" style={{ background: '#fef2f2', borderRadius: 12, padding: 14, border: '1px solid #fecaca' }}>
@@ -1021,12 +1036,14 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                     </div>
                   )}
                 </div>
+              </>
               );
             })()}
 
+            <MemoSection label="Cross-Profile Comparison" />
             {/* Cross-profile comparison */}
             <div className="cross-profile-section" style={{ ...cardStyle, padding: 20, marginBottom: 14 }}>
-              <h3 style={{ fontSize: 15, fontWeight: 700, margin: '0 0 4px', color: 'var(--text-primary)' }}>Same Transaction, Different Organizations</h3>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>Same Transaction, Different Organizations</div>
               <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '0 0 14px' }}>How the GU cost shifts by organizational risk appetite</p>
 
               {/* Mini bar chart comparison */}
@@ -1055,7 +1072,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             </div>
 
             <div className="start-new-btn no-print" style={{ textAlign: 'center' }}>
-              <button onClick={reset} className="btn-interactive" style={{ padding: '10px 24px', borderRadius: 10, border: 'none', cursor: 'pointer', background: theme === 'dark' ? 'var(--accent-primary)' : '#1e293b', color: '#fff', fontSize: 13, fontWeight: 700, boxShadow: 'var(--shadow-md)' }}>Start New Analysis</button>
+              <button onClick={reset} className="btn-interactive" style={{ padding: '10px 24px', borderRadius: 10, border: 'none', cursor: 'pointer', background: 'var(--accent-primary)', color: '#fff', fontSize: 13, fontWeight: 700, boxShadow: 'var(--shadow-md)' }}>Start New Analysis</button>
             </div>
 
             {/* Print footer */}
@@ -1095,7 +1112,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             />
             <button onClick={() => send()} disabled={loading || (!input.trim() && !file)} className="btn-interactive" style={{
               padding: '12px 22px', borderRadius: 10, border: 'none', cursor: loading ? 'wait' : 'pointer',
-              background: loading ? 'var(--text-muted)' : 'linear-gradient(135deg,#4338ca,#6366f1)', color: '#fff',
+              background: loading ? 'var(--text-muted)' : 'var(--accent-primary)', color: '#fff',
               fontSize: 13, fontWeight: 700, minHeight: 44, opacity: (!input.trim() && !file) ? 0.5 : 1,
               boxShadow: loading ? 'none' : 'var(--shadow-accent)',
               transition: 'all 0.3s',

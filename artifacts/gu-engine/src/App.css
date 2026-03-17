@@ -12,8 +12,8 @@
   --bg-card: #ffffff;
   --bg-input: #ffffff;
   --bg-chat: #f8fafc;
-  --bg-user-msg: #1e293b;
-  --bg-gradient: linear-gradient(135deg, #f0f4ff 0%, #f8fafc 50%, #fdf4ff 100%);
+  --bg-user-msg: #0f2644;
+  --bg-gradient: #f0f3f7;
   --text-primary: #1e293b;
   --text-secondary: #475569;
   --text-tertiary: #64748b;
@@ -21,15 +21,15 @@
   --text-inverse: #ffffff;
   --border-primary: #e2e8f0;
   --border-secondary: #f1f5f9;
-  --border-focus: #818cf8;
-  --accent-primary: #4338ca;
-  --accent-primary-light: #e0e7ff;
-  --accent-secondary: #6366f1;
+  --border-focus: #3b6ea5;
+  --accent-primary: #0f2644;
+  --accent-primary-light: #e3ecf5;
+  --accent-secondary: #1e4a7a;
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.06);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-  --shadow-accent: 0 4px 12px rgba(99, 102, 241, 0.3);
-  --selection-bg: #c7d2fe;
+  --shadow-accent: 0 4px 12px rgba(15, 38, 68, 0.2);
+  --selection-bg: #bed0e6;
   --scrollbar-track: #f1f5f9;
   --scrollbar-thumb: #cbd5e1;
   --overlay-bg: rgba(0, 0, 0, 0.3);
@@ -44,8 +44,8 @@
   --bg-card: #1e293b;
   --bg-input: #1e293b;
   --bg-chat: #0f172a;
-  --bg-user-msg: #312e81;
-  --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1a1a2e 50%, #16213e 100%);
+  --bg-user-msg: #1a3050;
+  --bg-gradient: #0f172a;
   --text-primary: #f1f5f9;
   --text-secondary: #cbd5e1;
   --text-tertiary: #94a3b8;
@@ -53,15 +53,15 @@
   --text-inverse: #0f172a;
   --border-primary: #334155;
   --border-secondary: #1e293b;
-  --border-focus: #818cf8;
-  --accent-primary: #818cf8;
-  --accent-primary-light: #312e81;
-  --accent-secondary: #a5b4fc;
+  --border-focus: #5b8fbe;
+  --accent-primary: #5b8fbe;
+  --accent-primary-light: #1a3050;
+  --accent-secondary: #7aabce;
   --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-accent: 0 4px 12px rgba(129, 140, 248, 0.3);
-  --selection-bg: #4338ca;
+  --shadow-accent: 0 4px 12px rgba(91, 143, 190, 0.25);
+  --selection-bg: #1e4a7a;
   --scrollbar-track: #1e293b;
   --scrollbar-thumb: #475569;
   --overlay-bg: rgba(0, 0, 0, 0.6);
@@ -168,23 +168,6 @@ input, textarea, select {
     transform: translateX(100%);
     opacity: 0;
   }
-}
-
-/* New animations */
-@keyframes gradientShift {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-@keyframes heroGlow {
-  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.1); }
-  50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.25); }
-}
-
-@keyframes badgePulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(99, 102, 241, 0); }
 }
 
 @keyframes radarDraw {
@@ -316,25 +299,6 @@ input, textarea, select {
 /* Score reveal */
 .score-reveal {
   animation: scoreReveal 0.5s ease forwards;
-}
-
-/* Badge pulse */
-.badge-pulse {
-  animation: badgePulse 2s ease-in-out infinite;
-}
-
-/* Hero glow */
-.hero-glow {
-  animation: heroGlow 3s ease-in-out infinite;
-}
-
-/* Gradient text animation */
-.gradient-text-animated {
-  background-size: 200% 200%;
-  animation: gradientShift 4s ease infinite;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
 }
 
 /* Button hover/active effects */

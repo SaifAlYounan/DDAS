@@ -89,50 +89,82 @@ function OnboardingOverlay({ onDismiss }) {
   );
 }
 
-function HeroSection({ theme }) {
+function CorporateHeader({ theme, toggleTheme, history, onHistoryOpen }) {
+  const navyBg = theme === 'dark' ? '#1a2f4a' : '#0f2644';
+  const navyBorder = theme === 'dark' ? '#22405f' : '#0c1e38';
   return (
-    <div className="hero-section hero-glow" style={{
-      textAlign: 'center', padding: '40px 20px 32px',
-      borderRadius: 20, marginBottom: 28,
-      background: theme === 'dark'
-        ? 'linear-gradient(135deg, rgba(49, 46, 129, 0.3) 0%, rgba(15, 23, 42, 0.8) 50%, rgba(30, 41, 59, 0.5) 100%)'
-        : 'linear-gradient(135deg, rgba(224, 231, 255, 0.6) 0%, rgba(248, 250, 252, 0.8) 50%, rgba(253, 244, 255, 0.6) 100%)',
-      border: '1px solid var(--border-primary)',
+    <div className="hero-section no-print" style={{
+      background: navyBg,
+      borderRadius: 12,
+      marginBottom: 20,
+      border: `1px solid ${navyBorder}`,
+      overflow: 'hidden',
     }}>
-      <div className="badge-pulse" style={{
-        display: 'inline-block', padding: '4px 14px', borderRadius: 20,
-        background: 'var(--accent-primary-light)', fontSize: 10, fontWeight: 700,
-        letterSpacing: 1.5, color: 'var(--accent-primary)', textTransform: 'uppercase', marginBottom: 12,
-      }}>
-        Dynamic Authority Framework
-      </div>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px' }}>
+        {/* Logo + Title */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <div style={{
+            width: 42, height: 42, borderRadius: 8,
+            background: 'rgba(255,255,255,0.1)',
+            border: '1px solid rgba(255,255,255,0.18)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M11 2L3 5.5V11C3 15.4 6.6 19.5 11 21C15.4 19.5 19 15.4 19 11V5.5L11 2Z"
+                stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" fill="rgba(255,255,255,0.08)" />
+              <path d="M7.5 11L9.5 13L14.5 8.5"
+                stroke="rgba(255,255,255,0.85)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2.5, color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', lineHeight: 1 }}>
+              Governance Unit Engine
+            </div>
+            <div style={{ fontSize: 16, fontWeight: 700, color: '#ffffff', marginTop: 4, letterSpacing: 0.2 }}>
+              Contract Risk Assessment
+            </div>
+          </div>
+        </div>
 
-      <h1 className="gradient-text-animated" style={{
-        fontSize: 36, fontWeight: 800, margin: '8px 0',
-        background: theme === 'dark'
-          ? 'linear-gradient(135deg, #e2e8f0, #818cf8, #a78bfa, #e2e8f0)'
-          : 'linear-gradient(135deg, #1e293b, #4338ca, #7c3aed, #1e293b)',
-        backgroundSize: '200% 200%',
-      }}>
-        Governance Unit Engine
-      </h1>
-
-      <p style={{
-        fontSize: 14, color: 'var(--text-tertiary)', maxWidth: 560, margin: '0 auto 20px',
-        lineHeight: 1.6,
-      }}>
-        Replacing static Delegation of Authority tables with dynamic, AI-powered risk scoring
-      </p>
-
-      <div style={{
-        display: 'flex', justifyContent: 'center', gap: 24, flexWrap: 'wrap',
-        fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)',
-      }}>
-        <span><strong style={{ color: 'var(--accent-primary)', fontSize: 18 }}>6</strong> Dimensions</span>
-        <span style={{ color: 'var(--border-primary)' }}>•</span>
-        <span><strong style={{ color: 'var(--accent-primary)', fontSize: 18 }}>5</strong> Tiers</span>
-        <span style={{ color: 'var(--border-primary)' }}>•</span>
-        <span><strong style={{ color: 'var(--accent-primary)', fontSize: 18 }}>∞</strong> Precision</span>
+        {/* Right controls */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+          <span style={{
+            fontSize: 9, fontWeight: 700, letterSpacing: 1.5, textTransform: 'uppercase',
+            color: 'rgba(255,255,255,0.45)', padding: '3px 8px',
+            border: '1px solid rgba(255,255,255,0.18)', borderRadius: 3,
+          }}>
+            Confidential — Internal Use
+          </span>
+          <button
+            onClick={onHistoryOpen}
+            className="btn-interactive"
+            style={{
+              padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.2)',
+              background: 'rgba(255,255,255,0.08)', cursor: 'pointer', fontSize: 11, fontWeight: 600,
+              color: 'rgba(255,255,255,0.8)', display: 'flex', alignItems: 'center', gap: 5,
+            }}
+          >
+            History
+            {history.length > 0 && (
+              <span style={{
+                fontSize: 9, fontWeight: 700, color: '#0f2644', background: 'rgba(255,255,255,0.9)',
+                borderRadius: 10, padding: '1px 5px', minWidth: 16, textAlign: 'center',
+              }}>{history.length}</span>
+            )}
+          </button>
+          <button
+            onClick={toggleTheme}
+            className="btn-interactive"
+            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            style={{
+              padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.2)',
+              background: 'rgba(255,255,255,0.08)', cursor: 'pointer', fontSize: 11, fontWeight: 600,
+              color: 'rgba(255,255,255,0.8)',
+            }}
+          >
+            {theme === 'light' ? 'Dark' : 'Light'}
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -282,53 +314,41 @@ export default function App() {
   }, []);
 
   const tabs = [
-    { id: 'analyzer', label: 'AI Contract Scorer', icon: '\u{1F916}' },
-    { id: 'calculator', label: 'Manual Calculator', icon: '\u{1F9EE}' },
-    { id: 'config', label: 'Configuration', icon: '\u{2699}\u{FE0F}' },
+    { id: 'analyzer', label: 'AI Contract Scorer' },
+    { id: 'calculator', label: 'Manual Calculator' },
+    { id: 'config', label: 'Configuration' },
   ];
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       <HistoryContext.Provider value={{ history, addToHistory, clearHistory }}>
-        <div className="app-container" style={{ maxWidth: 960, margin: '0 auto', padding: '20px 14px', minHeight: '100vh' }}>
-          {/* Top bar */}
-          <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginBottom: 12, gap: 6 }}>
-            <button
-              onClick={() => setHistoryOpen(true)}
-              className="btn-interactive"
-              style={{
-                padding: '6px 10px', borderRadius: 8, border: '1.5px solid var(--border-primary)',
-                background: 'var(--bg-card)', cursor: 'pointer', fontSize: 11, fontWeight: 600,
-                color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: 4,
-                transition: 'all 0.3s',
-              }}
-            >
-              History
-              {history.length > 0 && (
-                <span style={{
-                  fontSize: 9, fontWeight: 700, color: '#fff', background: 'var(--accent-primary)',
-                  borderRadius: 10, padding: '1px 5px', minWidth: 16, textAlign: 'center',
-                }}>{history.length}</span>
-              )}
-            </button>
-            <ThemeToggle theme={theme} toggle={toggleTheme} />
-          </div>
+        <div className="app-container" style={{ maxWidth: 980, margin: '0 auto', padding: '20px 14px', minHeight: '100vh' }}>
 
-          {/* Hero Section */}
-          <HeroSection theme={theme} />
+          {/* Corporate header */}
+          <CorporateHeader
+            theme={theme}
+            toggleTheme={toggleTheme}
+            history={history}
+            onHistoryOpen={() => setHistoryOpen(true)}
+          />
 
-          {/* Tab bar */}
-          <div className="tab-bar" style={{ display: 'flex', justifyContent: 'center', gap: 8, marginBottom: 28, flexWrap: 'wrap' }}>
+          {/* Tab bar — document style */}
+          <div className="tab-bar no-print" style={{
+            background: 'var(--bg-card)', borderRadius: 10,
+            border: '1px solid var(--border-primary)', display: 'flex',
+            marginBottom: 24, overflow: 'hidden', padding: '0 8px',
+          }}>
             {tabs.map(tab => (
-              <button key={tab.id} onClick={() => { setView(tab.id); setRestoredResult(null); }} className="btn-interactive" style={{
-                padding: '10px 22px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                background: view === tab.id
-                  ? (theme === 'dark' ? 'var(--accent-primary)' : '#1e293b')
-                  : 'var(--bg-card)',
-                color: view === tab.id ? '#fff' : 'var(--text-tertiary)',
-                fontSize: 13, fontWeight: 600, transition: 'all 0.3s',
-                boxShadow: view === tab.id ? 'var(--shadow-md)' : 'var(--shadow-sm)',
-              }}>{tab.icon} {tab.label}</button>
+              <button key={tab.id} onClick={() => { setView(tab.id); setRestoredResult(null); }} style={{
+                padding: '11px 20px', background: 'transparent', cursor: 'pointer',
+                border: 'none',
+                borderBottom: view === tab.id ? '2px solid var(--accent-primary)' : '2px solid transparent',
+                color: view === tab.id ? 'var(--accent-primary)' : 'var(--text-tertiary)',
+                fontSize: 13, fontWeight: view === tab.id ? 700 : 500,
+                transition: 'all 0.2s', whiteSpace: 'nowrap',
+              }}>
+                {tab.label}
+              </button>
             ))}
           </div>
 
@@ -344,7 +364,7 @@ export default function App() {
             textAlign: 'center', marginTop: 40, padding: '16px 0',
             borderTop: '1px solid var(--border-primary)', fontSize: 11, color: 'var(--text-muted)',
           }}>
-            GU Engine v2 — Replacing static Delegation of Authority with dynamic risk scoring
+            Governance Unit Engine — Dynamic Contract Risk Assessment — Internal Use Only
           </footer>
         </div>
 
