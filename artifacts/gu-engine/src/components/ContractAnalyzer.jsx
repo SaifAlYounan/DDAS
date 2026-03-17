@@ -1206,48 +1206,6 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
         </div>
       )}
 
-      {/* Upload dropzone — idle state only */}
-      {!active && !result && (
-        <div
-          className="no-print"
-          onClick={() => fileRef.current?.click()}
-          style={{
-            ...cardStyle,
-            marginBottom: 14, cursor: 'pointer',
-            border: '2px dashed var(--border-primary)',
-            background: 'var(--bg-secondary)',
-            padding: '30px 24px',
-            textAlign: 'center',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
-            transition: 'border-color 0.2s, background 0.2s',
-          }}
-          onMouseEnter={e => {
-            e.currentTarget.style.borderColor = 'var(--accent-primary)';
-            e.currentTarget.style.background = 'var(--accent-primary-light)';
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.borderColor = 'var(--border-primary)';
-            e.currentTarget.style.background = 'var(--bg-secondary)';
-          }}
-        >
-          <div style={{
-            width: 52, height: 52, borderRadius: 14,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'var(--accent-primary-light)', border: '1.5px solid var(--border-primary)',
-          }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14,2 14,8 20,8"/>
-              <line x1="12" y1="18" x2="12" y2="12"/>
-              <line x1="9" y1="15" x2="15" y2="15"/>
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>Drop a document here, or click to upload</div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>PDF or image — or describe your transaction in the input below</div>
-          </div>
-        </div>
-      )}
 
       {/* Chat area — visible once a conversation has started */}
       <div className="chat-area no-print" style={{
@@ -1692,11 +1650,54 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
           ...cardStyle,
           padding: '14px 16px',
         }}>
-          {/* Label — shown only when idle */}
+          {/* Upload zone + OR divider — idle state only */}
           {!active && (
-            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1.3, textTransform: 'uppercase', marginBottom: 10 }}>
-              Describe your action or transaction
-            </div>
+            <>
+              <div
+                onClick={() => fileRef.current?.click()}
+                style={{
+                  cursor: 'pointer',
+                  border: '2px dashed var(--border-primary)',
+                  borderRadius: 10,
+                  background: 'var(--bg-secondary)',
+                  padding: '18px 16px',
+                  textAlign: 'center',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+                  marginBottom: 4,
+                  transition: 'border-color 0.2s, background 0.2s',
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.borderColor = 'var(--accent-primary)';
+                  e.currentTarget.style.background = 'var(--accent-primary-light)';
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.borderColor = 'var(--border-primary)';
+                  e.currentTarget.style.background = 'var(--bg-secondary)';
+                }}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14,2 14,8 20,8"/>
+                  <line x1="12" y1="18" x2="12" y2="12"/>
+                  <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>Upload a document</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>Click to attach a PDF or image (contract, deck, memorandum)</div>
+                </div>
+              </div>
+
+              {/* OR divider */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '10px 0' }}>
+                <div style={{ flex: 1, height: 1, background: 'var(--border-secondary)' }} />
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1 }}>OR</span>
+                <div style={{ flex: 1, height: 1, background: 'var(--border-secondary)' }} />
+              </div>
+
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1.3, textTransform: 'uppercase', marginBottom: 8 }}>
+                Describe your action or transaction
+              </div>
+            </>
           )}
 
           {/* Attached file badge */}
@@ -1712,22 +1713,24 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
 
           <div className="input-row" style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
             <input ref={fileRef} type="file" accept=".pdf,image/*" onChange={e => { setFile(e.target.files[0] || null); e.target.value = ''; }} style={{ display: 'none' }} />
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="btn-interactive"
-              title="Attach a PDF or image"
-              style={{
-                padding: '10px 12px', borderRadius: 10,
-                border: '1.5px solid var(--border-primary)',
-                background: 'var(--bg-tertiary)', cursor: 'pointer',
-                fontSize: 16, color: 'var(--text-tertiary)', minHeight: 44,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-              }}
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
-              </svg>
-            </button>
+            {active && (
+              <button
+                onClick={() => fileRef.current?.click()}
+                className="btn-interactive"
+                title="Attach a PDF or image"
+                style={{
+                  padding: '10px 12px', borderRadius: 10,
+                  border: '1.5px solid var(--border-primary)',
+                  background: 'var(--bg-tertiary)', cursor: 'pointer',
+                  fontSize: 16, color: 'var(--text-tertiary)', minHeight: 44,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                </svg>
+              </button>
+            )}
             <textarea
               value={input} onChange={e => setInput(e.target.value)} onKeyDown={onKey}
               placeholder={active ? "Answer the system's questions, or add more detail..." : 'Paste a contract, describe a transaction, or type a question...'}
