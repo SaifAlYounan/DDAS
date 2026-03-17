@@ -1126,40 +1126,55 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
       {/* Demo box: org profile + sample contracts (idle state only) */}
       {!active && (
         <div className="profile-selector no-print" style={{ ...cardStyle, marginBottom: 14, padding: 0, overflow: 'hidden' }}>
-          <div style={{ padding: '8px 14px', background: 'rgba(30,74,122,0.06)', borderBottom: '1px solid rgba(30,74,122,0.12)', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 12 }}>🔵</span>
-            <span style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.4, color: '#1e4a7a', textTransform: 'uppercase' }}>Demo Environment</span>
+          {/* Header */}
+          <div style={{ padding: '11px 16px', background: 'linear-gradient(135deg, rgba(15,38,68,0.07) 0%, rgba(30,74,122,0.10) 100%)', borderBottom: '1px solid rgba(30,74,122,0.14)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px 3px 8px', borderRadius: 20, background: '#0f2644' }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#5b8fbe', flexShrink: 0 }} />
+              <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.8, color: '#fff', textTransform: 'uppercase' }}>Demo</span>
+            </div>
+            <span style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-secondary)' }}>Configure your organization profile before analysing an action</span>
           </div>
-          <div style={{ padding: '12px 14px' }}>
-          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.5 }}>
-            Choose your organization profile for automatic calibration. In a live deployment this is approved by the Board of Directors and hardwired in the Configuration section.
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Select the type of your organization:</span>
-            {Object.entries(config.profiles).map(([id, prof]) => (
-              <button key={id} onClick={() => setProfile(id)} className="btn-interactive" style={{
-                padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                border: profile === id ? '2px solid var(--accent-primary)' : '1.5px solid var(--border-primary)',
-                background: profile === id ? 'var(--accent-primary-light)' : 'var(--bg-card)',
-                color: profile === id ? 'var(--accent-primary)' : 'var(--text-muted)',
-                transition: 'all 0.3s',
-              }}>{prof.label}</button>
-            ))}
-          </div>
-          <div style={{ paddingTop: 10, borderTop: '1px solid var(--border-secondary)', fontSize: 12, color: 'var(--text-muted)' }}>
-            Don&rsquo;t have an action to describe?{' '}
-            <button
-              onClick={() => send(DEMO_SETTLEMENT, '\uD83D\uDCC4 Sample: Settlement Agreement — Meridian Resources / Atlas Mining Services')}
-              className="btn-interactive"
-              style={{
-                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
-                color: 'var(--accent-primary)', fontWeight: 700, fontSize: 12,
-                textDecoration: 'underline', textUnderlineOffset: 2,
-              }}
-            >
-              Click here to try with a sample settlement agreement.
-            </button>
-          </div>
+
+          <div style={{ padding: '14px 16px' }}>
+            {/* Profile selector */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 }}>Organization type:</span>
+              {Object.entries(config.profiles).map(([id, prof]) => (
+                <button key={id} onClick={() => setProfile(id)} className="btn-interactive" style={{
+                  padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                  border: profile === id ? '2px solid var(--accent-primary)' : '1.5px solid var(--border-primary)',
+                  background: profile === id ? 'var(--accent-primary-light)' : 'var(--bg-card)',
+                  color: profile === id ? 'var(--accent-primary)' : 'var(--text-muted)',
+                  transition: 'all 0.2s',
+                }}>{prof.label}</button>
+              ))}
+            </div>
+
+            {/* Sample contracts grid */}
+            <div style={{ borderTop: '1px solid var(--border-secondary)', paddingTop: 12 }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1.3, textTransform: 'uppercase', marginBottom: 8 }}>
+                Try a sample transaction
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6 }}>
+                {[...SAMPLES, { label: 'Settlement Agreement', icon: '\u2696\uFE0F', text: DEMO_SETTLEMENT }].map((s, i) => (
+                  <button
+                    key={i}
+                    onClick={() => send(s.text, `${s.icon} Sample: ${s.label}`)}
+                    className="btn-interactive"
+                    style={{
+                      padding: '8px 10px', borderRadius: 8,
+                      border: '1.5px solid var(--border-primary)',
+                      background: 'var(--bg-card)', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: 7,
+                      textAlign: 'left',
+                    }}
+                  >
+                    <span style={{ fontSize: 15, flexShrink: 0, lineHeight: 1 }}>{s.icon}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', lineHeight: 1.3 }}>{s.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -1181,19 +1196,57 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
         </div>
       )}
 
-      {/* Chat area */}
+      {/* Upload dropzone — idle state only */}
+      {!active && !result && (
+        <div
+          className="no-print"
+          onClick={() => fileRef.current?.click()}
+          style={{
+            ...cardStyle,
+            marginBottom: 14, cursor: 'pointer',
+            border: '2px dashed var(--border-primary)',
+            background: 'var(--bg-secondary)',
+            padding: '30px 24px',
+            textAlign: 'center',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10,
+            transition: 'border-color 0.2s, background 0.2s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.borderColor = 'var(--accent-primary)';
+            e.currentTarget.style.background = 'var(--accent-primary-light)';
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.borderColor = 'var(--border-primary)';
+            e.currentTarget.style.background = 'var(--bg-secondary)';
+          }}
+        >
+          <div style={{
+            width: 52, height: 52, borderRadius: 14,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'var(--accent-primary-light)', border: '1.5px solid var(--border-primary)',
+          }}>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 3 }}>Drop a document here, or click to upload</div>
+            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>PDF or image — or describe your transaction in the input below</div>
+          </div>
+        </div>
+      )}
+
+      {/* Chat area — visible once a conversation has started */}
       <div className="chat-area no-print" style={{
         ...cardStyle, background: 'var(--bg-chat)', maxHeight: 450, overflowY: 'auto',
         padding: active ? 16 : 0, marginBottom: 14, minHeight: active ? 120 : 0,
+        display: active ? 'block' : 'none',
         transition: 'all 0.3s',
       }}>
-        {!active && !result && (
-          <div onClick={() => fileRef.current?.click()} style={{ padding: 24, textAlign: 'center', cursor: 'pointer', transition: 'all 0.3s' }}>
-            <div style={{ fontSize: 28 }}>{'\uD83D\uDCC4'}</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-secondary)', marginTop: 4 }}>Drop a document here, or click to upload</div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 3 }}>PDF, images — or type/paste text below</div>
-          </div>
-        )}
+        {false && null /* dropzone removed — now rendered above as standalone */}
 
         {chat.map((msg, i) => {
           if (msg.from === 'user') return (
@@ -1627,27 +1680,55 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
 
       {/* Input area */}
       {!result && (
-        <div className="input-area no-print">
+        <div className="input-area no-print" style={{
+          ...cardStyle,
+          padding: '14px 16px',
+        }}>
+          {/* Label — shown only when idle */}
+          {!active && (
+            <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1.3, textTransform: 'uppercase', marginBottom: 10 }}>
+              Describe your action or transaction
+            </div>
+          )}
+
+          {/* Attached file badge */}
           {file && (
-            <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '4px 10px', background: 'var(--accent-primary-light)', borderRadius: 6, fontSize: 12, fontWeight: 600, color: 'var(--accent-primary)' }}>
+            <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '4px 10px', background: 'var(--accent-primary-light)', borderRadius: 6, fontSize: 12, fontWeight: 600, color: 'var(--accent-primary)', border: '1px solid var(--border-primary)' }}>
+                <span style={{ fontSize: 13 }}>📎</span>
                 {file.name}
-                <button onClick={() => setFile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent-secondary)', fontSize: 14, fontWeight: 700, padding: 0 }}>x</button>
+                <button onClick={() => setFile(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', fontSize: 14, fontWeight: 700, padding: 0, lineHeight: 1 }}>×</button>
               </div>
             </div>
           )}
+
           <div className="input-row" style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
             <input ref={fileRef} type="file" accept=".pdf,image/*" onChange={e => { setFile(e.target.files[0] || null); e.target.value = ''; }} style={{ display: 'none' }} />
-            <button onClick={() => fileRef.current?.click()} className="btn-interactive" style={{ padding: '10px 12px', borderRadius: 10, border: '1.5px solid var(--border-primary)', background: 'var(--bg-card)', cursor: 'pointer', fontSize: 16, color: 'var(--text-tertiary)', minHeight: 44 }}>{'\uD83D\uDCCE'}</button>
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="btn-interactive"
+              title="Attach a PDF or image"
+              style={{
+                padding: '10px 12px', borderRadius: 10,
+                border: '1.5px solid var(--border-primary)',
+                background: 'var(--bg-tertiary)', cursor: 'pointer',
+                fontSize: 16, color: 'var(--text-tertiary)', minHeight: 44,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}
+            >
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
             <textarea
               value={input} onChange={e => setInput(e.target.value)} onKeyDown={onKey}
-              placeholder={active ? "Answer the advisor's questions..." : 'Paste an action description, contract text, or describe a transaction...'}
+              placeholder={active ? "Answer the system's questions, or add more detail..." : 'Paste a contract, describe a transaction, or type a question...'}
               rows={active ? 2 : 4}
               style={{
                 flex: 1, padding: 12, borderRadius: 10, border: '1.5px solid var(--border-primary)',
                 fontSize: 13, lineHeight: 1.6, color: 'var(--text-primary)', resize: 'vertical',
                 fontFamily: 'inherit', outline: 'none', minHeight: active ? 44 : 90,
-                background: 'var(--bg-input)', transition: 'border-color 0.3s',
+                background: 'var(--bg-input)', transition: 'border-color 0.2s',
               }}
               onFocus={e => e.target.style.borderColor = 'var(--border-focus)'}
               onBlur={e => e.target.style.borderColor = 'var(--border-primary)'}
@@ -1655,10 +1736,11 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             <button onClick={() => send()} disabled={loading || (!input.trim() && !file)} className="btn-interactive" style={{
               padding: '12px 22px', borderRadius: 10, border: 'none', cursor: loading ? 'wait' : 'pointer',
               background: loading ? 'var(--text-muted)' : 'var(--accent-primary)', color: '#fff',
-              fontSize: 13, fontWeight: 700, minHeight: 44, opacity: (!input.trim() && !file) ? 0.5 : 1,
+              fontSize: 13, fontWeight: 700, minHeight: 44,
+              opacity: (!input.trim() && !file) ? 0.5 : 1,
               boxShadow: loading ? 'none' : 'var(--shadow-accent)',
-              transition: 'all 0.3s',
-            }}>{loading ? 'Analyzing...' : active ? 'Send' : 'Analyze'}</button>
+              transition: 'all 0.2s',
+            }}>{loading ? 'Analyzing…' : active ? 'Send' : 'Analyze →'}</button>
           </div>
         </div>
       )}
