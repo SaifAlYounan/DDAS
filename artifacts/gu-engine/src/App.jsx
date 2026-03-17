@@ -35,7 +35,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
     'Fully confidential — nothing is stored at the application level',
   ];
   const steps = [
-    { n: '1', title: 'Describe or Upload', desc: 'Paste a transaction description or upload a contract PDF. The system extracts what it needs.' },
+    { n: '1', title: 'Describe or Upload', desc: 'Paste an action description or upload a supporting document. The system extracts what it needs.' },
     { n: '2', title: 'AI Scores Risk', desc: 'Claude AI scores 6 risk dimensions, identifies red flags, missing clauses, and precedent risk.' },
     { n: '3', title: 'Get a Governance Decision', desc: 'Receive an instant approval tier, required signatories, and endorsing functions — with rationale.' },
   ];
@@ -67,13 +67,13 @@ function HowItWorks({ onGetStarted, onMethodology }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
           <button onClick={() => scrollToSection('how-it-works')} style={{ background: 'none', border: 'none', fontSize: 14, color: '#475569', cursor: 'pointer', fontFamily: 'Arial, sans-serif' }}>How It Works</button>
-          <button onClick={onMethodology} style={{ background: 'none', border: 'none', fontSize: 14, color: '#475569', cursor: 'pointer', fontFamily: 'Arial, sans-serif' }}>Methodology</button>
+          <button onClick={onMethodology} style={{ background: 'none', border: 'none', fontSize: 14, color: '#475569', cursor: 'pointer', fontFamily: 'Arial, sans-serif' }}>Concept</button>
           <button onClick={onGetStarted} style={{
             padding: '8px 20px', background: NAV, color: '#fff',
             border: 'none', borderRadius: 6, fontSize: 14, fontWeight: 700, cursor: 'pointer',
             fontFamily: 'Arial, sans-serif',
           }}>
-            Analyse a Contract →
+            Analyse an Action →
           </button>
         </div>
       </nav>
@@ -97,7 +97,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
             cursor: 'pointer', fontFamily: 'Arial, sans-serif',
             boxShadow: '0 4px 14px rgba(15,38,68,0.3)',
           }}>
-            Analyse a Contract →
+            Analyse an Action →
           </button>
           <button onClick={() => scrollToSection('how-it-works')} style={{
             padding: '13px 28px', background: 'transparent', color: NAV,
@@ -155,7 +155,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
       {/* ── How It Works ── */}
       <div id="how-it-works" style={{ maxWidth: 900, margin: '0 auto 64px', padding: '0 24px', textAlign: 'center' }}>
         <h2 style={{ fontSize: 30, fontWeight: 800, color: '#1e293b', marginBottom: 8 }}>How It Works</h2>
-        <p style={{ fontSize: 15, color: '#64748b', marginBottom: 40 }}>Three steps from contract to governance decision.</p>
+        <p style={{ fontSize: 15, color: '#64748b', marginBottom: 40 }}>Three steps from action description to governance decision.</p>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 24 }}>
           {steps.map((s, i) => (
             <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
@@ -196,7 +196,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
         <div style={{ background: 'linear-gradient(135deg, #0f2644 0%, #1e4a7a 100%)', borderRadius: 14, padding: '52px 48px', textAlign: 'center' }}>
           <h2 style={{ fontSize: 28, fontWeight: 800, color: '#fff', marginBottom: 12 }}>Ready to Try It?</h2>
           <p style={{ fontSize: 15, color: 'rgba(255,255,255,0.65)', marginBottom: 32, lineHeight: 1.65 }}>
-            Upload a contract, paste a transaction description, or run our built-in demo.
+            Describe an action or upload a supporting document, or run our built-in demo.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button onClick={onGetStarted} style={{
@@ -204,14 +204,14 @@ function HowItWorks({ onGetStarted, onMethodology }) {
               border: 'none', borderRadius: 7, fontSize: 15, fontWeight: 800,
               cursor: 'pointer', fontFamily: 'Arial, sans-serif',
             }}>
-              Analyse a Contract →
+              Analyse an Action →
             </button>
             <button onClick={onMethodology} style={{
               padding: '13px 28px', background: 'transparent', color: 'rgba(255,255,255,0.85)',
               border: '1.5px solid rgba(255,255,255,0.3)', borderRadius: 7, fontSize: 15,
               fontWeight: 600, cursor: 'pointer', fontFamily: 'Arial, sans-serif',
             }}>
-              View Methodology
+              View Concept
             </button>
           </div>
         </div>
@@ -301,7 +301,7 @@ function WhyUseful() {
   return (
     <div style={{ maxWidth: 760, margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
       <div style={{ padding: '20px 24px', marginBottom: 18, background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', borderLeft: '5px solid #0f2644', boxShadow: '0 1px 4px rgba(15,38,68,0.07)' }}>
-        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', color: '#5b8fbe', marginBottom: 10 }}>Methodology · Whitepaper</div>
+        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', color: '#5b8fbe', marginBottom: 10 }}>Concept · Whitepaper</div>
         <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', margin: '0 0 10px' }}>Why a Dynamic Delegation of Authority?</h1>
         <p style={{ fontSize: 13.5, color: '#475569', lineHeight: 1.75, margin: 0 }}>A technical overview of the GU scoring model — from the limitations of traditional DoA frameworks to a risk-weighted, AI-assisted governance algorithm.</p>
       </div>
@@ -344,7 +344,7 @@ function AppSidebar({ view, setView, history, onHistoryOpen, theme, toggleTheme,
     { id: 'config', label: 'Configuration', icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
     )},
-    { id: 'why', label: 'Methodology', icon: (
+    { id: 'why', label: 'Concept', icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
     )},
   ];
@@ -426,7 +426,7 @@ function AppTopBar({ view, history, onHistoryOpen, onExport, hasResult }) {
     analyzer: 'AI Governance Scorer',
     calculator: 'Manual Calculator',
     config: 'Configuration',
-    why: 'Methodology',
+    why: 'Concept',
   };
 
   return (
