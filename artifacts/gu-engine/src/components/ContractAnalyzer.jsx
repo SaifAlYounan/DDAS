@@ -978,26 +978,24 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               <div key={i} className="card-entrance" style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 10 }}>
                 <div style={{ maxWidth: '90%', padding: '14px 16px', borderRadius: 12, background: 'var(--bg-card)', border: '1px solid var(--border-primary)', fontSize: 13, lineHeight: 1.6 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--accent-primary)', marginBottom: 8 }}>GU ADVISOR</div>
-                  <div style={{ color: 'var(--text-primary)', marginBottom: 10 }}>{d.summary}</div>
 
                   {d.information_available?.length > 0 && (
-                    <div style={{ padding: 10, background: '#ecfdf5', borderRadius: 8, border: '1px solid #a7f3d0', marginBottom: 10 }}>
-                      <div style={{ fontSize: 10, fontWeight: 700, color: '#059669', textTransform: 'uppercase', marginBottom: 4 }}>Identified</div>
-                      {d.information_available.map((x, j) => <div key={j} style={{ fontSize: 12, color: '#065f46', padding: '2px 0' }}>- {x}</div>)}
+                    <div style={{ padding: '8px 12px', background: 'var(--bg-hover)', borderRadius: 7, border: '1px solid var(--border-secondary)', marginBottom: 12 }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: 4 }}>Identified</div>
+                      {d.information_available.map((x, j) => <div key={j} style={{ fontSize: 12, color: 'var(--text-secondary)', padding: '1px 0' }}>— {x}</div>)}
                     </div>
                   )}
 
-                  <div style={{ padding: 10, background: '#fffbeb', borderRadius: 8, border: '1px solid #fde68a' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: '#d97706', textTransform: 'uppercase', marginBottom: 6 }}>Need to know</div>
+                  <div style={{ color: 'var(--text-primary)', marginBottom: 10 }}>To score this transaction, the system needs a few more details:</div>
+
+                  <ol style={{ paddingLeft: 18, margin: '0 0 12px' }}>
                     {d.gaps?.map((g, j) => (
-                      <div key={j} style={{ padding: '8px 0', borderBottom: j < d.gaps.length - 1 ? '1px solid #fde68a' : 'none' }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#92400e' }}>{g.question}</div>
-                        <div style={{ fontSize: 11, color: '#a16207', marginTop: 2 }}>
-                          {g.why_it_matters}
-                          {g.dimension_affected && <span style={{ marginLeft: 6, padding: '1px 6px', background: '#fef3c7', borderRadius: 3, fontSize: 10, fontWeight: 600 }}>{g.dimension_affected}</span>}
-                        </div>
-                      </div>
+                      <li key={j} style={{ color: 'var(--text-primary)', marginBottom: 6 }}>{g.question}</li>
                     ))}
+                  </ol>
+
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                    Just type your answers numbered (e.g. 1. Yes, first time &nbsp; 2. Milestone-based with exit clause) — no need to repeat the questions.
                   </div>
                 </div>
               </div>
