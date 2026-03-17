@@ -80,6 +80,42 @@ First carbon credit offtake for this buyer. Seller has 3 prior Verra projects (t
   },
 ];
 
+const DEMO_SETTLEMENT = `SETTLEMENT AGREEMENT — Dated 14 March 2022
+
+Parties:
+- Meridian Resources Corporation S.A. (Principal), 45 Avenue de la République, Libreville, Republic of Gabon
+- Atlas Mining Services Ltd, Plot 7, Zone Industrielle, Libreville
+- Consolidated Works International SAS, Tour Montparnasse, 33 Avenue du Maine, 75015 Paris, France (together "Contractor")
+
+Background:
+The Principal entered into a Mining Services Contract dated 15 September 2018 with the Contractor. Various claims and disputes arose during performance. On 22 November 2020, Principal submitted an Overburden Removal Claim to ICC Arbitration No. 26891/AZR. On 18 January 2021, Contractor introduced a counterclaim (Ore Hardness Claim). Additional disputes outside the arbitration include the Currency Dispute, Bench Height Dispute, Stockpile Loading Dispute, Blast Pattern Sampling dispute, and Cost Adjustment for Regional Labour Index 2022.
+
+Settlement Terms:
+2.1 Full and final settlement of all claims including: Overburden Removal Claim, Ore Hardness Claim, Currency Dispute, Bench Height Dispute, and Stockpile Loading Dispute.
+2.2 Contractor also settles all other claims based on events prior to this Agreement, except two ongoing commercial discussions: (a) Blast Pattern Sampling — Impact on Drilling Productivity; (b) Cost Adjustment for Regional Labour Index 2022.
+2.4 Parties shall jointly notify the ICC to terminate the Arbitration. Neither party may restart the arbitration or commence new proceedings on any settled claim.
+
+Settlement Amount and Costs:
+2.7 (a) Principal shall pay USD 650,000 to Contractor in full and final settlement.
+(b) Each Party bears its own negotiation costs.
+(c) Each Party bears its own legal costs for the Arbitration.
+(d) ICC fees reimbursed shall be paid to Principal (who paid USD 25,000; Contractor paid nothing).
+(e) If ICC requires additional payments: first USD 25,000 borne by Contractor alone; amounts beyond USD 25,000 shared equally.
+2.8 Payment to: CONSOLIDATED WORKS INTERNATIONAL (USD), IBAN: FR76 0418 2700 9214 5600, BIC: BNPAFRPP (BNP Paribas, Paris).
+2.9 Payment due within 30 days of execution. Late interest at 4.75% per annum, simple (not compound), from day 31.
+2.10 Settlement amount is for settling Claims only, not to compensate for works done.
+
+Operational Representations (non-binding on contract rates):
+(a) Parties cooperating on overburden removal review criteria.
+(b) Working together for weekly Mine Plan reliability within 12% variation.
+(c) Optimising train loading time within contractual Export Ore quantity of 11.8 million tonnes/year.
+
+Confidentiality (Clause 3): Strictly confidential. No disclosure of Agreement, terms, Arbitration existence or content, except as required by applicable law.
+
+Governing Law: Laws of England and Wales. Disputes resolved by LCIA arbitration, London, three-arbitrator tribunal.
+
+Standard Clauses: Entire agreement, no admission of liability, mutual indemnities, no third party beneficiaries, modifications in writing, no assignment without consent.`;
+
 // Maps API score keys → config dimension keys
 const API_SCORE_MAP = {
   financial_exposure: 'financial',
@@ -759,13 +795,13 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
     if (onResultClear) onResultClear();
   };
 
-  const send = async (retryText) => {
+  const send = async (retryText, displayText) => {
     const txt = (retryText || input).trim();
     if (!txt && !file) return;
     setError(null);
 
-    if (!retryText) {
-      const display = [file ? `\uD83D\uDCCE ${file.name}` : '', txt].filter(Boolean).join('\n');
+    if (!retryText || displayText) {
+      const display = displayText || [file ? `\uD83D\uDCCE ${file.name}` : '', txt].filter(Boolean).join('\n');
       setChat(prev => [...prev, { from: 'user', text: display }]);
     }
 
@@ -900,7 +936,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10, lineHeight: 1.5 }}>
             Choose your organization profile for automatic calibration. In the &ldquo;real world&rdquo; this part is approved by the Board of Directors and hardwired in the Configuration section, which you can consult above.
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Select the type of your organization:</span>
             {Object.entries(config.profiles).map(([id, prof]) => (
               <button key={id} onClick={() => setProfile(id)} className="btn-interactive" style={{
@@ -911,6 +947,20 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                 transition: 'all 0.3s',
               }}>{prof.label}</button>
             ))}
+          </div>
+          <div style={{ paddingTop: 10, borderTop: '1px solid var(--border-secondary)', fontSize: 12, color: 'var(--text-muted)' }}>
+            Don&rsquo;t have a contract to upload?{' '}
+            <button
+              onClick={() => send(DEMO_SETTLEMENT, '\uD83D\uDCC4 Sample: Settlement Agreement — Meridian Resources / Atlas Mining Services')}
+              className="btn-interactive"
+              style={{
+                background: 'none', border: 'none', padding: 0, cursor: 'pointer',
+                color: 'var(--accent-primary)', fontWeight: 700, fontSize: 12,
+                textDecoration: 'underline', textUnderlineOffset: 2,
+              }}
+            >
+              Click here to try with a sample settlement agreement.
+            </button>
           </div>
         </div>
       )}
