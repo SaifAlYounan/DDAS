@@ -1,0 +1,18 @@
+Add a new tab called "How It Works" after the Configuration tab. It should display an educational page explaining the GU Engine concept. Use clean typography, no interactive elements — just well-formatted text with section headers. Here's the content:
+
+Section 1 - Title: "The Problem with Traditional DoAs"
+Text: "A Delegation of Authority table is a static lookup: action type → dollar threshold → approver. It treats a routine $500K equipment replacement the same as a $500K investment in an untested market. The procedural cost is identical, even though the risk profiles are completely different. This leads to two failure modes: over-governance of routine matters (slowing the organization), and under-governance of novel risks that happen to fall below a dollar threshold."
+
+Section 2 - Title: "The GU Model"
+Text: "Instead of mapping actions to approvers, we map risk profiles to a single scalar: Governance Units. The GU cost is a weighted composite of multiple risk dimensions — financial exposure, reversibility, regulatory complexity, reputational impact, precedent-setting nature, and stakeholder complexity. The weights are tunable per organization type. A regulated bank will weight compliance risk higher; a startup will weight financial exposure and speed."
+
+Section 3 - Title: "From Table to Algorithm"
+Text: "The traditional DoA is a lookup table maintained in a policy document. The GU model is an algorithm that can be embedded in any workflow system. When someone initiates a purchase order, contract, or investment, the system scores the risk dimensions (some automatically from metadata, some via a short questionnaire) and computes the GU cost. The approval pathway is determined dynamically. No table to maintain. No ambiguity about which row applies."
+
+Section 4 - Title: "Where AI Comes In"
+Text: "AI can auto-score several dimensions by analyzing transaction metadata: financial exposure from the amount, regulatory risk from contract clauses or counterparty jurisdiction, precedent from historical transaction matching, and stakeholder complexity from org-chart analysis. The human only validates or adjusts the AI's assessment, reducing friction on routine transactions to near-zero while ensuring novel risks get the scrutiny they deserve."
+
+Section 5 - Title: "Continuous Calibration"
+Text: "Unlike a static DoA that's reviewed annually, a GU model can learn. If transactions scored at 25 GU consistently require no escalation beyond manager review, the tier boundaries can be adjusted. If a class of transactions scored low later turns out to cause problems, the weighting model can be retrained. The governance framework becomes a living system."
+
+Style it with a clean card layout, subtle section dividers, and icons for each section. Make it feel like a whitepaper or methodology document.
