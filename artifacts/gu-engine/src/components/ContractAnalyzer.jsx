@@ -668,6 +668,9 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
     }
     win.document.write(html);
     win.document.close();
+    setTimeout(() => {
+      try { win.document.defaultView.print(); } catch (_) { /* inline script fallback */ }
+    }, 650);
   }, [result, liveGU, config]);
 
   const onKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
