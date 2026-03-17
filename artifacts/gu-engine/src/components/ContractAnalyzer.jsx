@@ -1332,7 +1332,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                       ) : (
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, alignItems: 'stretch' }}>
                           {execChain.map((item, i) => (
-                            <React.Fragment key={i}>
+                            <div key={i} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
                               <div style={{
                                 background: i === 0 ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)',
                                 border: `1px solid ${i === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.12)'}`,
@@ -1346,7 +1346,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                               {i < execChain.length - 1 && (
                                 <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px', color: 'rgba(255,255,255,0.25)', fontSize: 18, fontWeight: 300 }}>→</div>
                               )}
-                            </React.Fragment>
+                            </div>
                           ))}
                         </div>
                       )}
