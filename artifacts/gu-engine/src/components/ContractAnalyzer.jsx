@@ -1263,127 +1263,119 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               <div style={{ flex: 1, minWidth: 0 }}>
             <GovernanceMemo result={result} liveGU={liveGU} tier={tier} />
 
-            <MemoSection label="Governance Assessment" />
-            {/* GU Hero */}
-            <div className="gu-hero" style={{ background: tier.bg, borderRadius: 14, padding: 24, border: `2px solid ${tier.border}`, marginBottom: 14, position: 'relative', overflow: 'hidden' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 10 }}>
-                <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 1.5 }}>
-                    Governance Cost {liveGU.hasOverrides && <span style={{ color: '#f59e0b' }}>- manually adjusted</span>}
-                  </div>
-                  <div className="gu-hero-score score-reveal" style={{ fontSize: 50, fontWeight: 800, color: tier.color, lineHeight: 1.1 }}>{liveGU.primary.gu}<span style={{ fontSize: 20, fontWeight: 600 }}> GU</span></div>
-                </div>
-                <div style={{ textAlign: 'right' }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 1.5 }}>Required Tier</div>
-                  <div className="gu-hero-tier score-reveal" style={{ fontSize: 28, fontWeight: 800, color: tier.color, animationDelay: '0.2s' }}>{tier.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>{liveGU.primary.tier.approver}</div>
-                  <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>SLA: {liveGU.primary.tier.sla}</div>
-                  {liveGU.primary.floorApplied && (
-                    <div style={{ marginTop: 4, fontSize: 10, fontWeight: 700, color: '#dc2626', padding: '2px 8px', background: '#fef2f2', borderRadius: 4, display: 'inline-block' }}>
-                      Floor rule: {liveGU.primary.floorApplied}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div style={{ marginTop: 16, height: 10, background: '#e2e8f0', borderRadius: 5, overflow: 'hidden' }}>
-                <div style={{ width: `${Math.min(liveGU.primary.gu, 100)}%`, height: '100%', background: `linear-gradient(90deg,#10b981,${tier.color})`, borderRadius: 5, transition: 'width 0.5s' }} />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 4 }}>
-                {TIERS.map(t => <span key={t.name} style={{ fontSize: 9, fontWeight: 600, color: tier.name === t.name ? t.color : '#cbd5e1' }}>{t.name}</span>)}
-              </div>
-            </div>
+            {/* ══════════════════════════════════════════
+                1. EXECUTIVE SUMMARY — dark navy verdict card
+                ══════════════════════════════════════════ */}
+            {(() => {
+              const approver = liveGU.primary.tier?.approver || '';
+              const appAuth = result.analysis?.approval_authority || '';
+              const endorsing = result.analysis?.endorsing_functions || [];
+              const execChain = [
+                { role: appAuth || approver, label: 'Final Authority' },
+                ...endorsing.map(fn => ({ role: fn, label: 'Endorsement' })),
+              ].filter(c => c.role);
+              return (
+                <div className="gu-hero card-entrance" style={{
+                  background: 'linear-gradient(135deg, #0c1f3a 0%, #183560 100%)',
+                  borderRadius: 16, padding: '28px 30px', marginBottom: 20,
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  boxShadow: '0 6px 32px rgba(15,38,68,0.45)',
+                  position: 'relative', overflow: 'hidden',
+                }}>
+                  {/* Subtle background glow */}
+                  <div style={{ position: 'absolute', top: -60, right: -60, width: 240, height: 240, borderRadius: '50%', background: `radial-gradient(circle, ${tier.color}18 0%, transparent 70%)`, pointerEvents: 'none' }} />
 
+                  {/* Header */}
+                  <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 22, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
+                    Executive Summary — Governance Decision
+                    {liveGU.hasOverrides && <span style={{ color: '#f59e0b', marginLeft: 4 }}>· manually adjusted</span>}
+                  </div>
+
+                  {/* Score + Tier + Chain */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'auto auto 1fr', gap: 28, alignItems: 'flex-start', marginBottom: 22 }}>
+
+                    {/* Score */}
+                    <div>
+                      <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>Governance Score</div>
+                      <div className="score-reveal" style={{ fontSize: 72, fontWeight: 900, color: tier.color, lineHeight: 1, textShadow: `0 0 40px ${tier.color}66` }}>
+                        {liveGU.primary.gu}
+                      </div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 5 }}>out of 100</div>
+                    </div>
+
+                    {/* Tier */}
+                    <div style={{ borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: 24 }}>
+                      <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: 'rgba(255,255,255,0.4)', marginBottom: 8 }}>Approval Tier</div>
+                      <div style={{
+                        display: 'inline-block', background: `${tier.color}22`,
+                        border: `2px solid ${tier.color}`, borderRadius: 10,
+                        padding: '8px 18px', marginBottom: 8,
+                      }}>
+                        <div className="score-reveal" style={{ fontSize: 24, fontWeight: 800, color: tier.color, animationDelay: '0.15s' }}>{tier.name}</div>
+                      </div>
+                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>SLA: {liveGU.primary.tier.sla}</div>
+                      {liveGU.primary.floorApplied && (
+                        <div style={{ marginTop: 8, fontSize: 10, fontWeight: 700, color: '#fca5a5', padding: '3px 8px', background: 'rgba(239,68,68,0.15)', borderRadius: 4, display: 'inline-block', border: '1px solid rgba(239,68,68,0.3)' }}>
+                          ⚠ Floor rule: {liveGU.primary.floorApplied}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Approval Chain — routing slip */}
+                    <div style={{ borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: 24 }}>
+                      <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>
+                        Required Approval Chain
+                      </div>
+                      {execChain.length === 0 ? (
+                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>No chain data yet.</div>
+                      ) : (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, alignItems: 'stretch' }}>
+                          {execChain.map((item, i) => (
+                            <React.Fragment key={i}>
+                              <div style={{
+                                background: i === 0 ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)',
+                                border: `1px solid ${i === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.12)'}`,
+                                borderRadius: 8, padding: '10px 14px',
+                              }}>
+                                <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, color: i === 0 ? tier.color : 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
+                                  {item.label}
+                                </div>
+                                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1.3, maxWidth: 180 }}>{item.role}</div>
+                              </div>
+                              {i < execChain.length - 1 && (
+                                <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px', color: 'rgba(255,255,255,0.25)', fontSize: 18, fontWeight: 300 }}>→</div>
+                              )}
+                            </React.Fragment>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Tier progress bar */}
+                  <div style={{ height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
+                    <div style={{ width: `${Math.min(liveGU.primary.gu, 100)}%`, height: '100%', background: `linear-gradient(90deg,#10b981,${tier.color})`, borderRadius: 3, transition: 'width 0.6s' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
+                    {TIERS.map(t => <span key={t.name} style={{ fontSize: 9, fontWeight: 700, color: tier.name === t.name ? t.color : 'rgba(255,255,255,0.18)' }}>{t.name}</span>)}
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* ══════════════════════════════════════════
+                2. SPIDER / RADAR CHART
+                ══════════════════════════════════════════ */}
             <MemoSection label="Risk Profile" />
-            {/* Radar Chart */}
             <div style={{ ...cardStyle, padding: 20, marginBottom: 14, display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
               <RadarChart scores={aiScores} />
             </div>
 
-            {/* Contract Analysis */}
-            {a.contract_analysis && (
-              <div className="contract-analysis-section" style={{ ...cardStyle, padding: 20, marginBottom: 14 }}>
-                <MemoSection label="Contract Analysis" />
-
-                {a.contract_analysis.red_flags?.length > 0 && (
-                  <div style={{ marginBottom: 14 }}>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', marginBottom: 8 }}>Red Flags ({a.contract_analysis.red_flags.length})</div>
-                    {a.contract_analysis.red_flags.map((f, i) => (
-                      <div key={i} className="card-entrance" style={{
-                        padding: 12, marginBottom: 6, borderRadius: 8,
-                        background: f.severity === 'high' ? '#fef2f2' : f.severity === 'medium' ? '#fff7ed' : '#fefce8',
-                        border: `1px solid ${f.severity === 'high' ? '#fecaca' : f.severity === 'medium' ? '#fed7aa' : '#fef08a'}`,
-                        animationDelay: `${i * 0.05}s`, animationFillMode: 'backwards',
-                      }}>
-                        <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
-                          <SeverityBadge severity={f.severity} />
-                          {f.clause_reference && <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{f.clause_reference}</span>}
-                        </div>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{f.issue}</div>
-                        <div style={{ fontSize: 12, color: '#059669', fontStyle: 'italic', marginTop: 3 }}>{f.recommendation}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {a.contract_analysis.missing_provisions?.length > 0 && (
-                  <div style={{ marginBottom: 14 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                      <span style={{ fontSize: 14 }}>{'\u26A0\uFE0F'}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#d97706', textTransform: 'uppercase' }}>Missing Provisions ({a.contract_analysis.missing_provisions.length})</span>
-                    </div>
-                    {a.contract_analysis.missing_provisions.map((mp, i) => (
-                      <div key={i} className="card-entrance" style={{
-                        padding: 12, marginBottom: 6, borderRadius: 8, background: '#fffbeb', border: '1px solid #fde68a',
-                        animationDelay: `${i * 0.05}s`, animationFillMode: 'backwards',
-                      }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                          <span style={{ fontSize: 12 }}>{'\uD83D\uDCCB'}</span>
-                          <span style={{ fontSize: 13, fontWeight: 600, color: '#92400e' }}>{mp.provision}</span>
-                        </div>
-                        <div style={{ fontSize: 12, color: '#a16207', marginTop: 2 }}>{mp.risk}</div>
-                        <div style={{ fontSize: 12, color: '#059669', fontStyle: 'italic', marginTop: 2 }}>{mp.recommendation}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {a.contract_analysis.positive_features?.length > 0 && (
-                  <div style={{ marginBottom: 14 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
-                      <span style={{ fontSize: 14 }}>{'\u2705'}</span>
-                      <span style={{ fontSize: 11, fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>Positive Features</span>
-                    </div>
-                    {a.contract_analysis.positive_features.map((pf, i) => (
-                      <div key={i} className="card-entrance" style={{
-                        padding: 10, marginBottom: 4, borderRadius: 8, background: '#ecfdf5', border: '1px solid #a7f3d0',
-                        animationDelay: `${i * 0.05}s`, animationFillMode: 'backwards',
-                      }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, color: '#065f46' }}>{pf.feature}</div>
-                        <div style={{ fontSize: 12, color: '#047857', marginTop: 2 }}>{pf.benefit}</div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {(a.contract_analysis.assumptions?.length > 0 || a.contract_analysis.assumptions_made?.length > 0) && (
-                  <div style={{ padding: 10, borderRadius: 8, background: 'var(--bg-tertiary)', border: '1px dashed var(--border-primary)' }}>
-                    <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Assumptions Made</div>
-                    {(a.contract_analysis.assumptions || a.contract_analysis.assumptions_made || []).map((x, i) => {
-                      if (typeof x === 'string') return <div key={i} style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '2px 0' }}>- {x}</div>;
-                      return (
-                        <div key={i} style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '3px 0' }}>
-                          <span style={{ fontWeight: 600 }}>- {x.assumption}</span>
-                          {x.impact && <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}> — {x.impact}</span>}
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
+            {/* ══════════════════════════════════════════
+                3. RISK DIMENSIONS — 3×2 score card grid
+                ══════════════════════════════════════════ */}
             <MemoSection label="Risk Dimensions" />
-            {/* ── 3×2 Score Card Grid ─── */}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 14 }}>
               {DIM_ORDER.map(k => {
                 const v = aiScores[k];
@@ -1408,7 +1400,10 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               })}
             </div>
 
-            {/* Editable Dimension Scores */}
+            {/* ══════════════════════════════════════════
+                4. RISK DIMENSION SCORES + GOVERNANCE RATIONALE
+                ══════════════════════════════════════════ */}
+            <MemoSection label="Risk Dimension Scores & Governance Rationale" />
             <div className="dimension-scores-section" style={{ ...cardStyle, padding: 20, marginBottom: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>Risk Dimension Scores</div>
@@ -1445,7 +1440,6 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                       {levelLabel && <span style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-tertiary)', padding: '2px 6px', background: 'var(--bg-tertiary)', borderRadius: 3 }}>{levelLabel}</span>}
                       {bd && <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-primary)' }}>{bd.weighted.toFixed(1)}</span>}
                     </div>
-                    {/* Slider */}
                     <div className="slider-control no-print" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
                       <span style={{ fontSize: 11, color: 'var(--text-muted)', minWidth: 10 }}>1</span>
                       <input
@@ -1455,109 +1449,137 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                       />
                       <span style={{ fontSize: 18, fontWeight: 800, color: `hsl(${h},60%,40%)`, minWidth: 28, textAlign: 'right', transition: 'color 0.3s' }}>{currentScore}</span>
                     </div>
-                    {/* Print-only score display */}
                     <div className="print-only" style={{ display: 'none', marginBottom: 6 }}>
                       <ScoreBar score={currentScore} />
                     </div>
-                    {v?.rationale && <div style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.5 }}>{v.rationale}</div>}
+                    {v?.rationale && <div style={{ fontSize: 12, color: 'var(--text-tertiary)', lineHeight: 1.5, marginTop: 4, padding: '8px 10px', background: 'var(--bg-card)', borderRadius: 6, borderLeft: '2px solid var(--accent-primary)' }}>{v.rationale}</div>}
                   </div>
                 );
               })}
+              {/* Governance Rationale narrative */}
+              {(a.risk_rationale || a.overall_risk_narrative) && (
+                <div style={{
+                  marginTop: 14, padding: '12px 16px',
+                  background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)',
+                  borderLeft: '3px solid var(--accent-primary)',
+                  borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.65,
+                }}>
+                  <div style={{ fontSize: 10, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 1.5, color: 'var(--text-muted)', marginBottom: 6 }}>Governance Rationale</div>
+                  {a.risk_rationale || a.overall_risk_narrative}
+                </div>
+              )}
             </div>
 
-            {/* Risk rationale + Conditions Before Execution */}
+            {/* ══════════════════════════════════════════
+                5. CONTRACTUAL CONDITIONS BEFORE EXECUTION
+                (conditions + red flags + missing provisions)
+                ══════════════════════════════════════════ */}
             {(() => {
-              const rationale = a.risk_rationale || a.overall_risk_narrative || '';
               const conditions = a.approval_conditions || a.recommended_conditions || a.approval_conditions_before_execution || [];
-              if (!rationale && conditions.length === 0) return null;
+              const redFlags = a.contract_analysis?.red_flags || [];
+              const missingProvisions = a.contract_analysis?.missing_provisions || [];
+              const positiveFeatures = a.contract_analysis?.positive_features || [];
+              const assumptions = a.contract_analysis?.assumptions || a.contract_analysis?.assumptions_made || [];
+              if (conditions.length === 0 && redFlags.length === 0 && missingProvisions.length === 0 && positiveFeatures.length === 0) return null;
               return (
                 <>
-                <MemoSection label="Governance Rationale" />
-                <div style={{ marginBottom: 14 }}>
-                  {rationale && (
-                    <div style={{
-                      padding: '10px 16px', marginBottom: conditions.length > 0 ? 10 : 0,
-                      background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)',
-                      borderLeft: '3px solid var(--accent-primary)',
-                      borderRadius: 8, fontSize: 12, color: 'var(--text-secondary)', lineHeight: 1.65,
-                    }}>
-                      {rationale}
-                    </div>
-                  )}
-                  {conditions.length > 0 && (
-                    <div className="card-entrance" style={{
-                      background: '#fffbeb', borderRadius: 10, padding: '12px 16px',
-                      border: '1px solid #fde68a', borderLeft: '3px solid #f59e0b',
-                    }}>
-                      <div style={{ fontSize: 10, fontWeight: 800, color: '#92400e', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 }}>
-                        Contractual Conditions Before Execution
-                      </div>
-                      {conditions.map((c, i) => (
-                        <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '3px 0', fontSize: 12, color: '#78350f', lineHeight: 1.6 }}>
-                          <span style={{ fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
-                          <span>{c}</span>
+                  <MemoSection label="Contractual Conditions Before Execution" />
+                  <div style={{ marginBottom: 14 }}>
+                    {/* Conditions */}
+                    {conditions.length > 0 && (
+                      <div className="card-entrance" style={{
+                        background: '#fffbeb', borderRadius: 10, padding: '14px 18px', marginBottom: 10,
+                        border: '1px solid #fde68a', borderLeft: '4px solid #f59e0b',
+                      }}>
+                        <div style={{ fontSize: 10, fontWeight: 800, color: '#92400e', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 10 }}>
+                          Conditions Before Execution
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
-              );
-            })()}
-
-            {/* ── Approval Chain + Flags side-by-side ── */}
-            {(() => {
-              const approver = liveGU.primary.tier?.approver || '';
-              const appAuth = result.analysis?.approval_authority || '';
-              const endorsing = result.analysis?.endorsing_functions || [];
-              const flags = result.analysis?.contract_analysis?.red_flags || [];
-              const chainItems = [
-                { role: appAuth || approver, desc: 'Final approving authority', color: '#0f2644' },
-                ...endorsing.map(fn => ({ role: fn, desc: 'Endorsement required', color: '#3b6ea5' })),
-              ];
-              return (
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
-                  {/* Approval Chain */}
-                  <div style={{ background: 'var(--bg-card)', borderRadius: 10, padding: '16px 18px', border: '1px solid var(--border-primary)', boxShadow: '0 1px 4px rgba(15,38,68,0.07)' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
-                      Approval Chain
-                    </div>
-                    {chainItems.length === 0 ? (
-                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No approval chain data.</div>
-                    ) : chainItems.map((item, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: i < chainItems.length - 1 ? 12 : 0 }}>
-                        <div style={{ width: 26, height: 26, borderRadius: '50%', background: item.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>{i + 1}</div>
-                        <div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3 }}>{item.role}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{item.desc}</div>
-                        </div>
+                        {conditions.map((c, i) => (
+                          <div key={i} style={{ display: 'flex', gap: 8, alignItems: 'flex-start', padding: '4px 0', fontSize: 12, color: '#78350f', lineHeight: 1.6 }}>
+                            <span style={{ fontWeight: 800, flexShrink: 0, marginTop: 1 }}>{i + 1}.</span>
+                            <span>{c}</span>
+                          </div>
+                        ))}
                       </div>
-                    ))}
+                    )}
+                    {/* Red Flags */}
+                    {redFlags.length > 0 && (
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', marginBottom: 8 }}>Red Flags ({redFlags.length})</div>
+                        {redFlags.map((f, i) => (
+                          <div key={i} className="card-entrance" style={{
+                            padding: 12, marginBottom: 6, borderRadius: 8,
+                            background: f.severity === 'high' ? '#fef2f2' : f.severity === 'medium' ? '#fff7ed' : '#fefce8',
+                            border: `1px solid ${f.severity === 'high' ? '#fecaca' : f.severity === 'medium' ? '#fed7aa' : '#fef08a'}`,
+                            animationDelay: `${i * 0.05}s`, animationFillMode: 'backwards',
+                          }}>
+                            <div style={{ display: 'flex', gap: 6, alignItems: 'center', marginBottom: 4 }}>
+                              <SeverityBadge severity={f.severity} />
+                              {f.clause_reference && <span style={{ fontSize: 10, color: 'var(--text-muted)' }}>{f.clause_reference}</span>}
+                            </div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)' }}>{f.issue}</div>
+                            <div style={{ fontSize: 12, color: '#059669', fontStyle: 'italic', marginTop: 3 }}>{f.recommendation}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Missing Provisions */}
+                    {missingProvisions.length > 0 && (
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                          <span style={{ fontSize: 14 }}>{'\u26A0\uFE0F'}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#d97706', textTransform: 'uppercase' }}>Missing Provisions ({missingProvisions.length})</span>
+                        </div>
+                        {missingProvisions.map((mp, i) => (
+                          <div key={i} className="card-entrance" style={{
+                            padding: 12, marginBottom: 6, borderRadius: 8, background: '#fffbeb', border: '1px solid #fde68a',
+                            animationDelay: `${i * 0.05}s`, animationFillMode: 'backwards',
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                              <span style={{ fontSize: 12 }}>{'\uD83D\uDCCB'}</span>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: '#92400e' }}>{mp.provision}</span>
+                            </div>
+                            <div style={{ fontSize: 12, color: '#a16207', marginTop: 2 }}>{mp.risk}</div>
+                            <div style={{ fontSize: 12, color: '#059669', fontStyle: 'italic', marginTop: 2 }}>{mp.recommendation}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Positive Features */}
+                    {positiveFeatures.length > 0 && (
+                      <div style={{ marginBottom: 10 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+                          <span style={{ fontSize: 14 }}>{'\u2705'}</span>
+                          <span style={{ fontSize: 11, fontWeight: 700, color: '#059669', textTransform: 'uppercase' }}>Positive Features</span>
+                        </div>
+                        {positiveFeatures.map((pf, i) => (
+                          <div key={i} className="card-entrance" style={{
+                            padding: 10, marginBottom: 4, borderRadius: 8, background: '#ecfdf5', border: '1px solid #a7f3d0',
+                            animationDelay: `${i * 0.05}s`, animationFillMode: 'backwards',
+                          }}>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: '#065f46' }}>{pf.feature}</div>
+                            <div style={{ fontSize: 12, color: '#047857', marginTop: 2 }}>{pf.benefit}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    {/* Assumptions */}
+                    {assumptions.length > 0 && (
+                      <div style={{ padding: 10, borderRadius: 8, background: 'var(--bg-tertiary)', border: '1px dashed var(--border-primary)' }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 4 }}>Assumptions Made</div>
+                        {assumptions.map((x, i) => {
+                          if (typeof x === 'string') return <div key={i} style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '2px 0' }}>- {x}</div>;
+                          return (
+                            <div key={i} style={{ fontSize: 12, color: 'var(--text-tertiary)', padding: '3px 0' }}>
+                              <span style={{ fontWeight: 600 }}>- {x.assumption}</span>
+                              {x.impact && <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}> — {x.impact}</span>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                  {/* Flags */}
-                  <div style={{ background: 'var(--bg-card)', borderRadius: 10, padding: '16px 18px', border: '1px solid var(--border-primary)', boxShadow: '0 1px 4px rgba(15,38,68,0.07)' }}>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                      <span style={{ color: '#ef4444' }}>Flags</span>
-                      {flags.length > 0 && <span style={{ fontSize: 10, fontWeight: 700, background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', borderRadius: 10, padding: '1px 7px' }}>{flags.length}</span>}
-                    </div>
-                    {flags.length === 0 ? (
-                      <div style={{ fontSize: 12, color: '#10b981', display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span>✓</span> No critical flags identified.
-                      </div>
-                    ) : flags.slice(0, 4).map((f, i) => (
-                      <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < Math.min(flags.length, 4) - 1 ? 10 : 0 }}>
-                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={f.severity === 'high' ? '#ef4444' : '#f59e0b'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                        <div>
-                          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.35 }}>{f.issue}</div>
-                          {f.clause_reference && <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>{f.clause_reference}</div>}
-                        </div>
-                      </div>
-                    ))}
-                    {flags.length > 4 && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>+{flags.length - 4} more — see Contract Analysis above</div>}
-                  </div>
-                </div>
+                </>
               );
             })()}
 
