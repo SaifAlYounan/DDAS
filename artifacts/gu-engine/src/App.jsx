@@ -687,7 +687,7 @@ export default function App() {
               boxShadow: '0 1px 4px rgba(15,38,68,0.07)',
               flexWrap: 'wrap', gap: 0, overflow: 'hidden',
             }}>
-              {/* Primary: AI Contract Scorer */}
+              {/* Primary: AI Governance Scorer */}
               <button
                 onClick={() => { setView('analyzer'); setRestoredResult(null); }}
                 className="btn-interactive"
@@ -703,7 +703,7 @@ export default function App() {
                 }}
               >
                 <span style={{ fontSize: 16 }}>📄</span>
-                AI Contract Scorer
+                AI Governance Scorer
               </button>
 
               {/* Divider label */}
