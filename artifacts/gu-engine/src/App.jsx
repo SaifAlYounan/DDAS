@@ -23,9 +23,9 @@ function HowItWorks({ onGetStarted, onMethodology }) {
   };
 
   const problemItems = [
+    'Impossible to plan for everything in advance: Some transactions end up being undergoverned and some transactions end up being over governed',
     'Same approval path for a $50M routine purchase and a $50M risky JV',
     'The bureaucratic cost / burden management has to go through to get an action approved is unrelated to the actual underlying risk',
-    'Written years ago — never reflects today\'s regulatory complexity',
     'Ambiguous on novel deal types that fall between categories',
   ];
   const solutionItems = [
