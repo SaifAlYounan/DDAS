@@ -89,7 +89,7 @@ function OnboardingOverlay({ onDismiss }) {
   );
 }
 
-function CorporateHeader({ theme, toggleTheme, history, onHistoryOpen }) {
+function CorporateHeader({ theme, toggleTheme, history, onHistoryOpen, onAbout }) {
   const navyBg = theme === 'dark' ? '#1a2f4a' : '#0f2644';
   const navyBorder = theme === 'dark' ? '#22405f' : '#0c1e38';
   return (
@@ -135,6 +135,20 @@ function CorporateHeader({ theme, toggleTheme, history, onHistoryOpen }) {
           }}>
             Confidential — Internal Use
           </span>
+          {onAbout && (
+            <button
+              onClick={onAbout}
+              className="btn-interactive"
+              title="About this system"
+              style={{
+                padding: '5px 10px', borderRadius: 6, border: '1px solid rgba(255,255,255,0.2)',
+                background: 'rgba(255,255,255,0.08)', cursor: 'pointer', fontSize: 11, fontWeight: 600,
+                color: 'rgba(255,255,255,0.8)',
+              }}
+            >
+              About
+            </button>
+          )}
           <button
             onClick={onHistoryOpen}
             className="btn-interactive"
@@ -243,143 +257,183 @@ function HistoryDrawer({ history, onSelect, onClear, isOpen, onClose }) {
   );
 }
 
-const HOW_IT_WORKS_SECTIONS = [
+const WHY_IT_MATTERS = [
   {
-    n: 1, color: '#ef4444', bg: '#fef2f2',
-    title: 'The Problem with Traditional DoAs',
-    body: 'A Delegation of Authority table is a static lookup: action type → dollar threshold → approver. It treats a routine $500K equipment replacement the same as a $500K investment in an untested market. The procedural cost is identical, even though the risk profiles are completely different. This leads to two failure modes: over-governance of routine matters (slowing the organization), and under-governance of novel risks that happen to fall below a dollar threshold.',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+      </svg>
+    ),
+    text: 'A simple routine contract doesn\'t need C-suite sign-off. A complex JV with regulatory exposure does. Your current DoA most likely can\'t tell the difference.',
   },
   {
-    n: 2, color: '#3b82f6', bg: '#eff6ff',
-    title: 'The GU Model',
-    body: 'Instead of mapping actions to approvers, we map risk profiles to a single scalar: Governance Units (GU). The GU cost is a weighted composite of multiple risk dimensions — financial exposure, reversibility, regulatory complexity, reputational impact, precedent-setting nature, and stakeholder complexity. The weights are tunable per organization type. A regulated bank will weight compliance risk higher; a startup will weight financial exposure and speed.',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+      </svg>
+    ),
+    text: 'This isn\'t a tool that supplements your DoA. It replaces it with something smarter — governance that adapts to what\'s actually in front of you.',
   },
   {
-    n: 3, color: '#f59e0b', bg: '#fffbeb',
-    title: 'From Table to Algorithm',
-    body: 'The traditional DoA is a lookup table maintained in a policy document. The GU model is an algorithm that can be embedded in any workflow system. When someone initiates a purchase order, contract, or investment, the system scores the risk dimensions (some automatically from metadata, some via a short questionnaire) and computes the GU cost. The approval pathway is determined dynamically. No table to maintain. No ambiguity about which row applies.',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+      </svg>
+    ),
+    text: 'Built on Board-approved risk appetite and AI-powered analysis — not arbitrary dollar thresholds that made sense when your company was half the size.',
   },
   {
-    n: 4, color: '#10b981', bg: '#ecfdf5',
-    title: 'Where AI Comes In',
-    body: 'AI can auto-score several dimensions by analyzing transaction metadata: financial exposure from the amount, regulatory risk from contract clauses or counterparty jurisdiction, precedent from historical transaction matching, and stakeholder complexity from org-chart analysis. The human only validates or adjusts the AI\'s assessment, reducing friction on routine transactions to near-zero while ensuring novel risks get the scrutiny they deserve.',
-  },
-  {
-    n: 5, color: '#7c3aed', bg: '#f5f3ff',
-    title: 'Continuous Calibration',
-    body: 'Unlike a static DoA that\'s reviewed annually, a GU model can learn. If transactions scored at 25 GU consistently require no escalation beyond manager review, the tier boundaries can be adjusted. If a class of transactions scored low later turns out to cause problems, the weighting model can be retrained. The governance framework becomes a living system.',
+    icon: (
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+      </svg>
+    ),
+    text: 'Fully confidential. Nothing is stored at the app level. Your contracts and transaction details stay private.',
   },
 ];
 
-const SECTION_ICONS = {
-  1: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M12 3v1M6.3 6.3 5.6 5.6M3 12h1M5.6 18.4l.7-.7M12 20v1M18.4 18.4l-.7-.7M21 12h-1M18.4 5.6l-.7.7"/>
-      <circle cx="12" cy="12" r="4"/>
-    </svg>
-  ),
-  2: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/>
-      <line x1="12" y1="2" x2="12" y2="22"/>
-      <line x1="2" y1="8.5" x2="22" y2="8.5"/>
-      <line x1="2" y1="15.5" x2="22" y2="15.5"/>
-    </svg>
-  ),
-  3: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="16 18 22 12 16 6"/>
-      <polyline points="8 6 2 12 8 18"/>
-    </svg>
-  ),
-  4: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="11" width="18" height="11" rx="2"/>
-      <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-      <circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none"/>
-    </svg>
-  ),
-  5: (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
-      <path d="M3 3v5h5"/>
-    </svg>
-  ),
-};
-
 function HowItWorks({ onGetStarted }) {
+  const cardBase = {
+    background: 'var(--bg-card)', borderRadius: 12,
+    border: '1px solid var(--border-primary)',
+    boxShadow: '0 1px 4px rgba(15,38,68,0.07)',
+  };
+
   return (
-    <div style={{ maxWidth: 740, margin: '0 auto' }}>
-      <div style={{ marginBottom: 32, paddingBottom: 24, borderBottom: '1px solid var(--border-primary)' }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: 'uppercase', color: 'var(--accent-primary)', marginBottom: 10 }}>
-          Methodology
+    <div style={{ maxWidth: 720, margin: '0 auto' }}>
+
+      {/* Hero headline */}
+      <div className="card-entrance" style={{
+        ...cardBase, borderLeft: '5px solid #0f2644',
+        padding: '32px 36px', marginBottom: 16, animationDelay: '0s', animationFillMode: 'backwards',
+      }}>
+        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', color: '#5b8fbe', marginBottom: 14 }}>
+          DoA Governance · AI-Powered
         </div>
-        <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 12px', lineHeight: 1.25 }}>
-          How the Dynamic Delegation of Authority System Works
+        <h1 style={{ fontSize: 28, fontWeight: 900, color: 'var(--text-primary)', margin: '0 0 6px', lineHeight: 1.2, letterSpacing: -0.4 }}>
+          Your Delegation of Authority Matrix
         </h1>
-        <p style={{ fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.75, margin: 0 }}>
-          A technical overview of the GU scoring model — from the limitations of traditional DoA frameworks to a risk-weighted, AI-assisted governance algorithm.
+        <h1 style={{ fontSize: 28, fontWeight: 900, color: '#0f2644', margin: '0 0 20px', lineHeight: 1.2, letterSpacing: -0.4 }}>
+          is so 1999.
+        </h1>
+        <p style={{ fontSize: 15.5, fontWeight: 600, color: 'var(--text-secondary)', margin: 0, lineHeight: 1.6, borderTop: '1px solid var(--border-secondary)', paddingTop: 18 }}>
+          This system replaces it — with governance proportional to what's actually in front of you.
         </p>
       </div>
 
-      <div>
-        {HOW_IT_WORKS_SECTIONS.map((s, i) => (
-          <div key={s.n} className="card-entrance" style={{
-            display: 'flex', gap: 20, marginBottom: 14,
-            padding: '20px 24px', background: 'var(--bg-card)', borderRadius: 12,
-            border: '1px solid var(--border-primary)', borderLeft: '4px solid #1e4a7a',
-            boxShadow: '0 1px 4px rgba(15,38,68,0.07)',
-            animationDelay: `${i * 0.07}s`, animationFillMode: 'backwards',
-          }}>
-            <div style={{
-              width: 42, height: 42, borderRadius: 10,
-              background: 'rgba(30,74,122,0.08)', border: '1px solid rgba(30,74,122,0.18)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              flexShrink: 0, color: '#1e4a7a',
+      {/* The Problem */}
+      <div className="card-entrance" style={{
+        ...cardBase, borderLeft: '4px solid #1e4a7a',
+        padding: '22px 28px', marginBottom: 14, animationDelay: '0.07s', animationFillMode: 'backwards',
+        display: 'flex', gap: 18,
+      }}>
+        <div style={{
+          width: 38, height: 38, borderRadius: 9, flexShrink: 0,
+          background: 'rgba(30,74,122,0.08)', border: '1px solid rgba(30,74,122,0.18)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1e4a7a',
+        }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#5b8fbe', marginBottom: 8 }}>The Problem</div>
+          <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.85, margin: 0 }}>
+            Every company has a Delegation of Authority — a static PDF or spreadsheet that says who can endorse and approve what, up to what dollar amount. That document was written years ago. It doesn't account for today's world, contract complexity, or the actual risk profile of each transaction. A $50M routine equipment purchase and a $50M risky joint venture get the <strong>same approval path</strong>. They pay the same bureaucratic price to get approved. That's broken.
+          </p>
+        </div>
+      </div>
+
+      {/* What This Does */}
+      <div className="card-entrance" style={{
+        ...cardBase, borderLeft: '4px solid #1e4a7a',
+        padding: '22px 28px', marginBottom: 14, animationDelay: '0.14s', animationFillMode: 'backwards',
+        display: 'flex', gap: 18,
+      }}>
+        <div style={{
+          width: 38, height: 38, borderRadius: 9, flexShrink: 0,
+          background: 'rgba(30,74,122,0.08)', border: '1px solid rgba(30,74,122,0.18)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1e4a7a',
+        }}>
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+          </svg>
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#5b8fbe', marginBottom: 8 }}>What This Does</div>
+          <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.85, margin: 0 }}>
+            The Governance Utility Engine reads your actual action description or contract, scores its complexity across multiple dimensions — financial exposure, regulatory risk, operational dependency, strategic impact — and generates a dynamic governance recommendation: <strong>who should review it, at what level, and why</strong>. No more one-size-fits-all matrices. Every contract gets governance proportional to its actual risk.
+          </p>
+        </div>
+      </div>
+
+      {/* Why It Matters */}
+      <div className="card-entrance" style={{
+        ...cardBase, padding: '22px 28px', marginBottom: 24, animationDelay: '0.21s', animationFillMode: 'backwards',
+      }}>
+        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#5b8fbe', marginBottom: 16 }}>Why It Matters</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(290px, 1fr))', gap: 12 }}>
+          {WHY_IT_MATTERS.map((item, i) => (
+            <div key={i} className="card-entrance" style={{
+              display: 'flex', gap: 12, padding: '12px 14px',
+              background: 'rgba(30,74,122,0.04)', borderRadius: 9,
+              border: '1px solid rgba(30,74,122,0.1)',
+              animationDelay: `${0.21 + i * 0.06}s`, animationFillMode: 'backwards',
             }}>
-              {SECTION_ICONS[s.n]}
-            </div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.2, textTransform: 'uppercase', color: '#5b8fbe', background: 'rgba(91,143,190,0.1)', padding: '2px 7px', borderRadius: 4 }}>{i + 1} / {HOW_IT_WORKS_SECTIONS.length}</span>
-                <h2 style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-primary)', margin: 0, lineHeight: 1.4 }}>{s.title}</h2>
+              <div style={{
+                width: 30, height: 30, borderRadius: 7, flexShrink: 0, marginTop: 1,
+                background: 'rgba(30,74,122,0.1)', border: '1px solid rgba(30,74,122,0.2)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#1e4a7a',
+              }}>
+                {item.icon}
               </div>
-              <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.8, margin: 0 }}>
-                {s.body}
+              <p style={{ fontSize: 12.5, color: 'var(--text-secondary)', lineHeight: 1.75, margin: 0 }}>
+                {item.text}
               </p>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      <div style={{
-        marginTop: 8, padding: '14px 20px', borderRadius: 10,
-        background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)',
-        fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.65,
-      }}>
-        <span style={{ fontWeight: 700, color: 'var(--text-secondary)' }}>Note:</span> This document describes the conceptual model underlying the DDAS. Configuration parameters — including dimension weights, tier thresholds, and scoring anchors — are adjustable in the <em>Configuration</em> tab.
-      </div>
-
+      {/* CTA */}
       {onGetStarted && (
-        <div style={{ textAlign: 'center', marginTop: 40, paddingTop: 32, borderTop: '1px solid var(--border-primary)' }}>
-          <p style={{ fontSize: 14, color: 'var(--text-muted)', marginBottom: 20 }}>
-            Ready to score a contract?
+        <div className="card-entrance" style={{
+          ...cardBase, padding: '28px 36px', textAlign: 'center',
+          background: 'linear-gradient(135deg, #0f2644 0%, #1e4a7a 100%)',
+          border: '1px solid #0c1e38', animationDelay: '0.42s', animationFillMode: 'backwards',
+        }}>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 12 }}>
+            Ready to get started?
+          </div>
+          <h2 style={{ fontSize: 20, fontWeight: 800, color: '#fff', margin: '0 0 8px' }}>
+            Try It Now
+          </h2>
+          <p style={{ fontSize: 13, color: 'rgba(255,255,255,0.65)', margin: '0 0 24px', lineHeight: 1.6 }}>
+            Upload a contract, paste a transaction description, or use our demo settlement agreement.
           </p>
           <button
             onClick={onGetStarted}
             className="btn-interactive"
             style={{
-              padding: '14px 40px', borderRadius: 12, border: 'none', cursor: 'pointer',
-              background: 'var(--accent-primary)', color: '#fff',
-              fontSize: 16, fontWeight: 700, letterSpacing: 0.3,
-              boxShadow: 'var(--shadow-accent)', transition: 'all 0.2s',
+              padding: '14px 48px', borderRadius: 10, border: '2px solid rgba(255,255,255,0.3)',
+              background: 'rgba(255,255,255,0.12)', color: '#fff', backdropFilter: 'blur(4px)',
+              fontSize: 15, fontWeight: 800, letterSpacing: 0.3, cursor: 'pointer',
+              boxShadow: '0 4px 16px rgba(0,0,0,0.25)', transition: 'all 0.2s',
             }}
+            onMouseEnter={e => { e.target.style.background = 'rgba(255,255,255,0.22)'; e.target.style.borderColor = 'rgba(255,255,255,0.6)'; }}
+            onMouseLeave={e => { e.target.style.background = 'rgba(255,255,255,0.12)'; e.target.style.borderColor = 'rgba(255,255,255,0.3)'; }}
           >
-            Try It Now →
+            Get Started →
           </button>
-          <p style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 12 }}>
-            You can always revisit this page from the header.
-          </p>
+          <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+            <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+              Fully confidential — nothing is stored at the app level
+            </span>
+          </div>
         </div>
       )}
     </div>
@@ -467,6 +521,7 @@ export default function App() {
             toggleTheme={toggleTheme}
             history={history}
             onHistoryOpen={() => setHistoryOpen(true)}
+            onAbout={view !== 'landing' ? () => setView('landing') : null}
           />
 
           {/* Landing page — no tab bar */}
