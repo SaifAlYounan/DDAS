@@ -569,6 +569,36 @@ input, textarea, select {
   }
 }
 
+/* === DOCUSIGN-STYLE DOCUMENT LAYOUT === */
+.doc-layout {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.doc-sidebar {
+  width: 210px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+
+@media (max-width: 860px) {
+  .doc-layout {
+    flex-direction: column;
+  }
+
+  .doc-sidebar {
+    width: 100%;
+    position: static;
+    max-height: none;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
 /* === UTILITY CLASSES === */
 .no-scrollbar {
   -ms-overflow-style: none;
