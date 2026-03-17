@@ -27,11 +27,11 @@ export const DEFAULT_CONFIG = {
   // === APPROVAL TIERS ===
   // GU thresholds that map to approval authority
   tiers: [
-    { name: 'Self-Approve', maxGU: 15, approver: 'Individual (log only)', sla: 'Instant', controls: 'Post-hoc audit sampling', color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
-    { name: 'Manager', maxGU: 30, approver: 'Direct manager', sla: '24 hours', controls: 'Manager review + documentation', color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' },
-    { name: 'Director / VP', maxGU: 55, approver: 'Function head', sla: '3 business days', controls: 'Business case + risk assessment', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
-    { name: 'C-Suite', maxGU: 80, approver: 'CxO / ExCo member', sla: '5 business days', controls: 'Full diligence package', color: '#ef4444', bg: '#fef2f2', border: '#fecaca' },
-    { name: 'Board', maxGU: 100, approver: 'Board of Directors', sla: 'Next board cycle', controls: 'Board paper + external advisors', color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
+    { name: 'Self-Approve', maxGU: 15, approver: 'Individual (log only)', sla: 'Instant', controls: 'Post-hoc audit sampling', signatures: '1 signature (self-certified, logged)', color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0' },
+    { name: 'Manager', maxGU: 30, approver: 'Direct manager', sla: '24 hours', controls: 'Manager review + documentation', signatures: '2 signatures (requestor + direct manager)', color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe' },
+    { name: 'Director / VP', maxGU: 55, approver: 'Function head', sla: '3 business days', controls: 'Business case + risk assessment', signatures: '2 signatures + Legal review', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a' },
+    { name: 'C-Suite', maxGU: 80, approver: 'CxO / ExCo member', sla: '5 business days', controls: 'Full diligence package', signatures: '3 signatures + Legal + Finance review', color: '#ef4444', bg: '#fef2f2', border: '#fecaca' },
+    { name: 'Board', maxGU: 100, approver: 'Board of Directors', sla: 'Next board cycle', controls: 'Board paper + external advisors', signatures: 'Board resolution + Legal + Finance + External advisors', color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe' },
   ],
 
   // === SCORING ANCHORS ===
