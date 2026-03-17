@@ -292,6 +292,155 @@ const WHY_IT_MATTERS = [
   },
 ];
 
+const METHODOLOGY_SECTIONS = [
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    ),
+    label: '01 — The Problem',
+    title: 'The Problem with Traditional DoAs',
+    body: 'A Delegation of Authority table is a static lookup: action type → dollar threshold → approver. It treats a routine $500K equipment replacement the same as a $500K investment in an untested market. The procedural cost is identical, even though the risk profiles are completely different. This leads to two failure modes: over-governance of routine matters (slowing the organization), and under-governance of novel risks that happen to fall below a dollar threshold.',
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5"/>
+        <line x1="12" y1="2" x2="12" y2="22"/>
+        <line x1="2" y1="8.5" x2="22" y2="8.5"/>
+        <line x1="2" y1="15.5" x2="22" y2="15.5"/>
+      </svg>
+    ),
+    label: '02 — The Model',
+    title: 'The GU Model',
+    body: 'Instead of mapping actions to approvers, we map risk profiles to a single scalar: Governance Units. The GU cost is a weighted composite of multiple risk dimensions — financial exposure, reversibility, regulatory complexity, reputational impact, precedent-setting nature, and stakeholder complexity. The weights are tunable per organization type. A regulated bank will weight compliance risk higher; a startup will weight financial exposure and speed.',
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="16 18 22 12 16 6"/>
+        <polyline points="8 6 2 12 8 18"/>
+      </svg>
+    ),
+    label: '03 — The Algorithm',
+    title: 'From Table to Algorithm',
+    body: 'The traditional DoA is a lookup table maintained in a policy document. The GU model is an algorithm that can be embedded in any workflow system. When someone initiates a purchase order, contract, or investment, the system scores the risk dimensions (some automatically from metadata, some via a short questionnaire) and computes the GU cost. The approval pathway is determined dynamically. No table to maintain. No ambiguity about which row applies.',
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="3" y="11" width="18" height="11" rx="2"/>
+        <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+        <circle cx="12" cy="16" r="1.5" fill="currentColor" stroke="none"/>
+      </svg>
+    ),
+    label: '04 — AI Integration',
+    title: 'Where AI Comes In',
+    body: "AI can auto-score several dimensions by analyzing transaction metadata: financial exposure from the amount, regulatory risk from contract clauses or counterparty jurisdiction, precedent from historical transaction matching, and stakeholder complexity from org-chart analysis. The human only validates or adjusts the AI's assessment, reducing friction on routine transactions to near-zero while ensuring novel risks get the scrutiny they deserve.",
+  },
+  {
+    icon: (
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+        <path d="M3 3v5h5"/>
+      </svg>
+    ),
+    label: '05 — Calibration',
+    title: 'Continuous Calibration',
+    body: "Unlike a static DoA that's reviewed annually, a GU model can learn. If transactions scored at 25 GU consistently require no escalation beyond manager review, the tier boundaries can be adjusted. If a class of transactions scored low later turns out to cause problems, the weighting model can be retrained. The governance framework becomes a living system.",
+  },
+];
+
+function WhyUseful() {
+  return (
+    <div style={{ maxWidth: 760, margin: '0 auto' }}>
+
+      {/* Page header card */}
+      <div style={{
+        padding: '24px 28px', marginBottom: 20,
+        background: 'var(--bg-card)', borderRadius: 12,
+        border: '1px solid var(--border-primary)', borderLeft: '5px solid #0f2644',
+        boxShadow: '0 1px 4px rgba(15,38,68,0.07)',
+      }}>
+        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', color: '#5b8fbe', marginBottom: 10 }}>
+          Methodology · Whitepaper
+        </div>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', margin: '0 0 10px', lineHeight: 1.3, letterSpacing: -0.3 }}>
+          Why a Dynamic Delegation of Authority?
+        </h1>
+        <p style={{ fontSize: 13.5, color: 'var(--text-secondary)', lineHeight: 1.75, margin: 0 }}>
+          A technical overview of the GU scoring model — from the limitations of traditional DoA frameworks to a risk-weighted, AI-assisted governance algorithm.
+        </p>
+      </div>
+
+      {/* Sections */}
+      <div style={{
+        background: 'var(--bg-card)', borderRadius: 12,
+        border: '1px solid var(--border-primary)',
+        boxShadow: '0 1px 4px rgba(15,38,68,0.07)',
+        overflow: 'hidden',
+      }}>
+        {METHODOLOGY_SECTIONS.map((s, i) => (
+          <div key={i} className="card-entrance" style={{
+            padding: '28px 32px',
+            borderBottom: i < METHODOLOGY_SECTIONS.length - 1 ? '1px solid var(--border-secondary)' : 'none',
+            animationDelay: `${i * 0.06}s`, animationFillMode: 'backwards',
+          }}>
+            <div style={{ display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+              {/* Icon + label column */}
+              <div style={{ flexShrink: 0, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, paddingTop: 2 }}>
+                <div style={{
+                  width: 44, height: 44, borderRadius: 11,
+                  background: 'rgba(30,74,122,0.08)', border: '1px solid rgba(30,74,122,0.18)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#1e4a7a',
+                }}>
+                  {s.icon}
+                </div>
+                <span style={{
+                  fontSize: 9, fontWeight: 800, letterSpacing: 1.2, textTransform: 'uppercase',
+                  color: '#5b8fbe', writingMode: 'vertical-rl', transform: 'rotate(180deg)',
+                  opacity: 0.7,
+                }}>{s.label.split(' — ')[0]}</span>
+              </div>
+
+              {/* Content */}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#5b8fbe', marginBottom: 7 }}>
+                  {s.label}
+                </div>
+                <h2 style={{
+                  fontSize: 17, fontWeight: 800, color: 'var(--text-primary)',
+                  margin: '0 0 14px', lineHeight: 1.35,
+                }}>
+                  {s.title}
+                </h2>
+                <p style={{
+                  fontSize: 14, color: 'var(--text-secondary)', lineHeight: 1.85,
+                  margin: 0,
+                }}>
+                  {s.body}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Footer note */}
+      <div style={{
+        marginTop: 16, padding: '14px 20px', borderRadius: 10,
+        background: 'var(--bg-secondary)', border: '1px solid var(--border-primary)',
+        fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.65,
+      }}>
+        <strong style={{ color: 'var(--text-secondary)' }}>Note:</strong> Configuration parameters — dimension weights, tier thresholds, and scoring anchors — are fully adjustable in the <em>Configuration</em> tab to match your organization's risk appetite.
+      </div>
+    </div>
+  );
+}
+
 function HowItWorks({ onGetStarted }) {
   const cardBase = {
     background: 'var(--bg-card)', borderRadius: 12,
@@ -508,6 +657,7 @@ export default function App() {
     { id: 'analyzer', label: 'AI Contract Scorer', icon: '📄' },
     { id: 'calculator', label: 'Manual Calculator', icon: '🧮' },
     { id: 'config', label: 'Configuration', icon: '⚙️' },
+    { id: 'why', label: 'Why is this useful?', icon: '💡' },
   ];
 
   return (
@@ -562,6 +712,7 @@ export default function App() {
               {view === 'analyzer' && <ContractAnalyzer config={config} restoredResult={restoredResult} onResultClear={() => setRestoredResult(null)} />}
               {view === 'calculator' && <GUCalculator config={config} />}
               {view === 'config' && <ConfigPanel config={config} setConfig={setConfig} />}
+              {view === 'why' && <WhyUseful />}
             </div>
           )}
 
