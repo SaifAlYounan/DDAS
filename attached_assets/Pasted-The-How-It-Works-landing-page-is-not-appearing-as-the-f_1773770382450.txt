@@ -1,0 +1,25 @@
+The "How It Works" landing page is not appearing as the first screen when users open the app. Please fix this so it is definitely the first thing any new visitor sees before they can access the analysis tool. Use localStorage to track if they've seen it, and always show it first if they haven't. Add a clear "Get Started" button that takes them to the tool.
+
+Also, completely rewrite the landing page content. The current text doesn't make people understand the value. Here's the new messaging direction — adapt it into a clean, professional landing page:
+
+Headline: "Your Delegation of Authority Matrix is so 1999... This system replaces it."
+
+The problem (keep it short and punchy):
+Every company has a Delegation of Authority — a static PDF or spreadsheet that says who can endorse and who can approve what, up to what dollar amount. This Delegation of Authority system, was written years ago. It doesn't account for today’s world, contract complexity, and risk profiles of each transaction. A $50M routine purchase of equipment and a $50M risky joint venture get the same approval path. They pay the same « bureauratic price » to get approved. That's broken.
+
+What this does:
+The Governance Utility Engine reads your actual action description or contract, scores its complexity across multiple dimensions (financial exposure, regulatory risk, operational dependency, strategic impact), and generates a dynamic governance recommendation, who should review it, at what level, and why. No more one-size-fits-all matrices. Every contract gets governance proportional to its actual risk.
+
+Why it matters:
+
+• A simple routine contract doesn't need C-suite sign-off. A complex JV with regulatory exposure does. Your current DoA most likely can't tell the difference.
+
+• This isn't a tool that supplements your DoA. It replaces it with something smarter — governance that adapts to what's actually in front of you.
+
+• Built on Board approved risk appetite and AI-powered analysis, not arbitrary thresholds.
+
+• Fully confidential. Nothing is stored at the app level.
+
+Call to action: 
+
+"Try It Now — Upload a Contract or Use Our
