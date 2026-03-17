@@ -909,16 +909,6 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               }}>{prof.label}</button>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Upload your own contract or try one of these:</span>
-            {SAMPLES.map((s, i) => (
-              <button key={i} onClick={() => { reset(); setTimeout(() => setInput(s.text), 30); }} className="btn-interactive" style={{
-                padding: '5px 12px', borderRadius: 7, border: '1.5px solid var(--border-primary)',
-                background: 'var(--bg-card)', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-                color: 'var(--text-secondary)', transition: 'all 0.3s',
-              }}>{s.label}</button>
-            ))}
-          </div>
         </div>
       )}
 
