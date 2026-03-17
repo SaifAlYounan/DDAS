@@ -1,116 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-
-const RISK_DIMENSIONS = [
-  {
-    id: 'financial', label: 'Financial Exposure', icon: '\uD83D\uDCB0',
-    description: 'Total monetary value at risk',
-    levels: [
-      { score: 1, label: '< $10K', desc: 'Petty cash / minor procurement' },
-      { score: 2, label: '$10K \u2013 $100K', desc: 'Departmental budget items' },
-      { score: 4, label: '$100K \u2013 $1M', desc: 'Significant expenditure' },
-      { score: 7, label: '$1M \u2013 $10M', desc: 'Major investment' },
-      { score: 10, label: '> $10M', desc: 'Strategic / transformational' },
-    ],
-  },
-  {
-    id: 'reversibility', label: 'Reversibility', icon: '\uD83D\uDD04',
-    description: 'How easily can this decision be undone?',
-    levels: [
-      { score: 1, label: 'Fully reversible', desc: 'Cancel anytime, no cost' },
-      { score: 3, label: 'Mostly reversible', desc: 'Some sunk cost / friction' },
-      { score: 5, label: 'Partially reversible', desc: 'Significant unwinding cost' },
-      { score: 8, label: 'Mostly irreversible', desc: 'Contractual lock-in, reputational' },
-      { score: 10, label: 'Irreversible', desc: 'Cannot be undone once executed' },
-    ],
-  },
-  {
-    id: 'regulatory', label: 'Regulatory & Compliance', icon: '\u2696\uFE0F',
-    description: 'Exposure to regulatory, legal, or compliance risk',
-    levels: [
-      { score: 1, label: 'None', desc: 'No regulatory dimension' },
-      { score: 3, label: 'Low', desc: 'Standard compliance, well-understood' },
-      { score: 5, label: 'Moderate', desc: 'Requires legal review' },
-      { score: 8, label: 'High', desc: 'Cross-jurisdictional, novel regulatory' },
-      { score: 10, label: 'Critical', desc: 'License-to-operate risk' },
-    ],
-  },
-  {
-    id: 'reputational', label: 'Reputational Impact', icon: '\uD83D\uDCE2',
-    description: 'Potential impact on brand, stakeholders, or public trust',
-    levels: [
-      { score: 1, label: 'Internal only', desc: 'No external visibility' },
-      { score: 3, label: 'Limited', desc: 'Small stakeholder group aware' },
-      { score: 5, label: 'Moderate', desc: 'Industry / partner visibility' },
-      { score: 8, label: 'Significant', desc: 'Media / public attention likely' },
-      { score: 10, label: 'Severe', desc: 'Front-page risk' },
-    ],
-  },
-  {
-    id: 'precedent', label: 'Precedent Setting', icon: '\uD83D\uDCD0',
-    description: 'Does this create a new pattern others will follow?',
-    levels: [
-      { score: 1, label: 'Routine', desc: 'Done many times before' },
-      { score: 3, label: 'Minor variation', desc: 'Slight deviation from norm' },
-      { score: 5, label: 'New approach', desc: 'First time for this unit' },
-      { score: 8, label: 'Org-wide precedent', desc: 'Will shape future decisions' },
-      { score: 10, label: 'Industry precedent', desc: 'Novel in the market' },
-    ],
-  },
-  {
-    id: 'complexity', label: 'Stakeholder Complexity', icon: '\uD83D\uDD78\uFE0F',
-    description: 'Number and diversity of affected parties',
-    levels: [
-      { score: 1, label: 'Single team', desc: 'One team, one function' },
-      { score: 3, label: 'Cross-functional', desc: 'Multiple internal teams' },
-      { score: 5, label: 'Cross-BU', desc: 'Multiple business units' },
-      { score: 8, label: 'External parties', desc: 'Partners, JVs, regulators' },
-      { score: 10, label: 'Ecosystem-wide', desc: 'Broad external stakeholder web' },
-    ],
-  },
-];
-
-const WEIGHT_PRESETS = {
-  default: { financial: 0.25, reversibility: 0.20, regulatory: 0.20, reputational: 0.15, precedent: 0.10, complexity: 0.10 },
-  regulated: { financial: 0.15, reversibility: 0.15, regulatory: 0.35, reputational: 0.15, precedent: 0.10, complexity: 0.10 },
-  startup: { financial: 0.30, reversibility: 0.10, regulatory: 0.10, reputational: 0.10, precedent: 0.15, complexity: 0.25 },
-  publicCo: { financial: 0.20, reversibility: 0.15, regulatory: 0.20, reputational: 0.25, precedent: 0.10, complexity: 0.10 },
-};
-
-const TIERS = [
-  { name: 'Self-Approve', color: '#10b981', bg: '#ecfdf5', border: '#a7f3d0', maxGU: 15, approver: 'Individual (log only)', sla: 'Instant', controls: 'Post-hoc audit sampling' },
-  { name: 'Manager', color: '#3b82f6', bg: '#eff6ff', border: '#bfdbfe', maxGU: 30, approver: 'Direct manager', sla: '24 hours', controls: 'Manager review + documentation' },
-  { name: 'Director / VP', color: '#f59e0b', bg: '#fffbeb', border: '#fde68a', maxGU: 55, approver: 'Function head', sla: '3 business days', controls: 'Business case + risk assessment' },
-  { name: 'C-Suite', color: '#ef4444', bg: '#fef2f2', border: '#fecaca', maxGU: 80, approver: 'CxO / ExCo member', sla: '5 business days', controls: 'Full diligence package' },
-  { name: 'Board', color: '#7c3aed', bg: '#f5f3ff', border: '#ddd6fe', maxGU: 100, approver: 'Board of Directors', sla: 'Next board cycle', controls: 'Board paper + external advisors' },
-];
-
-const FLOOR_RULES = [
-  { condition: 'any_single_gte', threshold: 9, minTier: 3, label: 'Any single dimension \u2265 9 \u2192 minimum C-Suite' },
-  { condition: 'any_single_gte', threshold: 10, minTier: 4, label: 'Any single dimension = 10 \u2192 minimum Board' },
-  { condition: 'any_two_gte', threshold: 7, minTier: 2, label: 'Any two dimensions \u2265 7 \u2192 minimum Director/VP' },
-];
-
-function getTier(gu) {
-  for (const tier of TIERS) {
-    if (gu <= tier.maxGU) return tier;
-  }
-  return TIERS[TIERS.length - 1];
-}
-
-function checkFloorRules(breakdown) {
-  const scores = breakdown.map(b => b.raw);
-  const triggered = [];
-  for (const rule of FLOOR_RULES) {
-    let hit = false;
-    if (rule.condition === 'any_single_gte') {
-      hit = scores.some(s => s >= rule.threshold);
-    } else if (rule.condition === 'any_two_gte') {
-      hit = scores.filter(s => s >= rule.threshold).length >= 2;
-    }
-    if (hit) triggered.push(rule);
-  }
-  return triggered;
-}
+import { computeGU } from '../config.js';
 
 function AnimatedGU({ value }) {
   const [display, setDisplay] = useState(value);
@@ -200,12 +89,12 @@ function BeforeAfterComparison() {
   ];
 
   const guDimensions = [
-    { icon: '\uD83D\uDCB0', label: 'Financial', desc: 'Value at risk' },
-    { icon: '\uD83D\uDD04', label: 'Reversibility', desc: 'Can it be undone?' },
-    { icon: '\u2696\uFE0F', label: 'Regulatory', desc: 'Compliance exposure' },
-    { icon: '\uD83D\uDCE2', label: 'Reputational', desc: 'Brand impact' },
-    { icon: '\uD83D\uDCD0', label: 'Precedent', desc: 'Sets new pattern?' },
-    { icon: '\uD83D\uDD78\uFE0F', label: 'Complexity', desc: 'Stakeholder web' },
+    { icon: '💰', label: 'Financial', desc: 'Value at risk' },
+    { icon: '🔄', label: 'Reversibility', desc: 'Can it be undone?' },
+    { icon: '⚖️', label: 'Regulatory', desc: 'Compliance exposure' },
+    { icon: '📢', label: 'Reputational', desc: 'Brand impact' },
+    { icon: '📐', label: 'Precedent', desc: 'Sets new pattern?' },
+    { icon: '🕸️', label: 'Complexity', desc: 'Stakeholder web' },
   ];
 
   return (
@@ -219,10 +108,9 @@ function BeforeAfterComparison() {
       </p>
 
       <div className="comparison-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
-        {/* Traditional DoA */}
         <div style={{ borderRadius: 10, overflow: 'hidden', border: '1px solid var(--border-primary)' }}>
           <div style={{ padding: '10px 14px', background: 'var(--bg-tertiary)', borderBottom: '1px solid var(--border-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 14 }}>{'\uD83D\uDCCB'}</span>
+            <span style={{ fontSize: 14 }}>📋</span>
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-secondary)' }}>Traditional DoA</span>
             <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, color: '#ef4444', padding: '1px 6px', background: '#fef2f2', borderRadius: 3 }}>STATIC</span>
           </div>
@@ -251,10 +139,9 @@ function BeforeAfterComparison() {
           </div>
         </div>
 
-        {/* GU Engine */}
         <div style={{ borderRadius: 10, overflow: 'hidden', border: '2px solid var(--accent-primary)' }}>
           <div style={{ padding: '10px 14px', background: 'var(--accent-primary-light)', borderBottom: '1px solid var(--accent-primary)', display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontSize: 14 }}>{'\u{1F916}'}</span>
+            <span style={{ fontSize: 14 }}>🤖</span>
             <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-primary)' }}>DDAS</span>
             <span style={{ marginLeft: 'auto', fontSize: 9, fontWeight: 600, color: '#059669', padding: '1px 6px', background: '#ecfdf5', borderRadius: 3 }}>DYNAMIC</span>
           </div>
@@ -281,33 +168,27 @@ function BeforeAfterComparison() {
 }
 
 export default function GUCalculator({ config }) {
-  const [selections, setSelections] = useState({
-    financial: 0, reversibility: 0, regulatory: 0,
-    reputational: 0, precedent: 0, complexity: 0,
-  });
-  const [weightPreset, setWeightPreset] = useState('default');
-  const [floorWarnings, setFloorWarnings] = useState([]);
+  const dimensions = Object.entries(config.anchors).map(([id, anchor]) => ({ id, ...anchor }));
 
-  const weights = WEIGHT_PRESETS[weightPreset];
+  const initialSelections = Object.fromEntries(dimensions.map(d => [d.id, 0]));
+  const [selections, setSelections] = useState(initialSelections);
+  const [profileId, setProfileId] = useState('default');
 
-  const { gu, breakdown } = useMemo(() => {
-    let total = 0;
-    const bd = [];
-    for (const dim of RISK_DIMENSIONS) {
-      const rawScore = dim.levels[selections[dim.id]].score;
-      const weighted = rawScore * weights[dim.id] * 10;
-      total += weighted;
-      bd.push({ id: dim.id, label: dim.label, icon: dim.icon, raw: rawScore, weight: weights[dim.id], weighted });
-    }
-    return { gu: total, breakdown: bd };
-  }, [selections, weights]);
-
-  useEffect(() => {
-    const triggered = checkFloorRules(breakdown);
-    setFloorWarnings(triggered);
-  }, [breakdown]);
-
-  const tier = getTier(gu);
+  const { gu, tier, breakdown, floorApplied } = useMemo(() => {
+    const scores = Object.fromEntries(
+      dimensions.map(d => [d.id, d.points[selections[d.id]].score])
+    );
+    const result = computeGU(scores, config, profileId);
+    const bd = dimensions.map(d => ({
+      id: d.id,
+      label: d.label,
+      icon: d.icon,
+      raw: scores[d.id],
+      weight: config.profiles[profileId].weights[d.id],
+      weighted: scores[d.id] * config.profiles[profileId].weights[d.id] * 10,
+    }));
+    return { gu: result.gu, tier: result.tier, tierIndex: result.tierIndex, breakdown: bd, floorApplied: result.floorApplied };
+  }, [selections, profileId, config]);
 
   const cardStyle = {
     background: 'var(--bg-card)', borderRadius: 12, border: '1px solid var(--border-primary)',
@@ -322,36 +203,31 @@ export default function GUCalculator({ config }) {
           <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
         </div>
         <div>
-          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>🧮 Manual GU Calculator</h2>
-          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '3px 0 0' }}>Select risk levels for each dimension to compute your Governance Unit score and required approval tier.</p>
+          <h2 style={{ fontSize: 16, fontWeight: 700, margin: 0, color: 'var(--text-primary)' }}>🧮 Manual Calculator</h2>
+          <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: '3px 0 0' }}>Select risk levels for each dimension to compute your score and required approval tier. Uses the same engine as the AI analyser.</p>
         </div>
       </div>
 
-      {/* Weight Preset Selector */}
+      {/* Weight Profile Selector */}
       <div style={{
         ...cardStyle, display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20,
         flexWrap: 'wrap', padding: '16px 20px',
       }}>
-        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Organization profile:</span>
-        {[
-          { id: 'default', label: 'Balanced' },
-          { id: 'regulated', label: 'Heavily Regulated' },
-          { id: 'startup', label: 'Growth / Startup' },
-          { id: 'publicCo', label: 'Public Company' },
-        ].map(p => (
-          <button key={p.id} onClick={() => setWeightPreset(p.id)} className="btn-interactive" style={{
+        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>Organisation profile:</span>
+        {Object.entries(config.profiles).map(([id, profile]) => (
+          <button key={id} onClick={() => setProfileId(id)} className="btn-interactive" style={{
             padding: '6px 14px', borderRadius: 6,
-            border: weightPreset === p.id ? '2px solid var(--accent-primary)' : '1.5px solid var(--border-primary)',
-            background: weightPreset === p.id ? 'var(--accent-primary-light)' : 'var(--bg-card)', cursor: 'pointer',
+            border: profileId === id ? '2px solid var(--accent-primary)' : '1.5px solid var(--border-primary)',
+            background: profileId === id ? 'var(--accent-primary-light)' : 'var(--bg-card)', cursor: 'pointer',
             fontSize: 12, fontWeight: 600,
-            color: weightPreset === p.id ? 'var(--accent-primary)' : 'var(--text-tertiary)',
+            color: profileId === id ? 'var(--accent-primary)' : 'var(--text-tertiary)',
             transition: 'all 0.3s',
-          }}>{p.label}</button>
+          }}>{profile.label}</button>
         ))}
       </div>
 
-      {/* Risk Dimensions */}
-      {RISK_DIMENSIONS.map((dim, dimIdx) => (
+      {/* Risk Dimensions — driven from config.anchors */}
+      {dimensions.map((dim, dimIdx) => (
         <div key={dim.id} className="card-entrance" style={{
           ...cardStyle, marginBottom: 16, padding: '16px 20px',
           animationDelay: `${dimIdx * 0.05}s`, animationFillMode: 'backwards',
@@ -362,9 +238,9 @@ export default function GUCalculator({ config }) {
             <span style={{ fontSize: 12, color: 'var(--text-muted)', marginLeft: 4 }}>{dim.description}</span>
           </div>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-            {dim.levels.map((level, i) => {
+            {dim.points.map((point, i) => {
               const active = i === selections[dim.id];
-              const hue = [142, 120, 45, 25, 0][i];
+              const hue = [142, 120, 45, 25, 0][Math.min(i, 4)];
               return (
                 <button key={i} onClick={() => setSelections(prev => ({ ...prev, [dim.id]: i }))} className="score-btn" style={{
                   flex: '1 1 0', minWidth: 100, padding: '10px 8px', borderRadius: 8, cursor: 'pointer',
@@ -373,10 +249,10 @@ export default function GUCalculator({ config }) {
                   display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
                   boxShadow: active ? `0 2px 8px hsla(${hue}, 70%, 45%, 0.2)` : 'none',
                 }}>
-                  <span style={{ fontWeight: 600, fontSize: 13, color: active ? `hsl(${hue}, 70%, 35%)` : 'var(--text-secondary)', transition: 'color 0.3s' }}>{level.label}</span>
-                  <span style={{ fontSize: 11, color: active ? `hsl(${hue}, 60%, 40%)` : 'var(--text-muted)', textAlign: 'center', transition: 'color 0.3s' }}>{level.desc}</span>
+                  <span style={{ fontWeight: 600, fontSize: 13, color: active ? `hsl(${hue}, 70%, 35%)` : 'var(--text-secondary)', transition: 'color 0.3s' }}>{point.label}</span>
+                  <span style={{ fontSize: 11, color: active ? `hsl(${hue}, 60%, 40%)` : 'var(--text-muted)', textAlign: 'center', transition: 'color 0.3s' }}>{point.description}</span>
                   <span style={{ fontSize: 10, fontWeight: 700, marginTop: 2, color: active ? `hsl(${hue}, 70%, 40%)` : 'var(--border-primary)', transition: 'color 0.3s' }}>
-                    Score: {level.score}
+                    Score: {point.score}
                   </span>
                 </button>
               );
@@ -385,23 +261,18 @@ export default function GUCalculator({ config }) {
         </div>
       ))}
 
-      {/* Floor Rule Warnings */}
-      {floorWarnings.length > 0 && (
+      {/* Floor Rule Override Notice */}
+      {floorApplied && (
         <div className="card-entrance" style={{
           marginBottom: 16, padding: 14, borderRadius: 12,
           background: '#fef2f2', border: '1px solid #fecaca',
         }}>
-          <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', marginBottom: 6 }}>
-            {'\u26A0\uFE0F'} Floor Rules Triggered
+          <div style={{ fontSize: 11, fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', marginBottom: 4 }}>
+            ⚠️ Floor Rule Applied — Tier Upgraded
           </div>
-          {floorWarnings.map((rule, i) => (
-            <div key={i} className="card-entrance" style={{
-              fontSize: 12, color: '#991b1b', padding: '4px 0',
-              animationDelay: `${i * 0.1}s`, animationFillMode: 'backwards',
-            }}>
-              {rule.label} — minimum tier: <strong>{TIERS[rule.minTier]?.name}</strong>
-            </div>
-          ))}
+          <div style={{ fontSize: 12, color: '#991b1b' }}>
+            {floorApplied} — the approval tier has been raised to <strong>{tier.name}</strong> regardless of the weighted score.
+          </div>
         </div>
       )}
 
@@ -412,7 +283,7 @@ export default function GUCalculator({ config }) {
       }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 12 }}>
           <div style={{ flex: 1, minWidth: 200 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 1 }}>Governance Cost</div>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 1 }}>Governance Score</div>
             <div style={{ fontSize: 42, fontWeight: 800, color: tier.color, lineHeight: 1.1 }}>
               <AnimatedGU value={gu} /> <span style={{ fontSize: 18, fontWeight: 600 }}>GU</span>
             </div>
@@ -422,7 +293,6 @@ export default function GUCalculator({ config }) {
             </div>
           </div>
 
-          {/* Mini radar preview */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             <div style={{ fontSize: 10, fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Balance</div>
             <MiniRadarPreview breakdown={breakdown} />
@@ -460,7 +330,7 @@ export default function GUCalculator({ config }) {
         {/* Breakdown */}
         <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-tertiary)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Score Breakdown</div>
         <div style={{ display: 'grid', gap: 6 }}>
-          {breakdown.sort((a, b) => b.weighted - a.weighted).map((b, i) => (
+          {[...breakdown].sort((a, b) => b.weighted - a.weighted).map((b, i) => (
             <div key={b.id} className="card-entrance" style={{
               display: 'flex', alignItems: 'center', gap: 8,
               padding: '8px 12px', background: 'var(--bg-card)', borderRadius: 8, border: '1px solid var(--border-primary)',
@@ -468,7 +338,6 @@ export default function GUCalculator({ config }) {
             }}>
               <span style={{ fontSize: 16 }}>{b.icon}</span>
               <span style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)', flex: 1, minWidth: 100 }}>{b.label}</span>
-              {/* Mini bar */}
               <div style={{ width: 60, height: 6, background: 'var(--bg-tertiary)', borderRadius: 3, overflow: 'hidden' }}>
                 <div style={{
                   width: `${(b.weighted / 25) * 100}%`, height: '100%',
@@ -476,7 +345,7 @@ export default function GUCalculator({ config }) {
                   borderRadius: 3, transition: 'width 0.5s ease',
                 }} />
               </div>
-              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>raw {b.raw} x {(b.weight * 100).toFixed(0)}%</span>
+              <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>raw {b.raw} × {(b.weight * 100).toFixed(0)}%</span>
               <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', minWidth: 52, textAlign: 'right' }}>{b.weighted.toFixed(1)} GU</span>
             </div>
           ))}
