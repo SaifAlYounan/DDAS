@@ -74,8 +74,12 @@
   padding: 0;
 }
 
+html, body, #root {
+  height: 100%;
+}
+
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: Arial, 'Helvetica Neue', Helvetica, sans-serif;
   background: var(--bg-gradient);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;

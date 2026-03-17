@@ -368,15 +368,17 @@ function GovernanceMemo({ result, liveGU, tier }) {
             </span>
           </div>
         </div>
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontSize: 8, color: 'rgba(255,255,255,0.45)', letterSpacing: 2, textTransform: 'uppercase', marginBottom: 4 }}>
-            Document Ref
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
+          <div style={{
+            padding: '5px 14px', borderRadius: 20,
+            background: '#f97316', color: '#fff',
+            fontSize: 11, fontWeight: 800, letterSpacing: 0.8,
+            textTransform: 'uppercase',
+          }}>
+            {tier.name} · {tier.approver.split(' ').slice(0, 2).join(' ')}
           </div>
-          <div style={{ fontFamily: 'monospace', fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.85)', letterSpacing: 1.5 }}>
+          <div style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: 1 }}>
             {docRef}
-          </div>
-          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)', marginTop: 4, letterSpacing: 1 }}>
-            🔒 CONFIDENTIAL
           </div>
         </div>
       </div>
@@ -899,7 +901,7 @@ ${Object.keys(liveGU.allProfiles || {}).length > 1 ? `${sh('Cross-Profile Compar
 
 // ────────────────────────────────────────────────────────────────────────────
 
-export default function ContractAnalyzer({ config, restoredResult, onResultClear }) {
+export default function ContractAnalyzer({ config, restoredResult, onResultClear, onExportReady, onHasResult }) {
   const { theme } = useTheme();
   const { addToHistory } = useHistory();
   const TIERS = config.tiers;
@@ -1095,6 +1097,9 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
     }, 650);
   }, [result, liveGU, config, profile]);
 
+  useEffect(() => { if (onExportReady) onExportReady(result && liveGU ? handleExport : null); }, [result, liveGU, handleExport, onExportReady]);
+  useEffect(() => { if (onHasResult) onHasResult(!!result); }, [result, onHasResult]);
+
   const onKey = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
   const active = chat.length > 0;
 
@@ -1255,8 +1260,6 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             <Confetti show={showConfetti} />
 
             <div className="doc-layout" style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
-              <DocSidebar liveGU={liveGU} tier={tier} handleExport={handleExport} reset={reset} />
-
               <div style={{ flex: 1, minWidth: 0 }}>
             <GovernanceMemo result={result} liveGU={liveGU} tier={tier} />
 
@@ -1380,6 +1383,31 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             )}
 
             <MemoSection label="Risk Dimensions" />
+            {/* ── 3×2 Score Card Grid ─── */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 14 }}>
+              {DIM_ORDER.map(k => {
+                const v = aiScores[k];
+                const score = typeof v === 'number' ? v : (v?.score ?? 1);
+                const label = anchors[k]?.label || k;
+                const h = 142 - (score / 10) * 142;
+                const color = `hsl(${h},70%,48%)`;
+                const barBg = `hsl(${h},60%,93%)`;
+                return (
+                  <div key={k} style={{
+                    background: 'var(--bg-card)', borderRadius: 10, padding: '16px 18px',
+                    border: '1px solid var(--border-primary)',
+                    boxShadow: '0 1px 4px rgba(15,38,68,0.07)',
+                  }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 1.3, textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: 6 }}>{label}</div>
+                    <div style={{ fontSize: 40, fontWeight: 900, color, lineHeight: 1, marginBottom: 10 }}>{score}<span style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-muted)' }}>/10</span></div>
+                    <div style={{ height: 7, background: barBg, borderRadius: 4, overflow: 'hidden' }}>
+                      <div style={{ width: `${score * 10}%`, height: '100%', background: color, borderRadius: 4, transition: 'width 0.6s ease' }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
             {/* Editable Dimension Scores */}
             <div className="dimension-scores-section" style={{ ...cardStyle, padding: 20, marginBottom: 14 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, flexWrap: 'wrap', gap: 8 }}>
@@ -1474,6 +1502,62 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
                   )}
                 </div>
               </>
+              );
+            })()}
+
+            {/* ── Approval Chain + Flags side-by-side ── */}
+            {(() => {
+              const approver = liveGU.primary.tier?.approver || '';
+              const appAuth = result.analysis?.approval_authority || '';
+              const endorsing = result.analysis?.endorsing_functions || [];
+              const flags = result.analysis?.contract_analysis?.red_flags || [];
+              const chainItems = [
+                { role: appAuth || approver, desc: 'Final approving authority', color: '#0f2644' },
+                ...endorsing.map(fn => ({ role: fn, desc: 'Endorsement required', color: '#3b6ea5' })),
+              ];
+              return (
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 14 }}>
+                  {/* Approval Chain */}
+                  <div style={{ background: 'var(--bg-card)', borderRadius: 10, padding: '16px 18px', border: '1px solid var(--border-primary)', boxShadow: '0 1px 4px rgba(15,38,68,0.07)' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                      Approval Chain
+                    </div>
+                    {chainItems.length === 0 ? (
+                      <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>No approval chain data.</div>
+                    ) : chainItems.map((item, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: i < chainItems.length - 1 ? 12 : 0 }}>
+                        <div style={{ width: 26, height: 26, borderRadius: '50%', background: item.color, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 12, fontWeight: 800, flexShrink: 0 }}>{i + 1}</div>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.3 }}>{item.role}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{item.desc}</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Flags */}
+                  <div style={{ background: 'var(--bg-card)', borderRadius: 10, padding: '16px 18px', border: '1px solid var(--border-primary)', boxShadow: '0 1px 4px rgba(15,38,68,0.07)' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 14, display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                      <span style={{ color: '#ef4444' }}>Flags</span>
+                      {flags.length > 0 && <span style={{ fontSize: 10, fontWeight: 700, background: '#fef2f2', color: '#ef4444', border: '1px solid #fecaca', borderRadius: 10, padding: '1px 7px' }}>{flags.length}</span>}
+                    </div>
+                    {flags.length === 0 ? (
+                      <div style={{ fontSize: 12, color: '#10b981', display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span>✓</span> No critical flags identified.
+                      </div>
+                    ) : flags.slice(0, 4).map((f, i) => (
+                      <div key={i} style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: i < Math.min(flags.length, 4) - 1 ? 10 : 0 }}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={f.severity === 'high' ? '#ef4444' : '#f59e0b'} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0, marginTop: 2 }}><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.35 }}>{f.issue}</div>
+                          {f.clause_reference && <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 1 }}>{f.clause_reference}</div>}
+                        </div>
+                      </div>
+                    ))}
+                    {flags.length > 4 && <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>+{flags.length - 4} more — see Contract Analysis above</div>}
+                  </div>
+                </div>
               );
             })()}
 
