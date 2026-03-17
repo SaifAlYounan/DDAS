@@ -799,32 +799,51 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
         </div>
       </div>
 
-      {/* Profile selector */}
-      <div className="profile-selector no-print" style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap', padding: '10px 14px' }}>
-        <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Org profile:</span>
-        {Object.entries(config.profiles).map(([id, prof]) => (
-          <button key={id} onClick={() => setProfile(id)} className="btn-interactive" style={{
-            padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
-            border: profile === id ? '2px solid var(--accent-primary)' : '1.5px solid var(--border-primary)',
-            background: profile === id ? 'var(--accent-primary-light)' : 'var(--bg-card)',
-            color: profile === id ? 'var(--accent-primary)' : 'var(--text-muted)',
-            transition: 'all 0.3s',
-          }}>{prof.label}</button>
-        ))}
-        {active && <button onClick={reset} className="btn-interactive" style={{ marginLeft: 'auto', padding: '4px 12px', borderRadius: 6, border: '1.5px solid #fecaca', background: 'var(--bg-card)', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: '#ef4444' }}>New Analysis</button>}
-      </div>
-
-      {/* Samples */}
+      {/* Demo box: org profile + sample contracts (idle state only) */}
       {!active && (
-        <div className="sample-buttons no-print" style={{ display: 'flex', gap: 6, marginBottom: 14, flexWrap: 'wrap', alignItems: 'center' }}>
-          <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Try:</span>
-          {SAMPLES.map((s, i) => (
-            <button key={i} onClick={() => { reset(); setTimeout(() => setInput(s.text), 30); }} className="btn-interactive" style={{
-              padding: '5px 12px', borderRadius: 7, border: '1.5px solid var(--border-primary)',
-              background: 'var(--bg-card)', cursor: 'pointer', fontSize: 12, fontWeight: 600,
-              color: 'var(--text-secondary)', transition: 'all 0.3s',
-            }}>{s.icon} {s.label}</button>
+        <div className="profile-selector no-print" style={{ ...cardStyle, marginBottom: 14, padding: '12px 14px', borderStyle: 'dashed' }}>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.8, color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: 10 }}>
+            For the demo version only
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Org profile:</span>
+            {Object.entries(config.profiles).map(([id, prof]) => (
+              <button key={id} onClick={() => setProfile(id)} className="btn-interactive" style={{
+                padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                border: profile === id ? '2px solid var(--accent-primary)' : '1.5px solid var(--border-primary)',
+                background: profile === id ? 'var(--accent-primary-light)' : 'var(--bg-card)',
+                color: profile === id ? 'var(--accent-primary)' : 'var(--text-muted)',
+                transition: 'all 0.3s',
+              }}>{prof.label}</button>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-muted)' }}>Try:</span>
+            {SAMPLES.map((s, i) => (
+              <button key={i} onClick={() => { reset(); setTimeout(() => setInput(s.text), 30); }} className="btn-interactive" style={{
+                padding: '5px 12px', borderRadius: 7, border: '1.5px solid var(--border-primary)',
+                background: 'var(--bg-card)', cursor: 'pointer', fontSize: 12, fontWeight: 600,
+                color: 'var(--text-secondary)', transition: 'all 0.3s',
+              }}>{s.label}</button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Profile selector — active state (result visible) */}
+      {active && (
+        <div className="profile-selector no-print" style={{ ...cardStyle, display: 'flex', alignItems: 'center', gap: 8, marginBottom: 14, flexWrap: 'wrap', padding: '10px 14px' }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-secondary)' }}>Org profile:</span>
+          {Object.entries(config.profiles).map(([id, prof]) => (
+            <button key={id} onClick={() => setProfile(id)} className="btn-interactive" style={{
+              padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+              border: profile === id ? '2px solid var(--accent-primary)' : '1.5px solid var(--border-primary)',
+              background: profile === id ? 'var(--accent-primary-light)' : 'var(--bg-card)',
+              color: profile === id ? 'var(--accent-primary)' : 'var(--text-muted)',
+              transition: 'all 0.3s',
+            }}>{prof.label}</button>
           ))}
+          <button onClick={reset} className="btn-interactive" style={{ marginLeft: 'auto', padding: '4px 12px', borderRadius: 6, border: '1.5px solid #fecaca', background: 'var(--bg-card)', cursor: 'pointer', fontSize: 11, fontWeight: 600, color: '#ef4444' }}>New Analysis</button>
         </div>
       )}
 
