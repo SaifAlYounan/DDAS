@@ -14,7 +14,7 @@ const MAX_HISTORY = 20;
 
 // ── Landing Page ─────────────────────────────────────────────────────────────
 
-function HowItWorks({ onGetStarted, onMethodology }) {
+function HowItWorks({ onGetStarted, onMethodology, onML }) {
   const NAV = '#0f2644';
   const BLUE = '#3b5998';
   const scrollToSection = (id) => {
@@ -69,6 +69,7 @@ function HowItWorks({ onGetStarted, onMethodology }) {
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
           <button onClick={() => scrollToSection('how-it-works')} style={{ background: 'none', border: 'none', fontSize: 14, color: '#475569', cursor: 'pointer', fontFamily: 'Arial, sans-serif' }}>How It Works</button>
           <button onClick={onMethodology} style={{ background: 'none', border: 'none', fontSize: 14, color: '#475569', cursor: 'pointer', fontFamily: 'Arial, sans-serif' }}>Concept</button>
+          <button onClick={onML} style={{ background: 'none', border: 'none', fontSize: 14, color: '#475569', cursor: 'pointer', fontFamily: 'Arial, sans-serif' }}>Machine Learning</button>
           <button onClick={onGetStarted} style={{
             padding: '8px 20px', background: NAV, color: '#fff',
             border: 'none', borderRadius: 6, fontSize: 14, fontWeight: 700, cursor: 'pointer',
@@ -322,6 +323,91 @@ function WhyUseful() {
   );
 }
 
+// ── Machine Learning Roadmap ──────────────────────────────────────────────────
+
+const ML_SECTIONS = [
+  {
+    label: '00 — Foundation',
+    horizon: 'Today',
+    title: 'The Signal You Are Already Generating',
+    body: 'Every time a governance expert overrides an AI dimension score using the manual sliders, that is a labeled training example: the contract text went in, the AI produced a score, and a human with domain knowledge corrected it. This correction encodes expert judgment that the AI missed — perhaps about how UAE courts actually enforce limitation of liability clauses, or how EWEC\'s track record reduces counterparty risk for a specific off-taker. Currently, these corrections are used once and discarded. Persisting them in a structured database — document content, AI score, human-corrected score, config snapshot, timestamp — is the dataset on which every subsequent improvement depends. Without this, there is nothing to learn from.',
+  },
+  {
+    label: '01 — Layer 1',
+    horizon: 'Near-term',
+    title: 'Precedent-Augmented Scoring',
+    body: 'The most immediate improvement requires no model training. As scored contracts accumulate in a database, each new document can be matched against past transactions using vector embeddings — a mathematical representation of contract content. When a new settlement agreement arrives, the system retrieves the 3–5 most similar past agreements by counterparty type, jurisdiction, and financial magnitude, and injects their validated scores as examples into the prompt. This is retrieval-augmented generation applied to governance scoring. The model does not learn in the statistical sense, but the system becomes naturally consistent with its own precedent history — exactly what a legal or governance function expects. Repeatability without retraining.',
+  },
+  {
+    label: '02 — Layer 2',
+    horizon: 'Medium-term',
+    title: 'Statistical Bias Correction',
+    body: 'Once several hundred human-override pairs have accumulated, systematic patterns emerge: the AI may consistently underestimate financial exposure for carbon credit offtake agreements, or overestimate regulatory complexity for contracts governed by DIFC law. A lightweight regression model — not deep learning, a gradient-boosted tree — can learn these correction offsets per contract type, jurisdiction, and financial band, and apply them silently as a post-processing layer before results are shown. Drift detection can also run continuously: if the distribution of financial exposure scores begins shifting (everything clustering at 4–6 when deal sizes are increasing), an alert flags that recalibration is needed. The governance framework stays current without manual intervention.',
+  },
+  {
+    label: '03 — Layer 3',
+    horizon: 'Medium-term',
+    title: 'Fine-Tuning a Dedicated Scoring Model',
+    body: 'At 300–500 validated (contract text → 6-dimension score) pairs, fine-tuning a smaller open-source model becomes viable. A fine-tuned Llama or Mistral model trained specifically on this governance scoring task would produce scores faster, at a fraction of the cost, and with substantially greater consistency than a general-purpose frontier model. More importantly, a fine-tuned model can run on private infrastructure — keeping contract documents entirely within the organisation\'s own environment, a material advantage for a governance tool handling commercially sensitive transactions. At this stage, Claude transitions from primary scorer to secondary validator, invoked only when confidence is low or the document is materially unlike anything in the training set.',
+  },
+  {
+    label: '04 — Layer 4',
+    horizon: 'Long-term',
+    title: 'Outcome-Based Reinforcement Learning',
+    body: 'The deepest learning signal is not whether the AI agreed with the expert at time of scoring — it is whether the governance tier was appropriate given what actually happened. If a Manager-tier transaction later triggered a regulatory dispute or financial loss that required Board-level intervention, that is a missed classification in the strongest possible sense. Conversely, if C-Suite approval was systematically required for transactions that consistently resolved without incident, governance is being over-applied, creating unnecessary friction. Tracking post-approval outcomes and mapping them to original governance scores creates a reinforcement signal: reward for tiers that correctly predicted risk materialisation, penalty for misclassifications. This is how the system becomes calibrated to the organisation\'s actual risk experience — not just expert intuition captured at a single point in time. The data horizon is months to years, but the calibration insight it produces is irreplaceable.',
+  },
+];
+
+function MachineLearning() {
+  return (
+    <div style={{ maxWidth: 760, margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
+
+      {/* Header */}
+      <div style={{ padding: '20px 24px', marginBottom: 14, background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', borderLeft: '5px solid #7c3aed', boxShadow: '0 1px 4px rgba(15,38,68,0.07)' }}>
+        <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', color: '#7c3aed', marginBottom: 10 }}>Research · Roadmap</div>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1e293b', margin: '0 0 10px' }}>Machine Learning Roadmap for DDAS</h1>
+        <p style={{ fontSize: 13.5, color: '#475569', lineHeight: 1.75, margin: 0 }}>How the Dynamic Delegation of Authority System could evolve from AI-assisted scoring to a continuously learning governance engine — grounded in real transaction outcomes and expert feedback loops.</p>
+      </div>
+
+      {/* WIP banner */}
+      <div style={{ padding: '14px 18px', marginBottom: 18, background: '#fffbeb', border: '1px solid #fde68a', borderLeft: '4px solid #f59e0b', borderRadius: 8, display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+        <span style={{ fontSize: 20, flexShrink: 0, lineHeight: 1.3 }}>🔬</span>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 800, color: '#92400e', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 5 }}>Work in Progress — Not Yet Integrated</div>
+          <div style={{ fontSize: 13, color: '#92400e', lineHeight: 1.7 }}>The capabilities described below are a research roadmap for future development. <strong>None of these features are active in the current version of DDAS.</strong> The system today uses a fixed AI model with static scoring anchors and no persistent learning mechanism. This document outlines the engineering path toward a self-improving governance system.</div>
+        </div>
+      </div>
+
+      {/* Sections */}
+      <div style={{ background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', boxShadow: '0 1px 4px rgba(15,38,68,0.07)', overflow: 'hidden' }}>
+        {ML_SECTIONS.map((s, i) => {
+          const horizonStyle = {
+            'Today':       { bg: '#f0fdf4', color: '#166534' },
+            'Near-term':   { bg: '#ecfdf5', color: '#065f46' },
+            'Medium-term': { bg: '#fffbeb', color: '#92400e' },
+            'Long-term':   { bg: '#fef2f2', color: '#991b1b' },
+          }[s.horizon] || { bg: '#f5f3ff', color: '#5b21b6' };
+          return (
+            <div key={i} style={{ padding: '26px 30px', borderBottom: i < ML_SECTIONS.length - 1 ? '1px solid #f1f5f9' : 'none' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: 'uppercase', color: '#7c3aed' }}>{s.label}</div>
+                <div style={{ fontSize: 9, fontWeight: 700, padding: '2px 9px', borderRadius: 10, background: horizonStyle.bg, color: horizonStyle.color, letterSpacing: 0.5 }}>{s.horizon}</div>
+              </div>
+              <h2 style={{ fontSize: 17, fontWeight: 800, color: '#1e293b', margin: '0 0 12px' }}>{s.title}</h2>
+              <p style={{ fontSize: 14, color: '#475569', lineHeight: 1.85, margin: 0 }}>{s.body}</p>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Prerequisite footer */}
+      <div style={{ marginTop: 14, padding: '14px 18px', borderRadius: 8, background: '#f8fafc', border: '1px solid #e2e8f0', fontSize: 13, color: '#475569', lineHeight: 1.75 }}>
+        <strong style={{ color: '#1e293b' }}>Critical prerequisite for all four layers:</strong> A persistent, centralised database of analyzed transactions — including document content, AI scores, human override values, config snapshot at time of analysis, and post-approval outcome tracking. The current version stores results only in browser local storage, which is ephemeral, device-specific, and not queryable. Moving to server-side persistent storage is the foundational first step before any machine learning pipeline can be built.
+      </div>
+    </div>
+  );
+}
+
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 
 const NAV_BG = '#0f2644';
@@ -347,6 +433,9 @@ function AppSidebar({ view, setView, history, onHistoryOpen, theme, toggleTheme,
     )},
     { id: 'why', label: 'Concept', icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    )},
+    { id: 'ml', label: 'Machine Learning', icon: (
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
     )},
   ];
 
@@ -425,6 +514,7 @@ function AppTopBar({ view, history, onHistoryOpen, onExport, hasResult }) {
     calculator: 'Manual Calculator',
     config: 'Configuration',
     why: 'Concept',
+    ml: 'Machine Learning',
   };
 
   return (
@@ -480,6 +570,7 @@ export default function App() {
 
   const handleGetStarted = useCallback(() => setView('analyzer'), []);
   const handleMethodology = useCallback(() => setView('why'), []);
+  const handleML = useCallback(() => setView('ml'), []);
 
   const toggleTheme = useCallback(() => {
     setTheme(prev => {
@@ -522,7 +613,7 @@ export default function App() {
     return (
       <ThemeContext.Provider value={{ theme, toggleTheme }}>
         <HistoryContext.Provider value={{ history, addToHistory, clearHistory }}>
-          <HowItWorks onGetStarted={handleGetStarted} onMethodology={handleMethodology} />
+          <HowItWorks onGetStarted={handleGetStarted} onMethodology={handleMethodology} onML={handleML} />
         </HistoryContext.Provider>
       </ThemeContext.Provider>
     );
@@ -566,6 +657,7 @@ export default function App() {
               {view === 'calculator' && <GUCalculator config={config} />}
               {view === 'config' && <ConfigPanel config={config} setConfig={setConfig} />}
               {view === 'why' && <WhyUseful />}
+              {view === 'ml' && <MachineLearning />}
             </div>
           </div>
         </div>
