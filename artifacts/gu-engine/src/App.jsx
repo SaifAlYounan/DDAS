@@ -1,11 +1,8 @@
-import { useState, useEffect, useCallback, createContext, useContext } from 'react';
+import { useState, useCallback, createContext, useContext } from 'react';
 import { DEFAULT_CONFIG } from './config';
 import ContractAnalyzer from './components/ContractAnalyzer';
 import GUCalculator from './components/GUCalculator';
 import ConfigPanel from './components/ConfigPanel';
-
-const ThemeContext = createContext();
-export const useTheme = () => useContext(ThemeContext);
 
 const HistoryContext = createContext();
 export const useHistory = () => useContext(HistoryContext);
@@ -436,7 +433,7 @@ function AppSidebar({ view, setView, history, onHistoryOpen, goHome }) {
     { id: 'landing', label: 'Home', icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
     )},
-    { id: 'analyzer', label: 'Analyse', icon: (
+    { id: 'analyzer', label: 'Analyse a Transaction', icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
     )},
     { id: 'history', label: 'History', icon: (
@@ -564,7 +561,6 @@ function AppTopBar({ view, history, onHistoryOpen, onExport, hasResult }) {
 export default function App() {
   const [view, setView] = useState('landing');
   const [config, setConfig] = useState(DEFAULT_CONFIG);
-  const [theme, setTheme] = useState(() => localStorage.getItem('gu-engine-theme') || 'light');
   const [history, setHistory] = useState(() => {
     try { return JSON.parse(localStorage.getItem('gu-engine-history') || '[]'); } catch { return []; }
   });
@@ -576,19 +572,6 @@ export default function App() {
   const handleGetStarted = useCallback(() => setView('analyzer'), []);
   const handleMethodology = useCallback(() => setView('why'), []);
   const handleML = useCallback(() => setView('ml'), []);
-
-  const toggleTheme = useCallback(() => {
-    setTheme(prev => {
-      const next = prev === 'light' ? 'dark' : 'light';
-      localStorage.setItem('gu-engine-theme', next);
-      document.documentElement.setAttribute('data-theme', next);
-      return next;
-    });
-  }, []);
-
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', theme);
-  }, [theme]);
 
   const addToHistory = useCallback((entry) => {
     setHistory(prev => {
@@ -616,18 +599,15 @@ export default function App() {
   // Landing page: full standalone layout
   if (view === 'landing') {
     return (
-      <ThemeContext.Provider value={{ theme, toggleTheme }}>
-        <HistoryContext.Provider value={{ history, addToHistory, clearHistory }}>
-          <HowItWorks onGetStarted={handleGetStarted} onMethodology={handleMethodology} onML={handleML} />
-        </HistoryContext.Provider>
-      </ThemeContext.Provider>
+      <HistoryContext.Provider value={{ history, addToHistory, clearHistory }}>
+        <HowItWorks onGetStarted={handleGetStarted} onMethodology={handleMethodology} onML={handleML} />
+      </HistoryContext.Provider>
     );
   }
 
   // App mode: sidebar layout
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <HistoryContext.Provider value={{ history, addToHistory, clearHistory }}>
+    <HistoryContext.Provider value={{ history, addToHistory, clearHistory }}>
         <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', fontFamily: 'Arial, sans-serif', background: 'var(--bg-primary)' }}>
 
           <AppSidebar
@@ -672,7 +652,6 @@ export default function App() {
           isOpen={historyOpen}
           onClose={() => setHistoryOpen(false)}
         />
-      </HistoryContext.Provider>
-    </ThemeContext.Provider>
+    </HistoryContext.Provider>
   );
 }
