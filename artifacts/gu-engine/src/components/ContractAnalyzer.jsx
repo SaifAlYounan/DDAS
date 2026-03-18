@@ -870,7 +870,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
     { msg: 'Reading contract…', target: 20 },
     { msg: 'Scoring risk dimensions…', target: 50 },
     { msg: 'Generating governance recommendation…', target: 75 },
-    { msg: 'Building governance memo…', target: 88 },
+    { msg: 'Building governance memo…', target: 85 },
   ];
   useEffect(() => {
     if (!loading) {
@@ -900,7 +900,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
       }, delay)
     );
     const tick = setInterval(() => {
-      setLoadingProgress(p => Math.min(p + 0.4, 88));
+      setLoadingProgress(p => Math.min(p + 0.4, 85));
     }, 300);
     return () => {
       stageTimers.forEach(clearTimeout);
