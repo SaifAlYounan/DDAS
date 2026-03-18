@@ -206,13 +206,6 @@ function HowItWorks({ onGetStarted, onMethodology, onML }) {
             }}>
               Analyse an Action →
             </button>
-            <button onClick={onMethodology} style={{
-              padding: '13px 28px', background: 'transparent', color: 'rgba(255,255,255,0.85)',
-              border: '1.5px solid rgba(255,255,255,0.3)', borderRadius: 7, fontSize: 15,
-              fontWeight: 600, cursor: 'pointer', fontFamily: 'Arial, sans-serif',
-            }}>
-              View Concept
-            </button>
           </div>
         </div>
       </div>
