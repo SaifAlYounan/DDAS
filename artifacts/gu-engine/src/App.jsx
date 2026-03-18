@@ -1,4 +1,4 @@
-import { useState, useCallback, createContext, useContext } from 'react';
+import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { DEFAULT_CONFIG } from './config';
 import ContractAnalyzer from './components/ContractAnalyzer';
 import GUCalculator from './components/GUCalculator';
