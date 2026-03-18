@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { computeGU } from '../config';
-import { useTheme } from '../App';
 import { useHistory } from '../App';
 
 const SAMPLES = [
@@ -843,7 +842,6 @@ ${Object.keys(liveGU.allProfiles || {}).length > 1 ? `${sh('Cross-Profile Compar
 // ────────────────────────────────────────────────────────────────────────────
 
 export default function ContractAnalyzer({ config, restoredResult, onResultClear, onExportReady, onHasResult }) {
-  const { theme } = useTheme();
   const { addToHistory } = useHistory();
   const TIERS = config.tiers;
   const anchors = config.anchors;
@@ -853,6 +851,8 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
   const [loading, setLoading] = useState(false);
   const [loadingStage, setLoadingStage] = useState(0);
   const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingDone, setLoadingDone] = useState(false);
+  const wasLoadingRef = useRef(false);
   const [error, setError] = useState(null);
   const [chat, setChat] = useState([]);
   const [apiHistory, setApiHistory] = useState([]);
@@ -874,10 +874,22 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
   ];
   useEffect(() => {
     if (!loading) {
-      setLoadingStage(0);
-      setLoadingProgress(0);
+      if (wasLoadingRef.current) {
+        setLoadingProgress(100);
+        setLoadingStage(LOADING_STAGES.length - 1);
+        setLoadingDone(true);
+        const done = setTimeout(() => {
+          setLoadingStage(0);
+          setLoadingProgress(0);
+          setLoadingDone(false);
+        }, 500);
+        wasLoadingRef.current = false;
+        return () => clearTimeout(done);
+      }
       return;
     }
+    wasLoadingRef.current = true;
+    setLoadingDone(false);
     setLoadingStage(0);
     setLoadingProgress(5);
     const timings = [0, 7000, 15000, 22000];
@@ -1257,7 +1269,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
           return null;
         })}
 
-        {loading && (
+        {(loading || loadingDone) && (
           <div>
             <div style={{ margin: '12px 0 8px', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', overflow: 'hidden' }}>
               <div style={{ height: 3, background: '#f1f5f9', position: 'relative' }}>
