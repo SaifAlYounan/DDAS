@@ -328,19 +328,16 @@ function MemoSection({ label }) {
   );
 }
 
-function GovernanceMemo({ result, liveGU, tier }) {
+function VerdictCard({ result, liveGU, tier, tiers }) {
   const a = result.analysis;
   const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   const gu = liveGU.primary.gu;
   const docRef = `GOV-${String(gu).padStart(3, '0')}${tier.name.slice(0, 2).toUpperCase()}-${new Date().getFullYear()}`;
-
-  const memoRows = [
-    ['TO', tier.approver],
-    ['FROM', 'Governance Unit Engine · DDAS'],
-    ['DATE', today],
-    a.transaction_summary ? ['RE', a.transaction_summary] : null,
-    a.transaction_type ? ['TYPE', a.transaction_type] : null,
-  ].filter(Boolean);
+  const appAuth = a?.approval_authority || tier.approver;
+  const endorsements = (a?.endorsing_functions?.length > 0
+    ? a.endorsing_functions
+    : tier.signatures.split(/[+,·]/).map(s => s.trim()).filter(s => s && s.toLowerCase() !== 'signatures' && !s.match(/^\d/))
+  );
 
   return (
     <div style={{
@@ -349,140 +346,106 @@ function GovernanceMemo({ result, liveGU, tier }) {
       borderRadius: 12,
       marginBottom: 20,
       overflow: 'hidden',
-      boxShadow: '0 2px 12px rgba(15,38,68,0.10)',
+      boxShadow: '0 2px 16px rgba(15,38,68,0.12)',
     }}>
-      {/* Navy document header */}
+      {/* Navy header bar */}
       <div style={{
         background: 'linear-gradient(135deg, #0f2644 0%, #1e4a7a 100%)',
-        padding: '14px 22px',
-        display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start',
+        padding: '11px 22px',
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
       }}>
-        <div>
-          <div style={{ fontSize: 8, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: 3, textTransform: 'uppercase', marginBottom: 5 }}>
-            Internal Governance Document
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 18 }}>📄</span>
-            <span style={{ fontSize: 16, fontWeight: 800, color: '#fff', letterSpacing: 0.3 }}>
-              Governance Assessment Memo
-            </span>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+          <span style={{ fontSize: 15 }}>📄</span>
+          <span style={{ fontSize: 13, fontWeight: 800, color: '#fff', letterSpacing: 0.3 }}>Governance Assessment</span>
+          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.38)', letterSpacing: 1.2, textTransform: 'uppercase' }}>· DDAS</span>
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8, flexShrink: 0 }}>
-          <div style={{
-            padding: '5px 14px', borderRadius: 20,
-            background: '#f97316', color: '#fff',
-            fontSize: 11, fontWeight: 800, letterSpacing: 0.8,
-            textTransform: 'uppercase',
-          }}>
-            {tier.name} · {tier.approver.split(' ').slice(0, 2).join(' ')}
-          </div>
-          <div style={{ fontFamily: 'monospace', fontSize: 10, fontWeight: 700, color: 'rgba(255,255,255,0.55)', letterSpacing: 1 }}>
-            {docRef}
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 14, flexShrink: 0 }}>
+          <span style={{ fontFamily: 'monospace', fontSize: 10, color: 'rgba(255,255,255,0.45)', letterSpacing: 1 }}>{docRef}</span>
+          <span style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>{today}</span>
+          <span style={{ fontSize: 8, fontWeight: 800, color: '#fca5a5', letterSpacing: 1.5, textTransform: 'uppercase' }}>Confidential</span>
         </div>
       </div>
 
-      {/* Memo body: left fields + right approval stamp */}
-      <div style={{ display: 'flex' }}>
-        {/* Left: TO/FROM/DATE/RE/TYPE */}
-        <div style={{ flex: 1, padding: '14px 22px 12px' }}>
-          {memoRows.map(([label, value], i) => (
-            <div key={label} style={{
-              display: 'flex', gap: 16, alignItems: 'flex-start',
-              padding: '7px 0',
-              borderBottom: i < memoRows.length - 1 ? '1px solid var(--border-secondary)' : 'none',
-            }}>
-              <span style={{
-                fontSize: 9, fontWeight: 800, color: 'var(--text-muted)',
-                letterSpacing: 1.5, textTransform: 'uppercase',
-                minWidth: 40, paddingTop: 2, flexShrink: 0,
-              }}>
-                {label}
-              </span>
-              <span style={{
-                fontSize: label === 'RE' ? 13 : 12,
-                fontWeight: label === 'RE' ? 700 : 500,
-                color: 'var(--text-primary)', lineHeight: 1.5, flex: 1,
-              }}>
-                {value}
-              </span>
+      {/* RE / transaction summary */}
+      {a?.transaction_summary && (
+        <div style={{ padding: '12px 22px', borderBottom: '1px solid var(--border-secondary)', background: 'var(--bg-secondary)' }}>
+          <div style={{ display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+            <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', minWidth: 30, paddingTop: 3, flexShrink: 0 }}>RE</span>
+            <div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.45 }}>{a.transaction_summary}</div>
+              {a.transaction_type && (
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>Type: {a.transaction_type}</div>
+              )}
             </div>
-          ))}
-        </div>
-
-        {/* Right: approval stamp */}
-        <div style={{
-          flexShrink: 0, width: 148,
-          padding: '16px 18px',
-          borderLeft: '1px solid var(--border-secondary)',
-          display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', gap: 8,
-        }}>
-          <div style={{
-            border: `2px solid ${tier.color}`,
-            borderRadius: 10,
-            padding: '10px 12px',
-            textAlign: 'center', width: '100%',
-            background: tier.bg,
-          }}>
-            <div style={{ fontSize: 7, fontWeight: 800, color: tier.color, letterSpacing: 2.5, textTransform: 'uppercase', marginBottom: 5 }}>
-              Approval Required
-            </div>
-            <div style={{ fontSize: 9, fontWeight: 700, color: 'var(--text-tertiary)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
-              {tier.name}
-            </div>
-            <div style={{ fontSize: 28, fontWeight: 900, color: tier.color, lineHeight: 1 }}>{gu}</div>
-            <div style={{ fontSize: 9, color: 'var(--text-muted)', marginTop: 2 }}>Score / 100</div>
-          </div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.4 }}>
-            SLA: <strong style={{ color: 'var(--text-secondary)' }}>{liveGU.primary.tier.sla}</strong>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Approver + Endorsements rows */}
-      <div style={{ borderTop: '1px solid var(--border-secondary)' }}>
-        {/* Approver row */}
-        <div style={{ padding: '9px 22px', borderBottom: '1px solid var(--border-secondary)', display: 'flex', gap: 16, alignItems: 'center' }}>
-          <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', minWidth: 130, flexShrink: 0 }}>
-            Approving Authority
-          </span>
-          <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-primary)' }}>
-            {tier.approver}
-          </span>
+      {/* 4-column verdict row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr 1fr' }}>
+        {/* Score */}
+        <div style={{ padding: '16px 22px', borderRight: '1px solid var(--border-secondary)' }}>
+          <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 4 }}>Score</div>
+          <div className="score-reveal" style={{ fontSize: 52, fontWeight: 900, color: tier.color, lineHeight: 1 }}>{gu}</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>/ 100 GU</div>
         </div>
-        {/* Endorsements row */}
-        <div style={{ padding: '9px 22px', display: 'flex', gap: 16, alignItems: 'center' }}>
-          <span style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', minWidth: 130, flexShrink: 0 }}>
-            Endorsements Required
-          </span>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-            {(result?.analysis?.endorsing_functions?.length > 0
-              ? result.analysis.endorsing_functions
-              : tier.signatures.split(/[+,·]/).map(s => s.trim()).filter(s => s && s.toLowerCase() !== 'signatures' && !s.match(/^\d/))
-            ).map((fn, i) => (
+
+        {/* Tier */}
+        <div style={{ padding: '16px 18px', borderRight: '1px solid var(--border-secondary)' }}>
+          <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 }}>Approval Tier</div>
+          <div style={{ display: 'inline-block', background: tier.bg, border: `2px solid ${tier.color}`, borderRadius: 8, padding: '5px 16px', marginBottom: 6 }}>
+            <span className="score-reveal" style={{ fontSize: 20, fontWeight: 800, color: tier.color, animationDelay: '0.1s' }}>{tier.name}</span>
+          </div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>SLA: <strong style={{ color: 'var(--text-secondary)' }}>{liveGU.primary.tier.sla}</strong></div>
+          {liveGU.primary.floorApplied && (
+            <div style={{ marginTop: 6, fontSize: 9, fontWeight: 700, color: '#ef4444', padding: '2px 7px', background: 'rgba(239,68,68,0.08)', borderRadius: 4, border: '1px solid rgba(239,68,68,0.25)', display: 'inline-block' }}>
+              ⚠ Floor rule applied
+            </div>
+          )}
+        </div>
+
+        {/* Approving Authority */}
+        <div style={{ padding: '16px 18px', borderRight: '1px solid var(--border-secondary)' }}>
+          <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 }}>Approving Authority</div>
+          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.4 }}>{appAuth}</div>
+        </div>
+
+        {/* Endorsements */}
+        <div style={{ padding: '16px 18px' }}>
+          <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 }}>Endorsements Required</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+            {endorsements.map((fn, i) => (
               <span key={i} style={{
                 fontSize: 11, fontWeight: 700, padding: '3px 10px',
-                background: 'var(--bg-tertiary)',
-                border: '1px solid var(--border-primary)',
+                background: 'var(--bg-tertiary)', border: '1px solid var(--border-primary)',
                 borderRadius: 20, color: 'var(--text-secondary)',
-              }}>
-                {fn}
-              </span>
+              }}>{fn}</span>
             ))}
           </div>
         </div>
       </div>
 
+      {/* Tier scale bar */}
+      <div style={{ padding: '8px 22px 10px', borderTop: '1px solid var(--border-secondary)', background: 'var(--bg-secondary)' }}>
+        <div style={{ display: 'flex', gap: 0, borderRadius: 4, overflow: 'hidden', border: '1px solid var(--border-secondary)' }}>
+          {tiers.map(t => (
+            <div key={t.name} style={{
+              flex: 1, padding: '4px 3px', textAlign: 'center',
+              background: tier.name === t.name ? '#0f2644' : 'var(--bg-card)',
+              borderRight: '1px solid var(--border-secondary)',
+            }}>
+              <span style={{ fontSize: 9, fontWeight: 700, color: tier.name === t.name ? '#fff' : 'var(--text-muted)', whiteSpace: 'nowrap' }}>{t.name}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Confidentiality footer */}
       <div style={{
-        padding: '7px 22px',
-        background: 'var(--bg-tertiary)',
-        borderTop: '1px solid var(--border-secondary)',
+        padding: '6px 22px',
+        background: 'var(--bg-tertiary)', borderTop: '1px solid var(--border-secondary)',
         display: 'flex', gap: 7, alignItems: 'center',
-        fontSize: 9, fontWeight: 700, color: 'var(--text-muted)',
-        letterSpacing: 1, textTransform: 'uppercase',
+        fontSize: 9, fontWeight: 700, color: 'var(--text-muted)', letterSpacing: 1, textTransform: 'uppercase',
       }}>
         <span>⚠</span>
         <span>Confidential — For Internal Use Only · Dynamic Delegation of Authority System</span>
@@ -752,75 +715,62 @@ th{background:#f3f4f6;font-weight:700;font-size:10px;text-transform:uppercase;le
 </style>
 </head><body>
 
-<!-- DOCUMENT HEADER -->
-<div style="border-top:5px solid #0f2644;padding-top:16px;margin-bottom:22px">
-  <div style="display:flex;justify-content:space-between;align-items:flex-start">
-    <div>
-      <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;color:#6b7280;margin-bottom:5px">Dynamic Delegation of Authority System</div>
-      <div style="font-family:Arial,sans-serif;font-size:21px;font-weight:800;color:#0f2644;letter-spacing:.3px">Governance Assessment Memo</div>
-    </div>
-    <div style="text-align:right;font-family:Arial,sans-serif;font-size:10px;color:#6b7280;line-height:1.8">
-      <div style="font-weight:700;font-size:9px;letter-spacing:1px;text-transform:uppercase;color:#b91c1c;margin-bottom:4px">Confidential — Internal Use Only</div>
-      <div>Document Ref: <strong style="color:#111827;font-family:monospace;font-size:11px">${reportId}</strong></div>
-      <div>Date: <strong style="color:#111827">${dateOnly}</strong></div>
-      <div>Generated: ${generated}</div>
+<!-- VERDICT CARD -->
+<div style="border:2px solid #0f2644;border-radius:6px;overflow:hidden;margin-bottom:26px">
+  <!-- Header -->
+  <div style="background:#0f2644;padding:10px 18px;display:flex;justify-content:space-between;align-items:center">
+    <div style="font-family:Arial,sans-serif;font-size:14px;font-weight:800;color:#fff;letter-spacing:0.3px">📄 Governance Assessment <span style="font-size:10px;font-weight:400;color:rgba(255,255,255,0.45);letter-spacing:1px;text-transform:uppercase">· DDAS</span></div>
+    <div style="font-family:Arial,sans-serif;font-size:9px;color:rgba(255,255,255,0.55);display:flex;align-items:center;gap:14px">
+      <span style="font-family:monospace;font-size:10px;color:rgba(255,255,255,0.6)">${reportId}</span>
+      <span>${dateOnly}</span>
+      <span style="font-weight:800;color:#fca5a5;letter-spacing:1px;text-transform:uppercase;font-size:8px">Confidential</span>
     </div>
   </div>
-  <div style="border-top:1px solid #d1d5db;margin-top:14px"></div>
-</div>
-
-<!-- TRANSACTION DETAILS -->
-${a.transaction_summary ? `${sh('Transaction Details')}
-<table>
-  <tbody>
-    <tr><th style="width:165px">Transaction</th><td style="font-size:14px;font-weight:600;color:#0f2644;font-family:Arial,sans-serif">${escHtml(a.transaction_summary)}</td></tr>
-    ${a.transaction_type ? `<tr><th>Contract Type</th><td>${escHtml(a.transaction_type)}</td></tr>` : ''}
-    <tr><th>Assessment Date</th><td>${dateOnly}</td></tr>
-    <tr><th>Assessment Method</th><td>AI-Assisted Contract Risk Assessment (DDAS)</td></tr>
-  </tbody>
-</table>` : ''}
-
-<!-- ASSESSMENT OUTCOME -->
-${sh('Assessment Outcome')}
-<div style="border:2px solid #0f2644">
-  <div style="display:flex;border-bottom:1px solid #d1d5db">
-    <div style="flex:1;padding:16px 20px;border-right:1px solid #d1d5db">
-      <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:5px">Governance Score</div>
-      <div style="font-family:Arial,sans-serif;font-size:52px;font-weight:800;color:#0f2644;line-height:1">${gu}</div>
-      <div style="font-family:Arial,sans-serif;font-size:11px;color:#6b7280;margin-top:3px">out of 100 Governance Units</div>
-      ${floorApplied ? `<div style="margin-top:10px;font-family:Arial,sans-serif;font-size:10px;font-weight:700;color:#b91c1c">&#9888; Floor rule applied: ${escHtml(floorApplied)}</div>` : ''}
+  ${a.transaction_summary ? `<!-- RE line -->
+  <div style="padding:12px 18px;background:#f8fafc;border-bottom:1px solid #d1d5db">
+    <div style="display:flex;gap:14px;align-items:flex-start">
+      <span style="font-family:Arial,sans-serif;font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;min-width:28px;padding-top:3px;flex-shrink:0">RE</span>
+      <div>
+        <div style="font-family:Arial,sans-serif;font-size:15px;font-weight:700;color:#0f2644;line-height:1.4">${escHtml(a.transaction_summary)}</div>
+        ${a.transaction_type ? `<div style="font-family:Arial,sans-serif;font-size:11px;color:#6b7280;margin-top:4px">Type: ${escHtml(a.transaction_type)}</div>` : ''}
+      </div>
     </div>
-    <div style="flex:2;padding:16px 20px">
-      <table style="margin-bottom:0">
-        <tbody>
-          <tr>
-            <th style="background:none;border:none;border-bottom:1px solid #e5e7eb;padding:5px 0;width:160px;font-size:10px">Required Approval Tier</th>
-            <td style="border:none;border-bottom:1px solid #e5e7eb;padding:5px 0;font-size:17px;font-weight:800;color:#0f2644;font-family:Arial,sans-serif">${escHtml(tier.name)}</td>
-          </tr>
-          <tr>
-            <th style="background:none;border:none;border-bottom:1px solid #e5e7eb;padding:5px 0;font-size:10px">Approving Authority</th>
-            <td style="border:none;border-bottom:1px solid #e5e7eb;padding:5px 0">${escHtml(tier.approver)}</td>
-          </tr>
-          <tr>
-            <th style="background:none;border:none;border-bottom:1px solid #e5e7eb;padding:5px 0;font-size:10px">Endorsements Required</th>
-            <td style="border:none;border-bottom:1px solid #e5e7eb;padding:5px 0">${
-              (a.endorsing_functions && a.endorsing_functions.length > 0
-                ? a.endorsing_functions
-                : tier.signatures.split(/[+,·]/).map(s => s.trim()).filter(s => s && !s.match(/^\d/))
-              ).join(' · ')
-            }</td>
-          </tr>
-          <tr>
-            <th style="background:none;border:none;padding:5px 0;font-size:10px">Estimated SLA</th>
-            <td style="border:none;padding:5px 0">${escHtml(tier.sla)}</td>
-          </tr>
-        </tbody>
-      </table>
+  </div>` : ''}
+  <!-- 4-column verdict row -->
+  <div style="display:grid;grid-template-columns:auto 1fr 1fr 1fr;border-top:1px solid #d1d5db">
+    <div style="padding:14px 18px;border-right:1px solid #d1d5db">
+      <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:4px">Score</div>
+      <div style="font-family:Arial,sans-serif;font-size:50px;font-weight:900;color:#0f2644;line-height:1">${gu}</div>
+      <div style="font-family:Arial,sans-serif;font-size:10px;color:#6b7280;margin-top:2px">/ 100 GU</div>
+      ${floorApplied ? `<div style="margin-top:8px;font-family:Arial,sans-serif;font-size:9px;font-weight:700;color:#b91c1c">&#9888; Floor rule applied</div>` : ''}
+    </div>
+    <div style="padding:14px 18px;border-right:1px solid #d1d5db">
+      <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:8px">Approval Tier</div>
+      <div style="font-family:Arial,sans-serif;font-size:19px;font-weight:800;color:#0f2644;margin-bottom:5px">${escHtml(tier.name)}</div>
+      <div style="font-family:Arial,sans-serif;font-size:10px;color:#6b7280">SLA: <strong style="color:#111827">${escHtml(tier.sla)}</strong></div>
+    </div>
+    <div style="padding:14px 18px;border-right:1px solid #d1d5db">
+      <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:8px">Approving Authority</div>
+      <div style="font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#111827;line-height:1.4">${escHtml(a.approval_authority || tier.approver)}</div>
+    </div>
+    <div style="padding:14px 18px">
+      <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:8px">Endorsements Required</div>
+      <div style="font-family:Arial,sans-serif;font-size:12px;font-weight:600;color:#374151;line-height:1.6">${
+        (a.endorsing_functions && a.endorsing_functions.length > 0
+          ? a.endorsing_functions
+          : tier.signatures.split(/[+,·]/).map(s => s.trim()).filter(s => s && !s.match(/^\d/))
+        ).join(' · ')
+      }</div>
     </div>
   </div>
-  <div style="padding:10px 14px;background:#f3f4f6">
-    <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:5px">Approval Tier Scale</div>
+  <!-- Tier scale bar -->
+  <div style="padding:8px 18px 10px;background:#f3f4f6;border-top:1px solid #d1d5db">
+    <div style="font-family:Arial,sans-serif;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#6b7280;margin-bottom:4px">Approval Tier Scale</div>
     <div style="display:flex;gap:0">${tierBar}</div>
+  </div>
+  <!-- Confidentiality footer -->
+  <div style="padding:6px 18px;background:#f9fafb;border-top:1px solid #d1d5db;font-family:Arial,sans-serif;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#6b7280">
+    Confidential — For Internal Use Only · Dynamic Delegation of Authority System
   </div>
 </div>
 
@@ -1297,108 +1247,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
 
             <div className="doc-layout" style={{ display: 'flex', gap: 20, alignItems: 'flex-start' }}>
               <div style={{ flex: 1, minWidth: 0 }}>
-            <GovernanceMemo result={result} liveGU={liveGU} tier={tier} />
-
-            {/* ══════════════════════════════════════════
-                1. EXECUTIVE SUMMARY — dark navy verdict card
-                ══════════════════════════════════════════ */}
-            {(() => {
-              const approver = liveGU.primary.tier?.approver || '';
-              const appAuth = result.analysis?.approval_authority || '';
-              const endorsing = result.analysis?.endorsing_functions || [];
-              const execChain = [
-                { role: appAuth || approver, label: 'Final Authority' },
-                ...endorsing.map(fn => ({ role: fn, label: 'Endorsement' })),
-              ].filter(c => c.role);
-              return (
-                <div className="gu-hero card-entrance" style={{
-                  background: 'linear-gradient(135deg, #0c1f3a 0%, #183560 100%)',
-                  borderRadius: 16, padding: '28px 30px', marginBottom: 20,
-                  border: '1px solid rgba(255,255,255,0.1)',
-                  boxShadow: '0 6px 32px rgba(15,38,68,0.45)',
-                  position: 'relative', overflow: 'hidden',
-                }}>
-                  {/* Subtle background glow */}
-                  <div style={{ position: 'absolute', top: -60, right: -60, width: 240, height: 240, borderRadius: '50%', background: `radial-gradient(circle, ${tier.color}18 0%, transparent 70%)`, pointerEvents: 'none' }} />
-
-                  {/* Header */}
-                  <div style={{ fontSize: 9, fontWeight: 800, letterSpacing: 2.5, textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)', marginBottom: 22, display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: '#10b981', boxShadow: '0 0 8px #10b981' }} />
-                    Executive Summary — Governance Decision
-                    {liveGU.hasOverrides && <span style={{ color: '#f59e0b', marginLeft: 4 }}>· manually adjusted</span>}
-                  </div>
-
-                  {/* Score + Tier + Chain */}
-                  <div style={{ display: 'grid', gridTemplateColumns: 'auto auto 1fr', gap: 28, alignItems: 'flex-start', marginBottom: 22 }}>
-
-                    {/* Score */}
-                    <div>
-                      <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: 'rgba(255,255,255,0.4)', marginBottom: 6 }}>Governance Score</div>
-                      <div className="score-reveal" style={{ fontSize: 72, fontWeight: 900, color: tier.color, lineHeight: 1, textShadow: `0 0 40px ${tier.color}66` }}>
-                        {liveGU.primary.gu}
-                      </div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', marginTop: 5 }}>out of 100</div>
-                    </div>
-
-                    {/* Tier */}
-                    <div style={{ borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: 24 }}>
-                      <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: 'rgba(255,255,255,0.4)', marginBottom: 8 }}>Approval Tier</div>
-                      <div style={{
-                        display: 'inline-block', background: `${tier.color}22`,
-                        border: `2px solid ${tier.color}`, borderRadius: 10,
-                        padding: '8px 18px', marginBottom: 8,
-                      }}>
-                        <div className="score-reveal" style={{ fontSize: 24, fontWeight: 800, color: tier.color, animationDelay: '0.15s' }}>{tier.name}</div>
-                      </div>
-                      <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.35)' }}>SLA: {liveGU.primary.tier.sla}</div>
-                      {liveGU.primary.floorApplied && (
-                        <div style={{ marginTop: 8, fontSize: 10, fontWeight: 700, color: '#fca5a5', padding: '3px 8px', background: 'rgba(239,68,68,0.15)', borderRadius: 4, display: 'inline-block', border: '1px solid rgba(239,68,68,0.3)' }}>
-                          ⚠ Floor rule: {liveGU.primary.floorApplied}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Approval Chain — routing slip */}
-                    <div style={{ borderLeft: '1px solid rgba(255,255,255,0.08)', paddingLeft: 24 }}>
-                      <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 1.5, color: 'rgba(255,255,255,0.4)', marginBottom: 12 }}>
-                        Required Approval Chain
-                      </div>
-                      {execChain.length === 0 ? (
-                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)' }}>No chain data yet.</div>
-                      ) : (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 0, alignItems: 'stretch' }}>
-                          {execChain.map((item, i) => (
-                            <div key={i} style={{ display: 'flex', alignItems: 'stretch', gap: 0 }}>
-                              <div style={{
-                                background: i === 0 ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)',
-                                border: `1px solid ${i === 0 ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.12)'}`,
-                                borderRadius: 8, padding: '10px 14px',
-                              }}>
-                                <div style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.8, color: i === 0 ? tier.color : 'rgba(255,255,255,0.4)', marginBottom: 4 }}>
-                                  {item.label}
-                                </div>
-                                <div style={{ fontSize: 13, fontWeight: 700, color: '#fff', lineHeight: 1.3, maxWidth: 180 }}>{item.role}</div>
-                              </div>
-                              {i < execChain.length - 1 && (
-                                <div style={{ display: 'flex', alignItems: 'center', padding: '0 8px', color: 'rgba(255,255,255,0.25)', fontSize: 18, fontWeight: 300 }}>→</div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Tier progress bar */}
-                  <div style={{ height: 5, background: 'rgba(255,255,255,0.06)', borderRadius: 3, overflow: 'hidden' }}>
-                    <div style={{ width: `${Math.min(liveGU.primary.gu, 100)}%`, height: '100%', background: `linear-gradient(90deg,#10b981,${tier.color})`, borderRadius: 3, transition: 'width 0.6s' }} />
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 5 }}>
-                    {TIERS.map(t => <span key={t.name} style={{ fontSize: 9, fontWeight: 700, color: tier.name === t.name ? t.color : 'rgba(255,255,255,0.18)' }}>{t.name}</span>)}
-                  </div>
-                </div>
-              );
-            })()}
+            <VerdictCard result={result} liveGU={liveGU} tier={tier} tiers={TIERS} />
 
             {/* ══════════════════════════════════════════
                 2. SPIDER / RADAR CHART
