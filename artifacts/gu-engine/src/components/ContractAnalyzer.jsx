@@ -1144,7 +1144,18 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
             </p>
             <ol style={{ paddingLeft: 20, margin: '0 0 18px', display: 'flex', flexDirection: 'column', gap: 6 }}>
               <li style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                <strong style={{ color: 'var(--text-primary)' }}>Choose an organisation type</strong> below — this selects a template calibration that approximates the risk appetite for that type of organisation.
+                <strong style={{ color: 'var(--text-primary)' }}>Choose an organisation type</strong> — this selects a template calibration that approximates the risk appetite for that type of organisation.
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                  {Object.entries(config.profiles).map(([id, prof]) => (
+                    <button key={id} onClick={() => setProfile(id)} className="btn-interactive" style={{
+                      padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                      border: profile === id ? '2px solid var(--accent-primary)' : '1.5px solid var(--border-primary)',
+                      background: profile === id ? 'var(--accent-primary-light)' : 'var(--bg-card)',
+                      color: profile === id ? 'var(--accent-primary)' : 'var(--text-muted)',
+                      transition: 'all 0.2s',
+                    }}>{prof.label}</button>
+                  ))}
+                </div>
               </li>
               <li style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
                 <strong style={{ color: 'var(--text-primary)' }}>Describe or upload your action</strong> — paste a contract, upload a PDF or image, or type a description of the transaction in the box below. No document of your own?{' '}
@@ -1168,19 +1179,6 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               </li>
             </ol>
 
-            {/* Profile selector */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--text-secondary)', flexShrink: 0 }}>Organisation type:</span>
-              {Object.entries(config.profiles).map(([id, prof]) => (
-                <button key={id} onClick={() => setProfile(id)} className="btn-interactive" style={{
-                  padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
-                  border: profile === id ? '2px solid var(--accent-primary)' : '1.5px solid var(--border-primary)',
-                  background: profile === id ? 'var(--accent-primary-light)' : 'var(--bg-card)',
-                  color: profile === id ? 'var(--accent-primary)' : 'var(--text-muted)',
-                  transition: 'all 0.2s',
-                }}>{prof.label}</button>
-              ))}
-            </div>
 
           </div>
         </div>
