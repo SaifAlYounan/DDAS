@@ -215,6 +215,9 @@ function HowItWorks({ onGetStarted, onMethodology, onML }) {
 
 function HistoryDrawer({ history, onSelect, onClear, isOpen, onClose }) {
   const [clearConfirm, setClearConfirm] = useState(false);
+  useEffect(() => {
+    if (!isOpen) setClearConfirm(false);
+  }, [isOpen]);
   if (!isOpen) return null;
   const tiers = DEFAULT_CONFIG.tiers;
   const getTier = (gu) => tiers.find(t => gu <= t.maxGU) || tiers[tiers.length - 1];
