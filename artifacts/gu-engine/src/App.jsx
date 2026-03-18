@@ -68,8 +68,6 @@ function HowItWorks({ onGetStarted, onMethodology, onML }) {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
           <button onClick={() => scrollToSection('how-it-works')} style={{ background: 'none', border: 'none', fontSize: 14, color: '#475569', cursor: 'pointer', fontFamily: 'Arial, sans-serif' }}>How It Works</button>
-          <button onClick={onMethodology} style={{ background: 'none', border: 'none', fontSize: 14, color: '#475569', cursor: 'pointer', fontFamily: 'Arial, sans-serif' }}>Concept</button>
-          <button onClick={onML} style={{ background: 'none', border: 'none', fontSize: 14, color: '#475569', cursor: 'pointer', fontFamily: 'Arial, sans-serif' }}>Machine Learning</button>
           <button onClick={onGetStarted} style={{
             padding: '8px 20px', background: NAV, color: '#fff',
             border: 'none', borderRadius: 6, fontSize: 14, fontWeight: 700, cursor: 'pointer',
