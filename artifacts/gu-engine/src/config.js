@@ -12,15 +12,15 @@ export const DEFAULT_CONFIG = {
     },
     regulated: {
       label: 'Heavily Regulated',
-      weights: { financial: 0.15, reversibility: 0.15, regulatory: 0.35, reputational: 0.15, precedent: 0.10, complexity: 0.10 },
+      weights: { financial: 0.15, reversibility: 0.10, regulatory: 0.40, reputational: 0.25, precedent: 0.05, complexity: 0.05 },
     },
     startup: {
       label: 'Growth / Startup',
-      weights: { financial: 0.30, reversibility: 0.10, regulatory: 0.10, reputational: 0.10, precedent: 0.15, complexity: 0.25 },
+      weights: { financial: 0.35, reversibility: 0.15, regulatory: 0.03, reputational: 0.07, precedent: 0.15, complexity: 0.25 },
     },
     publicCo: {
       label: 'Public Company',
-      weights: { financial: 0.20, reversibility: 0.15, regulatory: 0.20, reputational: 0.25, precedent: 0.10, complexity: 0.10 },
+      weights: { financial: 0.15, reversibility: 0.10, regulatory: 0.30, reputational: 0.35, precedent: 0.03, complexity: 0.07 },
     },
   },
 

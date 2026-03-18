@@ -73,7 +73,7 @@ function HowItWorks({ onGetStarted, onMethodology, onML }) {
             border: 'none', borderRadius: 6, fontSize: 14, fontWeight: 700, cursor: 'pointer',
             fontFamily: 'Arial, sans-serif',
           }}>
-            Analyse an Action →
+            Analyse a Transaction →
           </button>
         </div>
       </nav>
@@ -97,7 +97,7 @@ function HowItWorks({ onGetStarted, onMethodology, onML }) {
             cursor: 'pointer', fontFamily: 'Arial, sans-serif',
             boxShadow: '0 4px 14px rgba(15,38,68,0.3)',
           }}>
-            Analyse an Action →
+            Analyse a Transaction →
           </button>
           <button onClick={() => scrollToSection('how-it-works')} style={{
             padding: '13px 28px', background: 'transparent', color: NAV,
@@ -204,7 +204,7 @@ function HowItWorks({ onGetStarted, onMethodology, onML }) {
               border: 'none', borderRadius: 7, fontSize: 15, fontWeight: 800,
               cursor: 'pointer', fontFamily: 'Arial, sans-serif',
             }}>
-              Analyse an Action →
+              Analyse a Transaction →
             </button>
           </div>
         </div>
@@ -217,6 +217,7 @@ function HowItWorks({ onGetStarted, onMethodology, onML }) {
 // ── History Drawer ────────────────────────────────────────────────────────────
 
 function HistoryDrawer({ history, onSelect, onClear, isOpen, onClose }) {
+  const [clearConfirm, setClearConfirm] = useState(false);
   if (!isOpen) return null;
   const tiers = DEFAULT_CONFIG.tiers;
   const getTier = (gu) => tiers.find(t => gu <= t.maxGU) || tiers[tiers.length - 1];
@@ -270,9 +271,19 @@ function HistoryDrawer({ history, onSelect, onClear, isOpen, onClose }) {
         </div>
         {history.length > 0 && (
           <div style={{ padding: 12, borderTop: '1px solid #f1f5f9' }}>
-            <button onClick={onClear} style={{ width: '100%', padding: '8px 14px', borderRadius: 8, border: '1.5px solid #fecaca', background: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#ef4444', fontFamily: 'Arial, sans-serif' }}>
-              Clear All History
-            </button>
+            {clearConfirm ? (
+              <div style={{ borderRadius: 8, border: '1.5px solid #fecaca', background: '#fff7f7', padding: '10px 12px' }}>
+                <div style={{ fontSize: 12, color: '#991b1b', fontWeight: 600, marginBottom: 8, fontFamily: 'Arial, sans-serif' }}>Are you sure? This cannot be undone.</div>
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button onClick={() => { onClear(); setClearConfirm(false); onClose(); }} style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: 'none', background: '#ef4444', color: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 700, fontFamily: 'Arial, sans-serif' }}>Yes, clear all</button>
+                  <button onClick={() => setClearConfirm(false)} style={{ flex: 1, padding: '6px 0', borderRadius: 6, border: '1px solid #e2e8f0', background: '#f8fafc', color: '#475569', cursor: 'pointer', fontSize: 12, fontWeight: 600, fontFamily: 'Arial, sans-serif' }}>Cancel</button>
+                </div>
+              </div>
+            ) : (
+              <button onClick={() => setClearConfirm(true)} style={{ width: '100%', padding: '8px 14px', borderRadius: 8, border: '1.5px solid #fecaca', background: '#fff', cursor: 'pointer', fontSize: 12, fontWeight: 600, color: '#ef4444', fontFamily: 'Arial, sans-serif' }}>
+                Clear All History
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -420,7 +431,7 @@ const NAV_BG = '#0f2644';
 const NAV_HOVER = '#1e3a58';
 const NAV_ACTIVE = '#1a3560';
 
-function AppSidebar({ view, setView, history, onHistoryOpen, theme, toggleTheme, goHome }) {
+function AppSidebar({ view, setView, history, onHistoryOpen, goHome }) {
   const navItems = [
     { id: 'landing', label: 'Home', icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
@@ -490,18 +501,9 @@ function AppSidebar({ view, setView, history, onHistoryOpen, theme, toggleTheme,
 
       <div style={{ flex: 1 }} />
 
-      {/* Footer controls */}
+      {/* Footer */}
       <div style={{ padding: '10px 8px 14px', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-        <button onClick={toggleTheme} style={{
-          width: '100%', padding: '8px 10px', borderRadius: 7, border: 'none',
-          background: 'rgba(255,255,255,0.07)', cursor: 'pointer', textAlign: 'left',
-          fontSize: 12, color: 'rgba(255,255,255,0.5)', fontFamily: 'Arial, sans-serif',
-          display: 'flex', alignItems: 'center', gap: 8,
-        }}>
-          <span style={{ fontSize: 14 }}>{theme === 'light' ? '🌙' : '☀️'}</span>
-          {theme === 'light' ? 'Dark Mode' : 'Light Mode'}
-        </button>
-        <div style={{ marginTop: 10, padding: '0 10px', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 0.5 }}>
+        <div style={{ padding: '0 10px', fontSize: 9, color: 'rgba(255,255,255,0.2)', letterSpacing: 0.5 }}>
           CONFIDENTIAL — INTERNAL USE ONLY
         </div>
       </div>
@@ -633,8 +635,6 @@ export default function App() {
             setView={handleSetView}
             history={history}
             onHistoryOpen={() => setHistoryOpen(true)}
-            theme={theme}
-            toggleTheme={toggleTheme}
             goHome={() => setView('landing')}
           />
 

@@ -175,14 +175,25 @@ When scoring, respond ONLY with this JSON:
 - **USE THE FULL SCORING RANGE**: A simple $200K consultancy should score 2-3 on most dimensions. A $2B green hydrogen JV should score 8-10 on most dimensions. If all your scores are between 3-5, you are doing it wrong.
 - **NEVER comment on the company's internal governance processes, delegation of authority matrix, approval hierarchy, or who should "confirm" authority** — the system determines governance routing automatically from the GU score. Do not write things like "internal delegation of authority should be confirmed" or "board approval may be required" — that is the system's role, not yours.
 - **approval_conditions must ONLY contain contractual deficiencies** — specific clauses missing from or needing to be added to the contract document. Never include organizational, procedural, or governance process items.
-- **risk_rationale must be exactly one sentence** referencing specific dimension scores. No freeform narrative. No recommendations. No suggestions.`;
+- **risk_rationale must be exactly one sentence** referencing specific dimension scores. No freeform narrative. No recommendations. No suggestions. Do NOT mention any approval role title, tier name, authority level, or who should approve — reference only dimension names and their numeric scores.`;
 
-async function analyzeContract(conversationHistory: any[], _context: any = {}) {
+const PROFILE_CONTEXT: Record<string, string> = {
+  default:   "You are evaluating this transaction for a balanced organisation that weights financial exposure and reversibility most heavily. Apply standard scoring across all dimensions.",
+  regulated: "You are evaluating this transaction for a heavily regulated organisation (e.g. licensed utility, bank, or government entity). Regulatory & Compliance and Reputational Impact are the dominant concerns — score these dimensions harder than you otherwise would. A regulatory breach or reputational incident is existential for this organisation. Financial thresholds are less critical than compliance exposure.",
+  startup:   "You are evaluating this transaction for a growth-stage company. Financial Exposure and Stakeholder Complexity are the dominant concerns — these determine whether the business survives. Score financial risk and complexity higher than you otherwise would. Regulatory risk is minimal for this organisation as it operates in low-regulated markets. Speed and flexibility matter more than reputational optics.",
+  publicCo:  "You are evaluating this transaction for a publicly listed company. Reputational Impact is the dominant concern — anything that could trigger analyst, media, or investor scrutiny must be scored high. Regulatory Compliance is also elevated because public companies face enhanced disclosure obligations. Score reputational and regulatory dimensions significantly higher than for a private company.",
+};
+
+async function analyzeContract(conversationHistory: any[], context: any = {}) {
+  const profileKey = context?.profile || "default";
+  const profileNote = PROFILE_CONTEXT[profileKey] || PROFILE_CONTEXT["default"];
+  const systemWithProfile = `${SYSTEM_PROMPT}\n\n## ORGANISATIONAL CONTEXT FOR THIS ANALYSIS\n${profileNote}`;
+
   const message = await anthropic.messages.create({
     model: "claude-sonnet-4-6",
     max_tokens: 8192,
     temperature: 0,
-    system: SYSTEM_PROMPT,
+    system: systemWithProfile,
     messages: conversationHistory,
   });
 

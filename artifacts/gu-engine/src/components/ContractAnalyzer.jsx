@@ -851,6 +851,8 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
   const [input, setInput] = useState('');
   const [profile, setProfile] = useState('default');
   const [loading, setLoading] = useState(false);
+  const [loadingStage, setLoadingStage] = useState(0);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [error, setError] = useState(null);
   const [chat, setChat] = useState([]);
   const [apiHistory, setApiHistory] = useState([]);
@@ -863,6 +865,36 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
   const fileRef = useRef(null);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [chat, loading]);
+
+  const LOADING_STAGES = [
+    { msg: 'Reading contract…', target: 20 },
+    { msg: 'Scoring risk dimensions…', target: 50 },
+    { msg: 'Generating governance recommendation…', target: 75 },
+    { msg: 'Building governance memo…', target: 88 },
+  ];
+  useEffect(() => {
+    if (!loading) {
+      setLoadingStage(0);
+      setLoadingProgress(0);
+      return;
+    }
+    setLoadingStage(0);
+    setLoadingProgress(5);
+    const timings = [0, 7000, 15000, 22000];
+    const stageTimers = timings.map((delay, i) =>
+      setTimeout(() => {
+        setLoadingStage(i);
+        setLoadingProgress(LOADING_STAGES[i].target);
+      }, delay)
+    );
+    const tick = setInterval(() => {
+      setLoadingProgress(p => Math.min(p + 0.4, 88));
+    }, 300);
+    return () => {
+      stageTimers.forEach(clearTimeout);
+      clearInterval(tick);
+    };
+  }, [loading]);
 
   // Handle restored result from history
   useEffect(() => {
@@ -895,6 +927,8 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
     if (result && liveGU && !restoredResult) {
       const a = result.analysis;
       addToHistory({
+        id: Date.now(),
+        timestamp: Date.now(),
         summary: a.transaction_summary || 'Contract Analysis',
         type: a.transaction_type || 'Unknown',
         gu: liveGU.primary.gu,
@@ -1223,7 +1257,31 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
           return null;
         })}
 
-        {loading && <LoadingSkeleton />}
+        {loading && (
+          <div>
+            <div style={{ margin: '12px 0 8px', borderRadius: 10, border: '1px solid #e2e8f0', background: '#fff', overflow: 'hidden' }}>
+              <div style={{ height: 3, background: '#f1f5f9', position: 'relative' }}>
+                <div style={{
+                  position: 'absolute', left: 0, top: 0, height: '100%',
+                  background: 'linear-gradient(90deg, #0f2644, #5b8fbe)',
+                  width: `${loadingProgress}%`,
+                  transition: 'width 0.5s ease',
+                }} />
+              </div>
+              <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#0f2644', opacity: 0.7,
+                  animation: 'pulse 1.2s ease-in-out infinite' }} />
+                <span style={{ fontSize: 12.5, fontWeight: 600, color: '#1e293b' }}>
+                  {LOADING_STAGES[loadingStage]?.msg}
+                </span>
+                <span style={{ fontSize: 11, color: '#94a3b8', marginLeft: 'auto' }}>
+                  {Math.round(loadingProgress)}%
+                </span>
+              </div>
+            </div>
+            <LoadingSkeleton />
+          </div>
+        )}
         <div ref={endRef} />
       </div>
 
