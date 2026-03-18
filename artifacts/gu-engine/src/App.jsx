@@ -290,7 +290,7 @@ const METHODOLOGY_SECTIONS = [
   { label: '05 — Calibration', title: 'Continuous Calibration', body: "Unlike a static DoA that's reviewed annually, a DDAS model can learn. If transactions scored at 25 consistently require no escalation beyond manager review, the tier boundaries can be adjusted. If a class of transactions scored low later turns out to cause problems, the weighting model can be retrained. The governance framework becomes a living system." },
 ];
 
-function WhyUseful() {
+function WhyUseful({ setView }) {
   return (
     <div style={{ maxWidth: 760, margin: '0 auto', fontFamily: 'Arial, sans-serif' }}>
       <div style={{ padding: '20px 24px', marginBottom: 18, background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', borderLeft: '5px solid #0f2644', boxShadow: '0 1px 4px rgba(15,38,68,0.07)' }}>
@@ -309,6 +309,21 @@ function WhyUseful() {
       </div>
       <div style={{ marginTop: 14, padding: '12px 18px', borderRadius: 8, background: '#f8fafc', border: '1px solid #e2e8f0', fontSize: 12, color: '#94a3b8', lineHeight: 1.65 }}>
         <strong style={{ color: '#64748b' }}>Note:</strong> Configuration parameters — dimension weights, tier thresholds, and scoring anchors — are fully adjustable in the Configuration panel to match your organization's risk appetite.
+      </div>
+      <div style={{ marginTop: 18, padding: '20px 24px', background: '#fff', borderRadius: 10, border: '1px solid #e2e8f0', borderLeft: '5px solid #7c3aed', boxShadow: '0 1px 4px rgba(15,38,68,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16 }}>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 800, letterSpacing: 2, textTransform: 'uppercase', color: '#7c3aed', marginBottom: 6 }}>Research · Roadmap</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: '#1e293b', marginBottom: 4 }}>Machine Learning</div>
+          <div style={{ fontSize: 13, color: '#64748b', lineHeight: 1.6 }}>Explore the roadmap for evolving DDAS from AI-assisted scoring into a continuously learning governance engine.</div>
+        </div>
+        <button
+          onClick={() => setView('ml')}
+          style={{ flexShrink: 0, padding: '10px 20px', borderRadius: 8, border: 'none', cursor: 'pointer', background: '#7c3aed', color: '#fff', fontSize: 13, fontWeight: 700, fontFamily: 'Arial, sans-serif', letterSpacing: 0.2, whiteSpace: 'nowrap' }}
+          onMouseEnter={e => { e.currentTarget.style.background = '#6d28d9'; }}
+          onMouseLeave={e => { e.currentTarget.style.background = '#7c3aed'; }}
+        >
+          View Roadmap
+        </button>
       </div>
     </div>
   );
@@ -424,9 +439,6 @@ function AppSidebar({ view, setView, history, onHistoryOpen, theme, toggleTheme,
     )},
     { id: 'why', label: 'Concept', icon: (
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-    )},
-    { id: 'ml', label: 'Machine Learning', icon: (
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
     )},
   ];
 
@@ -647,7 +659,7 @@ export default function App() {
               )}
               {view === 'calculator' && <GUCalculator config={config} />}
               {view === 'config' && <ConfigPanel config={config} setConfig={setConfig} />}
-              {view === 'why' && <WhyUseful />}
+              {view === 'why' && <WhyUseful setView={setView} />}
               {view === 'ml' && <MachineLearning />}
             </div>
           </div>
