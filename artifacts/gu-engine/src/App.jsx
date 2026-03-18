@@ -565,7 +565,10 @@ export default function App() {
   const [view, setView] = useState('landing');
   const [config, setConfig] = useState(DEFAULT_CONFIG);
   const [history, setHistory] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('gu-engine-history') || '[]'); } catch { return []; }
+    try {
+      const raw = JSON.parse(localStorage.getItem('gu-engine-history') || '[]');
+      return raw.map(e => ({ ...e, id: e.id ?? Date.now(), timestamp: e.timestamp ?? Date.now() }));
+    } catch { return []; }
   });
   const [historyOpen, setHistoryOpen] = useState(false);
   const [restoredResult, setRestoredResult] = useState(null);
