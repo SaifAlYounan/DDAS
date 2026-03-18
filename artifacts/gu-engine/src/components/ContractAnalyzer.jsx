@@ -1126,59 +1126,77 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
       {/* Demo box: org profile + sample contracts (idle state only) */}
       {!active && (
         <div className="profile-selector no-print" style={{ ...cardStyle, marginBottom: 14, padding: 0, overflow: 'hidden' }}>
-          {/* Header badge */}
-          <div style={{ padding: '11px 16px', background: 'linear-gradient(135deg, rgba(15,38,68,0.07) 0%, rgba(30,74,122,0.10) 100%)', borderBottom: '1px solid rgba(30,74,122,0.14)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px 3px 8px', borderRadius: 20, background: 'var(--bg-user-msg)' }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-secondary)', flexShrink: 0 }} />
-              <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.8, color: 'rgba(255,255,255,0.92)', textTransform: 'uppercase' }}>Demo Version</span>
+          {/* Header */}
+          <div style={{ padding: '12px 18px', background: 'linear-gradient(135deg, rgba(15,38,68,0.07) 0%, rgba(30,74,122,0.10) 100%)', borderBottom: '1px solid rgba(30,74,122,0.14)', display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px 3px 8px', borderRadius: 20, background: 'var(--bg-user-msg)', flexShrink: 0 }}>
+              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-secondary)' }} />
+              <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.8, color: 'rgba(255,255,255,0.92)', textTransform: 'uppercase' }}>Demo</span>
             </div>
+            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Running on default calibrations — live deployment uses your Board-approved Risk Matrix</span>
           </div>
 
-          <div style={{ padding: '16px 18px' }}>
-            {/* Intro */}
-            <p style={{ fontSize: 13, color: 'var(--text-primary)', lineHeight: 1.7, marginBottom: 16 }}>
-              This is a demo version of DDAS running on default calibrations. In a live deployment, your organisation's Board-approved Risk Matrix and Risk Appetite would be loaded into the system at setup — no manual configuration required thereafter.
-            </p>
-            <p style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.7, marginBottom: 16 }}>
-              To try the demo:
-            </p>
-            <ol style={{ paddingLeft: 20, margin: '0 0 18px', display: 'flex', flexDirection: 'column', gap: 6 }}>
-              <li style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                <strong style={{ color: 'var(--text-primary)' }}>Choose an organisation type</strong> — this selects a template calibration that approximates the risk appetite for that type of organisation.
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+          {/* Three-step layout */}
+          <div style={{ padding: '0 18px' }}>
+
+            {/* Step 1 */}
+            <div style={{ display: 'flex', gap: 16, padding: '18px 0', borderBottom: '1px solid var(--border-secondary)', alignItems: 'flex-start' }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg-user-msg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.92)' }}>1</span>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Select your organisation type</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>Sets the template risk calibration for your sector</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                   {Object.entries(config.profiles).map(([id, prof]) => (
                     <button key={id} onClick={() => setProfile(id)} className="btn-interactive" style={{
-                      padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer',
+                      padding: '5px 14px', borderRadius: 6, fontSize: 12, fontWeight: 600, cursor: 'pointer',
                       border: profile === id ? '2px solid var(--accent-primary)' : '1.5px solid var(--border-primary)',
                       background: profile === id ? 'var(--accent-primary-light)' : 'var(--bg-card)',
-                      color: profile === id ? 'var(--accent-primary)' : 'var(--text-muted)',
-                      transition: 'all 0.2s',
+                      color: profile === id ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                      transition: 'all 0.15s',
                     }}>{prof.label}</button>
                   ))}
                 </div>
-              </li>
-              <li style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                <strong style={{ color: 'var(--text-primary)' }}>Describe or upload your action</strong> — paste a contract, upload a PDF or image, or type a description of the transaction in the box below. No document of your own?{' '}
+              </div>
+            </div>
+
+            {/* Step 2 */}
+            <div style={{ display: 'flex', gap: 16, padding: '18px 0', borderBottom: '1px solid var(--border-secondary)', alignItems: 'flex-start' }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg-user-msg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1 }}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.92)' }}>2</span>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Provide your action or document</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>Upload a PDF or image, or type a description in the box below</div>
                 <button
                   onClick={() => send(DEMO_SETTLEMENT, '\u2696\uFE0F Sample: Settlement Agreement — Meridian Resources / Atlas Mining Services')}
                   className="btn-interactive"
                   style={{
-                    display: 'inline-flex', alignItems: 'center', gap: 5,
-                    padding: '2px 10px', borderRadius: 6, cursor: 'pointer',
+                    display: 'inline-flex', alignItems: 'center', gap: 7,
+                    padding: '6px 14px', borderRadius: 7, cursor: 'pointer',
                     border: '1.5px solid var(--border-primary)',
                     background: 'var(--bg-card)',
-                    verticalAlign: 'middle',
                   }}
                 >
-                  <span style={{ fontSize: 13, lineHeight: 1 }}>⚖️</span>
-                  <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--accent-primary)' }}>Use our sample Settlement Agreement</span>
+                  <span style={{ fontSize: 15, lineHeight: 1 }}>⚖️</span>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent-primary)' }}>Use our sample document</div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>Settlement Agreement — Meridian Resources</div>
+                  </div>
                 </button>
-              </li>
-              <li style={{ fontSize: 13, color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-                <strong style={{ color: 'var(--text-primary)' }}>Click Analyze</strong> — the system will score the action across 6 risk dimensions and return a governance decision instantly.
-              </li>
-            </ol>
+              </div>
+            </div>
 
+            {/* Step 3 */}
+            <div style={{ display: 'flex', gap: 16, padding: '18px 0', alignItems: 'center' }}>
+              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'var(--bg-user-msg)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                <span style={{ fontSize: 13, fontWeight: 800, color: 'rgba(255,255,255,0.92)' }}>3</span>
+              </div>
+              <div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 2 }}>Click Analyze</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>Scores across 6 risk dimensions and returns a governance decision instantly</div>
+              </div>
+            </div>
 
           </div>
         </div>
