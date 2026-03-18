@@ -1127,12 +1127,16 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
       {!active && (
         <div className="profile-selector no-print" style={{ ...cardStyle, marginBottom: 14, padding: 0, overflow: 'hidden' }}>
           {/* Header */}
-          <div style={{ padding: '12px 18px', background: 'linear-gradient(135deg, rgba(15,38,68,0.07) 0%, rgba(30,74,122,0.10) 100%)', borderBottom: '1px solid rgba(30,74,122,0.14)', display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '3px 10px 3px 8px', borderRadius: 20, background: 'var(--bg-user-msg)', flexShrink: 0 }}>
-              <div style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--accent-secondary)' }} />
-              <span style={{ fontSize: 9, fontWeight: 800, letterSpacing: 1.8, color: 'rgba(255,255,255,0.92)', textTransform: 'uppercase' }}>Demo</span>
+          <div style={{ padding: '16px 18px', background: 'linear-gradient(135deg, rgba(15,38,68,0.10) 0%, rgba(30,74,122,0.16) 100%)', borderBottom: '1px solid rgba(30,74,122,0.20)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px 4px 10px', borderRadius: 20, background: 'var(--bg-user-msg)', flexShrink: 0 }}>
+                <div style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--accent-secondary)' }} />
+                <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: 2, color: 'rgba(255,255,255,0.95)', textTransform: 'uppercase' }}>Demo Environment</span>
+              </div>
             </div>
-            <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Running on default calibrations — live deployment uses your Board-approved Risk Matrix</span>
+            <p style={{ margin: 0, fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', lineHeight: 1.5 }}>
+              Running on <strong>default calibrations</strong> — a live deployment would use your organisation's Board-approved Risk Matrix and Risk Appetite instead.
+            </p>
           </div>
 
           {/* Three-step layout */}
@@ -1167,7 +1171,7 @@ export default function ContractAnalyzer({ config, restoredResult, onResultClear
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', marginBottom: 4 }}>Provide your action or document</div>
-                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>Upload a PDF or image, or type a description in the box below</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 10 }}>Upload a PDF or image, or type a description in the box below — or if you prefer, just use our sample document</div>
                 <button
                   onClick={() => send(DEMO_SETTLEMENT, '\u2696\uFE0F Sample: Settlement Agreement — Meridian Resources / Atlas Mining Services')}
                   className="btn-interactive"
