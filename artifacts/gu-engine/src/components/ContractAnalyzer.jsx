@@ -333,7 +333,6 @@ function VerdictCard({ result, liveGU, tier, tiers }) {
   const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   const gu = liveGU.primary.gu;
   const docRef = `GOV-${String(gu).padStart(3, '0')}${tier.name.slice(0, 2).toUpperCase()}-${new Date().getFullYear()}`;
-  const appAuth = tier.approver;
   const endorsements = (a?.endorsing_functions?.length > 0
     ? a.endorsing_functions
     : tier.signatures.split(/[+,·]/).map(s => s.trim()).filter(s => s && s.toLowerCase() !== 'signatures' && !s.match(/^\d/))
@@ -381,8 +380,8 @@ function VerdictCard({ result, liveGU, tier, tiers }) {
         </div>
       )}
 
-      {/* 4-column verdict row */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr 1fr' }}>
+      {/* 3-column verdict row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr 1fr' }}>
         {/* Score */}
         <div style={{ padding: '16px 22px', borderRight: '1px solid var(--border-secondary)' }}>
           <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 4 }}>Score</div>
@@ -390,24 +389,19 @@ function VerdictCard({ result, liveGU, tier, tiers }) {
           <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 3 }}>/ 100 GU</div>
         </div>
 
-        {/* Tier */}
+        {/* Approval Required — tier + approver + SLA in one column */}
         <div style={{ padding: '16px 18px', borderRight: '1px solid var(--border-secondary)' }}>
-          <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 }}>Approval Tier</div>
-          <div style={{ display: 'inline-block', background: tier.bg, border: `2px solid ${tier.color}`, borderRadius: 8, padding: '5px 16px', marginBottom: 6 }}>
+          <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 }}>Approval Required</div>
+          <div style={{ display: 'inline-block', background: tier.bg, border: `2px solid ${tier.color}`, borderRadius: 8, padding: '5px 16px', marginBottom: 8 }}>
             <span className="score-reveal" style={{ fontSize: 20, fontWeight: 800, color: tier.color, animationDelay: '0.1s' }}>{tier.name}</span>
           </div>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>SLA: <strong style={{ color: 'var(--text-secondary)' }}>{liveGU.primary.tier.sla}</strong></div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-primary)', marginBottom: 4 }}>{tier.approver}</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>SLA: <strong style={{ color: 'var(--text-secondary)' }}>{tier.sla}</strong></div>
           {liveGU.primary.floorApplied && (
-            <div style={{ marginTop: 6, fontSize: 9, fontWeight: 700, color: '#ef4444', padding: '2px 7px', background: 'rgba(239,68,68,0.08)', borderRadius: 4, border: '1px solid rgba(239,68,68,0.25)', display: 'inline-block' }}>
+            <div style={{ marginTop: 7, fontSize: 9, fontWeight: 700, color: '#ef4444', padding: '2px 7px', background: 'rgba(239,68,68,0.08)', borderRadius: 4, border: '1px solid rgba(239,68,68,0.25)', display: 'inline-block' }}>
               ⚠ Floor rule applied
             </div>
           )}
-        </div>
-
-        {/* Approving Authority */}
-        <div style={{ padding: '16px 18px', borderRight: '1px solid var(--border-secondary)' }}>
-          <div style={{ fontSize: 9, fontWeight: 800, color: 'var(--text-muted)', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 8 }}>Approving Authority</div>
-          <div style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.4 }}>{appAuth}</div>
         </div>
 
         {/* Endorsements */}
@@ -736,8 +730,8 @@ th{background:#f3f4f6;font-weight:700;font-size:10px;text-transform:uppercase;le
       </div>
     </div>
   </div>` : ''}
-  <!-- 4-column verdict row -->
-  <div style="display:grid;grid-template-columns:auto 1fr 1fr 1fr;border-top:1px solid #d1d5db">
+  <!-- 3-column verdict row -->
+  <div style="display:grid;grid-template-columns:auto 1fr 1fr;border-top:1px solid #d1d5db">
     <div style="padding:14px 18px;border-right:1px solid #d1d5db">
       <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:4px">Score</div>
       <div style="font-family:Arial,sans-serif;font-size:50px;font-weight:900;color:#0f2644;line-height:1">${gu}</div>
@@ -745,13 +739,10 @@ th{background:#f3f4f6;font-weight:700;font-size:10px;text-transform:uppercase;le
       ${floorApplied ? `<div style="margin-top:8px;font-family:Arial,sans-serif;font-size:9px;font-weight:700;color:#b91c1c">&#9888; Floor rule applied</div>` : ''}
     </div>
     <div style="padding:14px 18px;border-right:1px solid #d1d5db">
-      <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:8px">Approval Tier</div>
-      <div style="font-family:Arial,sans-serif;font-size:19px;font-weight:800;color:#0f2644;margin-bottom:5px">${escHtml(tier.name)}</div>
+      <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:8px">Approval Required</div>
+      <div style="font-family:Arial,sans-serif;font-size:19px;font-weight:800;color:#0f2644;margin-bottom:6px">${escHtml(tier.name)}</div>
+      <div style="font-family:Arial,sans-serif;font-size:13px;font-weight:600;color:#111827;margin-bottom:5px">${escHtml(tier.approver)}</div>
       <div style="font-family:Arial,sans-serif;font-size:10px;color:#6b7280">SLA: <strong style="color:#111827">${escHtml(tier.sla)}</strong></div>
-    </div>
-    <div style="padding:14px 18px;border-right:1px solid #d1d5db">
-      <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:8px">Approving Authority</div>
-      <div style="font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#111827;line-height:1.4">${escHtml(tier.approver)}</div>
     </div>
     <div style="padding:14px 18px">
       <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:8px">Endorsements Required</div>
