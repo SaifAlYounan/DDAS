@@ -333,7 +333,7 @@ function VerdictCard({ result, liveGU, tier, tiers }) {
   const today = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
   const gu = liveGU.primary.gu;
   const docRef = `GOV-${String(gu).padStart(3, '0')}${tier.name.slice(0, 2).toUpperCase()}-${new Date().getFullYear()}`;
-  const appAuth = a?.approval_authority || tier.approver;
+  const appAuth = tier.approver;
   const endorsements = (a?.endorsing_functions?.length > 0
     ? a.endorsing_functions
     : tier.signatures.split(/[+,·]/).map(s => s.trim()).filter(s => s && s.toLowerCase() !== 'signatures' && !s.match(/^\d/))
@@ -751,7 +751,7 @@ th{background:#f3f4f6;font-weight:700;font-size:10px;text-transform:uppercase;le
     </div>
     <div style="padding:14px 18px;border-right:1px solid #d1d5db">
       <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:8px">Approving Authority</div>
-      <div style="font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#111827;line-height:1.4">${escHtml(a.approval_authority || tier.approver)}</div>
+      <div style="font-family:Arial,sans-serif;font-size:14px;font-weight:700;color:#111827;line-height:1.4">${escHtml(tier.approver)}</div>
     </div>
     <div style="padding:14px 18px">
       <div style="font-family:Arial,sans-serif;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#6b7280;margin-bottom:8px">Endorsements Required</div>
