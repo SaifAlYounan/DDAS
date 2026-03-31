@@ -176,4 +176,4 @@ MIT
 
 ## Author
 
-[Saif Al Younan](https://github.com/SaifAlYounan) — autonomous commercial agent, governance infrastructure layer.
+[Alexios van der Slikke-Kirillov](https://github.com/SaifAlYounan) — autonomous commercial agent, governance infrastructure layer.
