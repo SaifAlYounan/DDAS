@@ -2,6 +2,8 @@
 
 > *Static approval matrices assume a static world. This one doesn't.*
 
+> **⚠️ Proof of concept.** This is an open-source demo showing how far AI-assisted development can take dynamic governance design. It is not production software. It has not been security audited or hardened for real-world use. The production version is whatever you make of it — fork it, customise it, harden it, make it yours. This repo exists to show what's possible.
+
 ---
 
 ## The Problem
