@@ -4,7 +4,7 @@
 
 **DDAS replaces the corporate Delegation of Authority table with your registered risk appetite, executed as code.** Any transaction or action — initiated by a human or an AI agent — is classified against your own enterprise risk matrix and risk tolerance, producing the required authority tier and a fully auditable derivation. The same action, in a different context, routes to a different approver. Not because the rules changed — because the risk did.
 
-> ⚠️ **Status: v2 under construction.** The v2 architecture and risk model are specified and scaffolded (this branch); the classification core lands in Phase 1. The original March 2026 hackathon proof of concept is preserved on the [`archive/poc`](../../tree/archive/poc) branch.
+> ⚠️ **Status: headless core working (Phase 1 of 3).** The deterministic ACOS engine, policy compiler, LLM fact extraction, golden corpus, and `ddas` CLI are built and property-tested — policy in, documents in, tier + cited derivation out. The platform (web console, approval routing, audit chain) is Phase 2. The original March 2026 hackathon proof of concept is preserved on the [`archive/poc`](../../tree/archive/poc) branch.
 
 ---
 
@@ -50,10 +50,28 @@ Self-hosted, single container + Postgres, `docker compose up`:
 
 | Phase | Ships | Status |
 |---|---|---|
-| 0 | Repo reset, architecture decisions ([ADRs](docs/adr/)), policy schema v1, engine contracts, golden-set format | ✅ this branch |
-| 1 | Headless core: engine + extraction + policy registration, CLI, eval harness, simulation | next |
-| 2 | The platform: routing, org, audit chain, web console, approver inbox | |
+| 0 | Repo reset, architecture decisions ([ADRs](docs/adr/)), policy schema v1, engine contracts, golden-set format | ✅ |
+| 1 | Headless core: ACOS engine (property-tested), policy compiler/linter, cited fact extraction, `ddas` CLI, golden corpus + eval harness, LLM-free policy simulation | ✅ |
+| 2 | The platform: routing, org, audit chain, web console, approver inbox | next |
 | 3 | Enterprise & agents: OIDC/SSO, webhooks, MCP server, Helm | |
+
+## Try it (headless)
+
+```bash
+pnpm install && pnpm build
+
+# lint + register + activate a policy (start from the template)
+node apps/cli/dist/main.js policy lint packages/policy/templates/starter-balanced.yaml
+node apps/cli/dist/main.js policy register packages/policy/templates/starter-balanced.yaml
+node apps/cli/dist/main.js policy activate starter-balanced@1
+
+# submit a transaction (facts from a file, or --extract with DDAS_EXTRACTION_* set)
+node apps/cli/dist/main.js submit contract.md --facts facts.json --initiator user:you
+node apps/cli/dist/main.js classify sub-0001
+
+# what would change under a draft policy? (replays stored facts — zero LLM calls)
+node apps/cli/dist/main.js simulate draft-v2.yaml
+```
 
 ## Development
 

@@ -1,0 +1,132 @@
+{
+  "case_id": "adversarial-euphemistic-termination",
+  "description": "Adversarial: 'either party may revisit the arrangement in good faith' is a review clause, not a termination right. Correct label abstains; reversibility escalates conservatively to tier 3.",
+  "tags": [
+    "adversarial"
+  ],
+  "documents": [
+    {
+      "path": "docs/adversarial-euphemistic-termination.md",
+      "sha256": "a7d99084af27457bbc73ec30ca4b5559003076e58bf314e01bdc3a60e61379f9"
+    }
+  ],
+  "labeled_facts": [
+    {
+      "id": "amount_base_total",
+      "status": "FOUND",
+      "value": 210000,
+      "unit": "EUR",
+      "value_tolerance": 0.01,
+      "citation": {
+        "doc_index": 0,
+        "text": "The committed contract value is EUR 210,000"
+      }
+    },
+    {
+      "id": "action_type",
+      "status": "FOUND",
+      "value": "standard_procurement",
+      "citation": {
+        "doc_index": 0,
+        "text": "tender concluded as a standard procurement under procedure PROC-STD-04"
+      }
+    },
+    {
+      "id": "counterparty_name",
+      "status": "FOUND",
+      "value": "Hensbroek Polymer Seals B.V.",
+      "citation": {
+        "doc_index": 0,
+        "text": "Hensbroek Polymer Seals B.V., Nijverheidsweg 14"
+      }
+    },
+    {
+      "id": "counterparty_jurisdiction",
+      "status": "FOUND",
+      "value": "NL",
+      "citation": {
+        "doc_index": 0,
+        "text": "3812 PK Amersfoort, the Netherlands"
+      }
+    },
+    {
+      "id": "counterparty_rating",
+      "status": "FOUND",
+      "value": "BBB",
+      "citation": {
+        "doc_index": 0,
+        "text": "the equivalent of BBB on the international rating scale"
+      }
+    },
+    {
+      "id": "liability_cap_exists",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "capped at 100% of the committed contract value"
+      }
+    },
+    {
+      "id": "termination_for_convenience",
+      "status": "NOT_FOUND"
+    },
+    {
+      "id": "contract_term_months",
+      "status": "FOUND",
+      "value": 36,
+      "citation": {
+        "doc_index": 0,
+        "text": "a fixed term of thirty-six (36) months from the effective date"
+      }
+    },
+    {
+      "id": "regulated_activity",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "is not a regulated activity and requires no permit"
+      }
+    },
+    {
+      "id": "cross_border",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "deliveries are domestic with no cross-border element"
+      }
+    },
+    {
+      "id": "external_visibility",
+      "status": "FOUND",
+      "value": "none",
+      "citation": {
+        "doc_index": 0,
+        "text": "the agreement has no external visibility"
+      }
+    },
+    {
+      "id": "affected_parties_scope",
+      "status": "FOUND",
+      "value": "single_team",
+      "citation": {
+        "doc_index": 0,
+        "text": "confined to the Eindhoven Assembly team"
+      }
+    }
+  ],
+  "expected_routing": {
+    "policy_ref": {
+      "policy_id": "kolvarra-risk",
+      "version": 1
+    },
+    "expected": {
+      "status": "ROUTED",
+      "tier": 3,
+      "binding_category": "reversibility",
+      "triggers_fired": []
+    }
+  }
+}

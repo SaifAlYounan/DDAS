@@ -1,0 +1,319 @@
+{
+  "derivation": {
+    "categoryEvaluations": [
+      {
+        "appetiteBreached": true,
+        "appetiteRowApplied": "default",
+        "bandRuleFired": "amount_base_total < 2000000",
+        "category": "financial",
+        "distanceFromNextBoundary": {
+          "bands": 1,
+          "direction": "below"
+        },
+        "handling": "scored",
+        "impactBand": "Major",
+        "likelihoodBand": "Unlikely",
+        "likelihoodRulesFired": [
+          "default"
+        ],
+        "matrixRating": "High",
+        "requiredTier": 3
+      },
+      {
+        "appetiteBreached": false,
+        "appetiteRowApplied": "default",
+        "bandRuleFired": "termination_for_convenience == true",
+        "category": "reversibility",
+        "distanceFromNextBoundary": {
+          "bands": 1,
+          "direction": "below"
+        },
+        "handling": "scored",
+        "impactBand": "Reversible",
+        "likelihoodBand": "Likely",
+        "likelihoodRulesFired": [
+          "default"
+        ],
+        "matrixRating": "Low",
+        "requiredTier": 0
+      },
+      {
+        "appetiteBreached": false,
+        "appetiteRowApplied": "default",
+        "bandRuleFired": "regulated_activity == false",
+        "category": "regulatory",
+        "distanceFromNextBoundary": {
+          "bands": 1,
+          "direction": "below"
+        },
+        "handling": "scored",
+        "impactBand": "None",
+        "likelihoodBand": "Unlikely",
+        "likelihoodRulesFired": [
+          "default"
+        ],
+        "matrixRating": "Low",
+        "requiredTier": 0
+      },
+      {
+        "appetiteBreached": true,
+        "appetiteRowApplied": "default",
+        "bandRuleFired": "else",
+        "category": "reputational",
+        "distanceFromNextBoundary": {
+          "bands": 1,
+          "direction": "below"
+        },
+        "handling": "scored",
+        "impactBand": "Public",
+        "likelihoodBand": "Possible",
+        "likelihoodRulesFired": [
+          "default"
+        ],
+        "matrixRating": "High",
+        "requiredTier": 3
+      },
+      {
+        "appetiteBreached": false,
+        "appetiteRowApplied": "default",
+        "bandRuleFired": "action_type in approved_precedents",
+        "category": "precedent",
+        "distanceFromNextBoundary": {
+          "bands": 1,
+          "direction": "below"
+        },
+        "handling": "scored",
+        "impactBand": "Routine",
+        "likelihoodBand": "Possible",
+        "likelihoodRulesFired": [
+          "default"
+        ],
+        "matrixRating": "Low",
+        "requiredTier": 0
+      },
+      {
+        "appetiteBreached": true,
+        "appetiteRowApplied": "default",
+        "bandRuleFired": "else",
+        "category": "stakeholder_complexity",
+        "distanceFromNextBoundary": {
+          "bands": 1,
+          "direction": "below"
+        },
+        "handling": "scored",
+        "impactBand": "External",
+        "likelihoodBand": "Possible",
+        "likelihoodRulesFired": [
+          "default"
+        ],
+        "matrixRating": "High",
+        "requiredTier": 2
+      }
+    ],
+    "composition": {
+      "accumulation": {
+        "applied": true,
+        "countAtOrAbove": "High",
+        "observedCount": 3,
+        "threshold": 3
+      },
+      "baseTier": {
+        "bindingCategory": "financial",
+        "tier": 3
+      },
+      "finalTier": 4,
+      "triggers": [
+        {
+          "fired": false,
+          "id": "sanctions_exposure",
+          "minTier": 4
+        },
+        {
+          "fired": false,
+          "id": "uncapped_liability",
+          "tierUplift": 1
+        },
+        {
+          "fired": false,
+          "id": "novel_precedent",
+          "tierUplift": 1
+        }
+      ]
+    },
+    "documents": [
+      {
+        "name": "msa.md",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+      }
+    ],
+    "engineVersion": "2.0.0-alpha.0",
+    "explanation": "Routed to Board: Financial exposure was assessed 'Major' impact × 'Unlikely' likelihood → 'High', which your appetite maps to C-Suite. 3 categories rated at or above 'High' (threshold 3); one tier added.",
+    "factSet": {
+      "facts": [
+        {
+          "citation": {
+            "docIndex": 0,
+            "span": [
+              0,
+              10
+            ],
+            "text": "cited span"
+          },
+          "id": "amount_base_total",
+          "status": "FOUND",
+          "unit": "EUR",
+          "value": 1000000
+        },
+        {
+          "citation": {
+            "docIndex": 0,
+            "span": [
+              0,
+              10
+            ],
+            "text": "cited span"
+          },
+          "id": "action_type",
+          "status": "FOUND",
+          "value": "standard_procurement"
+        },
+        {
+          "attestedBy": "user:j.doe",
+          "id": "counterparty_name",
+          "status": "MANUAL",
+          "value": "Acme GmbH"
+        },
+        {
+          "citation": {
+            "docIndex": 0,
+            "span": [
+              0,
+              10
+            ],
+            "text": "cited span"
+          },
+          "id": "counterparty_jurisdiction",
+          "status": "FOUND",
+          "value": "FR"
+        },
+        {
+          "citation": {
+            "docIndex": 0,
+            "span": [
+              0,
+              10
+            ],
+            "text": "cited span"
+          },
+          "id": "counterparty_rating",
+          "status": "FOUND",
+          "value": "AA"
+        },
+        {
+          "citation": {
+            "docIndex": 0,
+            "span": [
+              0,
+              10
+            ],
+            "text": "cited span"
+          },
+          "id": "liability_cap_exists",
+          "status": "FOUND",
+          "value": true
+        },
+        {
+          "citation": {
+            "docIndex": 0,
+            "span": [
+              0,
+              10
+            ],
+            "text": "cited span"
+          },
+          "id": "termination_for_convenience",
+          "status": "FOUND",
+          "value": true
+        },
+        {
+          "citation": {
+            "docIndex": 0,
+            "span": [
+              0,
+              10
+            ],
+            "text": "cited span"
+          },
+          "id": "contract_term_months",
+          "status": "FOUND",
+          "value": 12
+        },
+        {
+          "citation": {
+            "docIndex": 0,
+            "span": [
+              0,
+              10
+            ],
+            "text": "cited span"
+          },
+          "id": "regulated_activity",
+          "status": "FOUND",
+          "value": false
+        },
+        {
+          "citation": {
+            "docIndex": 0,
+            "span": [
+              0,
+              10
+            ],
+            "text": "cited span"
+          },
+          "id": "cross_border",
+          "status": "FOUND",
+          "value": false
+        },
+        {
+          "citation": {
+            "docIndex": 0,
+            "span": [
+              0,
+              10
+            ],
+            "text": "cited span"
+          },
+          "id": "external_visibility",
+          "status": "FOUND",
+          "value": "international"
+        },
+        {
+          "citation": {
+            "docIndex": 0,
+            "span": [
+              0,
+              10
+            ],
+            "text": "cited span"
+          },
+          "id": "affected_parties_scope",
+          "status": "FOUND",
+          "value": "ecosystem"
+        }
+      ]
+    },
+    "policy": {
+      "contentHash": "sha256:6bcaf5d0cb91f35437192be7f302b25f47941bd223a5fce0038653043a5e7700",
+      "id": "starter-balanced",
+      "version": 1
+    },
+    "subject": {
+      "actionType": "vendor_contract_renewal",
+      "initiator": "user:j.doe",
+      "initiatorKind": "human"
+    }
+  },
+  "status": "ROUTED",
+  "tier": 4,
+  "tierName": "Board"
+}

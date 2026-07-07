@@ -1,0 +1,182 @@
+# Kolvarra Industrial Systems B.V. — registered risk policy v1.
+# The golden corpus's fictional company: a mid-size Dutch manufacturer of
+# industrial pump and drivetrain systems (~900 employees, plants in NL and PL).
+# Deliberately DIFFERENT band values from the starter template so corpus tests
+# cannot accidentally pass against starter-balanced.
+
+schema_version: 1
+policy_id: kolvarra-risk
+name: Kolvarra Industrial Systems — enterprise risk policy
+version: 1
+effective_from: "2026-07-01"
+approved_by:
+  role: CFO
+  name: M. van Aalst
+  date: "2026-06-25"
+
+authority_ladder:
+  - { tier: 0, name: Self-approve }
+  - { tier: 1, name: Team Lead, roles: [team_lead] }
+  - { tier: 2, name: Plant Director, roles: [plant_director] }
+  - { tier: 3, name: Executive Board, roles: [ceo, cfo], quorum: 1 }
+  - { tier: 4, name: Supervisory Board, roles: [supervisory_board], quorum: majority }
+
+likelihood_scale:
+  bands: [Rare, Unlikely, Possible, Likely, Almost_certain]
+
+rating_scale:
+  ratings: [Low, Moderate, High, Critical]
+
+fact_schema:
+  - { id: amount_base_total, type: money, unit: EUR, description: "Total value at risk over the full term, normalized to EUR" }
+  - { id: action_type, type: string, description: "Normalized action label" }
+  - { id: counterparty_name, type: string }
+  - { id: counterparty_jurisdiction, type: string, description: "ISO country code" }
+  - { id: counterparty_rating, type: string, description: "External credit rating if any" }
+  - { id: liability_cap_exists, type: boolean }
+  - { id: termination_for_convenience, type: boolean }
+  - { id: contract_term_months, type: number }
+  - { id: regulated_activity, type: boolean }
+  - { id: cross_border, type: boolean }
+  - { id: external_visibility, type: enum, values: [none, industry, national, international] }
+  - { id: affected_parties_scope, type: enum, values: [single_team, cross_functional, external_parties, ecosystem] }
+
+categories:
+  - id: financial
+    name: Financial exposure
+    impact_scale:
+      bands:
+        - { name: Minor, rule: "amount_base_total < 50000" }
+        - { name: Moderate, rule: "amount_base_total < 500000" }
+        - { name: Major, rule: "amount_base_total < 3000000" }
+        - { name: Severe, rule: "else" }
+      required_facts: [amount_base_total]
+    likelihood_rules:
+      - { if: "counterparty_rating == NOT_FOUND", min_band: Possible }
+      - { default_band: Unlikely }
+    risk_matrix:
+      Minor:    [Low, Low, Low, Moderate, Moderate]
+      Moderate: [Low, Moderate, Moderate, High, High]
+      Major:    [Moderate, High, High, Critical, Critical]
+      Severe:   [High, Critical, Critical, Critical, Critical]
+    appetite: { Low: 0, Moderate: 1, High: 2, Critical: 4 }
+    appetite_agent_initiated: { Low: 1, Moderate: 2, High: 3, Critical: 4 }
+    missing_info: { behavior: escalate, conservative_band: Major }
+
+  - id: reversibility
+    name: Reversibility
+    impact_scale:
+      bands:
+        - { name: Reversible, rule: "termination_for_convenience == true" }
+        - { name: Sticky, rule: "contract_term_months < 24" }
+        - { name: Locked_in, rule: "else" }
+      required_facts: [termination_for_convenience, contract_term_months]
+    likelihood_rules:
+      - { default_band: Likely }
+    risk_matrix:
+      Reversible: [Low, Low, Low, Low, Moderate]
+      Sticky:     [Low, Moderate, Moderate, High, High]
+      Locked_in:  [Moderate, High, High, Critical, Critical]
+    appetite: { Low: 0, Moderate: 1, High: 2, Critical: 3 }
+    missing_info: { behavior: escalate, conservative_band: Locked_in }
+
+  - id: regulatory
+    name: Regulatory & compliance
+    impact_scale:
+      bands:
+        - { name: None, rule: "regulated_activity == false" }
+        - { name: Standard, rule: "cross_border == false" }
+        - { name: Elevated, rule: "else" }
+      required_facts: [regulated_activity]
+    likelihood_rules:
+      - { if: "cross_border == true", min_band: Possible }
+      - { default_band: Unlikely }
+    risk_matrix:
+      None:     [Low, Low, Low, Low, Low]
+      Standard: [Low, Moderate, Moderate, High, High]
+      Elevated: [Moderate, High, High, Critical, Critical]
+    appetite: { Low: 0, Moderate: 2, High: 3, Critical: 4 }
+    missing_info: { behavior: needs_info }
+
+  - id: reputational
+    name: Reputational impact
+    impact_scale:
+      bands:
+        - { name: Internal, rule: "external_visibility == none" }
+        - { name: Industry, rule: "external_visibility == industry" }
+        - { name: Public, rule: "else" }
+      required_facts: [external_visibility]
+    likelihood_rules:
+      - { default_band: Possible }
+    risk_matrix:
+      Internal: [Low, Low, Low, Low, Moderate]
+      Industry: [Low, Low, Moderate, Moderate, High]
+      Public:   [Moderate, Moderate, High, Critical, Critical]
+    appetite: { Low: 0, Moderate: 1, High: 3, Critical: 4 }
+    missing_info: { behavior: escalate, conservative_band: Industry }
+
+  - id: precedent
+    name: Precedent setting
+    impact_scale:
+      bands:
+        - { name: Routine, rule: "action_type in approved_precedents" }
+        - { name: Novel, rule: "else" }
+      required_facts: [action_type]
+    likelihood_rules:
+      - { default_band: Possible }
+    risk_matrix:
+      Routine: [Low, Low, Low, Low, Low]
+      Novel:   [Low, Moderate, Moderate, High, High]
+    appetite: { Low: 0, Moderate: 1, High: 2, Critical: 3 }
+    missing_info: { behavior: escalate, conservative_band: Novel }
+
+  - id: stakeholder_complexity
+    name: Stakeholder complexity
+    impact_scale:
+      bands:
+        - { name: Contained, rule: "affected_parties_scope == single_team" }
+        - { name: Cross_functional, rule: "affected_parties_scope == cross_functional" }
+        - { name: External, rule: "else" }
+      required_facts: [affected_parties_scope]
+    likelihood_rules:
+      - { default_band: Possible }
+    risk_matrix:
+      Contained:        [Low, Low, Low, Low, Low]
+      Cross_functional: [Low, Low, Moderate, Moderate, High]
+      External:         [Low, Moderate, High, High, Critical]
+    appetite: { Low: 0, Moderate: 1, High: 2, Critical: 3 }
+    missing_info: { behavior: escalate, conservative_band: External }
+
+escalation_triggers:
+  - id: sanctions_exposure
+    rule: "counterparty_jurisdiction in sanctions_list"
+    min_tier: 4
+    rationale: "Zero appetite for sanctions exposure; Supervisory Board only."
+  - id: uncapped_liability
+    rule: "liability_cap_exists == false"
+    tier_uplift: 1
+    rationale: "Uncapped liability escalates one tier above the risk-derived level."
+  - id: novel_precedent
+    rule: "not (action_type in approved_precedents)"
+    tier_uplift: 1
+    rationale: "First-of-kind actions set precedent and receive one tier of extra scrutiny."
+
+accumulation_rule:
+  count_at_or_above: High
+  threshold: 3
+  tier_uplift: 1
+
+agent_policy:
+  default_uplift: 1
+  self_approve_allowed: false
+  attestation_required_facts: [counterparty_name]
+
+reference_lists:
+  sanctions_list: [KP, IR, SY]
+  home_jurisdictions: [NL, PL, DE]
+  approved_precedents: [vendor_contract_renewal, standard_procurement, spare_parts_po]
+
+fx_snapshot:
+  base_currency: EUR
+  as_of: "2026-07-01"
+  rates: { USD: 0.93, PLN: 0.23, GBP: 1.16 }

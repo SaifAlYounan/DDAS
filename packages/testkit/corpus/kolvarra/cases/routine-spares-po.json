@@ -1,0 +1,134 @@
+{
+  "case_id": "routine-spares-po",
+  "description": "Routine spare-parts PO, EUR 18,500, known Polish forge, fully benign. Every category Low; self-approve.",
+  "documents": [
+    {
+      "path": "docs/routine-spares-po.md",
+      "sha256": "319789b1f050500e572984746722bc7f227a34a7195a07cd43837ab85751bb60"
+    }
+  ],
+  "labeled_facts": [
+    {
+      "id": "amount_base_total",
+      "status": "FOUND",
+      "value": 18500,
+      "unit": "EUR",
+      "value_tolerance": 0.01,
+      "citation": {
+        "doc_index": 0,
+        "text": "The total order value is EUR 18,500"
+      }
+    },
+    {
+      "id": "action_type",
+      "status": "FOUND",
+      "value": "spare_parts_po",
+      "citation": {
+        "doc_index": 0,
+        "text": "The order is a routine spare-parts purchase order under the existing framework quality agreement"
+      }
+    },
+    {
+      "id": "counterparty_name",
+      "status": "FOUND",
+      "value": "Bremvik Forge Sp. z o.o.",
+      "citation": {
+        "doc_index": 0,
+        "text": "Bremvik Forge Sp. z o.o., ul. Odlewnicza 12, 61-315 Poznań, Poland"
+      }
+    },
+    {
+      "id": "counterparty_jurisdiction",
+      "status": "FOUND",
+      "value": "PL",
+      "citation": {
+        "doc_index": 0,
+        "text": "ul. Odlewnicza 12, 61-315 Poznań, Poland"
+      }
+    },
+    {
+      "id": "counterparty_rating",
+      "status": "FOUND",
+      "value": "BBB+",
+      "citation": {
+        "doc_index": 0,
+        "text": "a Standard & Poor's long-term issuer rating of BBB+"
+      }
+    },
+    {
+      "id": "liability_cap_exists",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "The Supplier's aggregate liability under this order is capped at the total order value."
+      }
+    },
+    {
+      "id": "termination_for_convenience",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "The Buyer may terminate this order for convenience at any time on written notice"
+      }
+    },
+    {
+      "id": "contract_term_months",
+      "status": "FOUND",
+      "value": 12,
+      "citation": {
+        "doc_index": 0,
+        "text": "a term of twelve (12) months from the date of issue"
+      }
+    },
+    {
+      "id": "regulated_activity",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "the supply of pump spare parts is not a regulated activity"
+      }
+    },
+    {
+      "id": "cross_border",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "Cross-border shipment from the Supplier's Poznań works to the Buyer's Eindhoven warehouse"
+      }
+    },
+    {
+      "id": "external_visibility",
+      "status": "FOUND",
+      "value": "none",
+      "citation": {
+        "doc_index": 0,
+        "text": "no external visibility and no announcement of any kind"
+      }
+    },
+    {
+      "id": "affected_parties_scope",
+      "status": "FOUND",
+      "value": "single_team",
+      "citation": {
+        "doc_index": 0,
+        "text": "confined to the Maintenance & Reliability team"
+      }
+    }
+  ],
+  "expected_routing": {
+    "policy_ref": {
+      "policy_id": "kolvarra-risk",
+      "version": 1
+    },
+    "expected": {
+      "status": "ROUTED",
+      "tier": 0,
+      "binding_category": "financial",
+      "triggers_fired": []
+    }
+  }
+}

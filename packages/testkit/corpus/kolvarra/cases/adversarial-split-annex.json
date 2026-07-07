@@ -1,0 +1,141 @@
+{
+  "case_id": "adversarial-split-annex",
+  "description": "Adversarial: value split between the main body (EUR 180,000 fee) and Annex B (EUR 250,000/contract year over two years). Correct aggregate is EUR 680,000 (Major band) - a figure printed nowhere.",
+  "tags": [
+    "adversarial"
+  ],
+  "documents": [
+    {
+      "path": "docs/adversarial-split-annex.md",
+      "sha256": "b7f00933e5ed09ae9b60eff7b3c2fb82d48247dd3c2ee68c085db825d5e66bc4"
+    },
+    {
+      "path": "docs/adversarial-split-annex-annex-b.md",
+      "sha256": "10d83720e0bc7bbbcb27716c67145e3fba75b8822fea6ffcb69d3a4e90aaa260"
+    }
+  ],
+  "labeled_facts": [
+    {
+      "id": "amount_base_total",
+      "status": "FOUND",
+      "value": 680000,
+      "unit": "EUR",
+      "value_tolerance": 0.01,
+      "citation": {
+        "doc_index": 1,
+        "text": "a minimum committed order volume of EUR 250,000 (two hundred fifty thousand euro) per contract year"
+      }
+    },
+    {
+      "id": "action_type",
+      "status": "FOUND",
+      "value": "standard_procurement",
+      "citation": {
+        "doc_index": 0,
+        "text": "negotiated award recorded as a standard procurement under procedure PROC-STD-04"
+      }
+    },
+    {
+      "id": "counterparty_name",
+      "status": "FOUND",
+      "value": "Merkato Fluid Systems S.r.l.",
+      "citation": {
+        "doc_index": 0,
+        "text": "Merkato Fluid Systems S.r.l., Via Stradella 44"
+      }
+    },
+    {
+      "id": "counterparty_jurisdiction",
+      "status": "FOUND",
+      "value": "IT",
+      "citation": {
+        "doc_index": 0,
+        "text": "10147 Turin, Italy"
+      }
+    },
+    {
+      "id": "counterparty_rating",
+      "status": "FOUND",
+      "value": "BBB",
+      "citation": {
+        "doc_index": 0,
+        "text": "the equivalent of BBB on the international rating scale"
+      }
+    },
+    {
+      "id": "liability_cap_exists",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "Each party's aggregate liability under the agreement is capped at EUR 500,000 per event and in the aggregate"
+      }
+    },
+    {
+      "id": "termination_for_convenience",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "The Customer may terminate the agreement for convenience on sixty (60) days' written notice"
+      }
+    },
+    {
+      "id": "contract_term_months",
+      "status": "FOUND",
+      "value": 24,
+      "citation": {
+        "doc_index": 0,
+        "text": "The agreement runs for twenty-four (24) months from the effective date"
+      }
+    },
+    {
+      "id": "regulated_activity",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "their supply is not a regulated activity and no licence or approval is required"
+      }
+    },
+    {
+      "id": "cross_border",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "Deliveries are cross-border from Turin, Italy, to Eindhoven and Poznań"
+      }
+    },
+    {
+      "id": "external_visibility",
+      "status": "FOUND",
+      "value": "none",
+      "citation": {
+        "doc_index": 0,
+        "text": "it has no external visibility"
+      }
+    },
+    {
+      "id": "affected_parties_scope",
+      "status": "FOUND",
+      "value": "cross_functional",
+      "citation": {
+        "doc_index": 0,
+        "text": "the programme involves the Purchasing, Design Engineering, and Quality functions"
+      }
+    }
+  ],
+  "expected_routing": {
+    "policy_ref": {
+      "policy_id": "kolvarra-risk",
+      "version": 1
+    },
+    "expected": {
+      "status": "ROUTED",
+      "tier": 2,
+      "binding_category": "financial",
+      "triggers_fired": []
+    }
+  }
+}

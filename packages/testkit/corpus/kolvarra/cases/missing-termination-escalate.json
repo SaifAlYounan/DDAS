@@ -1,0 +1,124 @@
+{
+  "case_id": "missing-termination-escalate",
+  "description": "Supply agreement silent on term and termination: reversibility escalates conservatively to Locked_in (Critical at Likely) and binds at tier 3.",
+  "documents": [
+    {
+      "path": "docs/missing-termination-escalate.md",
+      "sha256": "527c52dc24d555ca574f984b20b50ce718afc9f2c3d13d183943acad6d570317"
+    }
+  ],
+  "labeled_facts": [
+    {
+      "id": "amount_base_total",
+      "status": "FOUND",
+      "value": 95000,
+      "unit": "EUR",
+      "value_tolerance": 0.01,
+      "citation": {
+        "doc_index": 0,
+        "text": "The agreed contract value is EUR 95,000"
+      }
+    },
+    {
+      "id": "action_type",
+      "status": "FOUND",
+      "value": "standard_procurement",
+      "citation": {
+        "doc_index": 0,
+        "text": "tendered and awarded as a standard procurement under procedure PROC-STD-04"
+      }
+    },
+    {
+      "id": "counterparty_name",
+      "status": "FOUND",
+      "value": "Duvenhoek Bearings B.V.",
+      "citation": {
+        "doc_index": 0,
+        "text": "Duvenhoek Bearings B.V., Lagedijk 31"
+      }
+    },
+    {
+      "id": "counterparty_jurisdiction",
+      "status": "FOUND",
+      "value": "NL",
+      "citation": {
+        "doc_index": 0,
+        "text": "5705 BX Helmond, the Netherlands"
+      }
+    },
+    {
+      "id": "counterparty_rating",
+      "status": "FOUND",
+      "value": "BBB+",
+      "citation": {
+        "doc_index": 0,
+        "text": "the equivalent of BBB+ on the international rating scale"
+      }
+    },
+    {
+      "id": "liability_cap_exists",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "The Supplier's aggregate liability under this agreement is capped at twice the contract value"
+      }
+    },
+    {
+      "id": "termination_for_convenience",
+      "status": "NOT_FOUND"
+    },
+    {
+      "id": "contract_term_months",
+      "status": "NOT_FOUND"
+    },
+    {
+      "id": "regulated_activity",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "The supply of catalogue bearings is not a regulated activity"
+      }
+    },
+    {
+      "id": "cross_border",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "all deliveries are domestic; there is no cross-border element to the supply"
+      }
+    },
+    {
+      "id": "external_visibility",
+      "status": "FOUND",
+      "value": "none",
+      "citation": {
+        "doc_index": 0,
+        "text": "it has no external visibility"
+      }
+    },
+    {
+      "id": "affected_parties_scope",
+      "status": "FOUND",
+      "value": "cross_functional",
+      "citation": {
+        "doc_index": 0,
+        "text": "the agreement concerns the Purchasing, Incoming Quality, and Assembly Engineering functions"
+      }
+    }
+  ],
+  "expected_routing": {
+    "policy_ref": {
+      "policy_id": "kolvarra-risk",
+      "version": 1
+    },
+    "expected": {
+      "status": "ROUTED",
+      "tier": 3,
+      "binding_category": "reversibility",
+      "triggers_fired": []
+    }
+  }
+}

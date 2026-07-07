@@ -1,0 +1,134 @@
+{
+  "case_id": "vendor-msa-high-value",
+  "description": "MSA renewal, USD 2,000,000 (fx 0.93 -> EUR 1.86M, Major band), Fitch A- known. Financial binds at tier 2.",
+  "documents": [
+    {
+      "path": "docs/vendor-msa-high-value.md",
+      "sha256": "b23c47802fb78c360d790814af5af7ea3c804baed5f307afd78a4ac0cdfb8f62"
+    }
+  ],
+  "labeled_facts": [
+    {
+      "id": "amount_base_total",
+      "status": "FOUND",
+      "value": 2000000,
+      "unit": "USD",
+      "value_tolerance": 0.01,
+      "citation": {
+        "doc_index": 0,
+        "text": "a total contract value of USD 2,000,000"
+      }
+    },
+    {
+      "id": "action_type",
+      "status": "FOUND",
+      "value": "vendor_contract_renewal",
+      "citation": {
+        "doc_index": 0,
+        "text": "the renewal of the Master Services Agreement dated 15 June 2021"
+      }
+    },
+    {
+      "id": "counterparty_name",
+      "status": "FOUND",
+      "value": "Halcyon Drivetrain Components Inc.",
+      "citation": {
+        "doc_index": 0,
+        "text": "Halcyon Drivetrain Components Inc., 2200 Harbor Point Drive"
+      }
+    },
+    {
+      "id": "counterparty_jurisdiction",
+      "status": "FOUND",
+      "value": "US",
+      "citation": {
+        "doc_index": 0,
+        "text": "Wilmington, Delaware, United States"
+      }
+    },
+    {
+      "id": "counterparty_rating",
+      "status": "FOUND",
+      "value": "A-",
+      "citation": {
+        "doc_index": 0,
+        "text": "a Fitch long-term issuer default rating of A-"
+      }
+    },
+    {
+      "id": "liability_cap_exists",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "each party's aggregate liability is capped at the fees paid in the twelve months preceding the claim"
+      }
+    },
+    {
+      "id": "termination_for_convenience",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "Either party may terminate for convenience on ninety (90) days' written notice"
+      }
+    },
+    {
+      "id": "contract_term_months",
+      "status": "FOUND",
+      "value": 24,
+      "citation": {
+        "doc_index": 0,
+        "text": "The renewal term is twenty-four (24) months from 1 July 2026"
+      }
+    },
+    {
+      "id": "regulated_activity",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "neither party's performance constitutes a regulated activity"
+      }
+    },
+    {
+      "id": "cross_border",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "Deliveries are made cross-border from the Supplier's Delaware facility to the Netherlands"
+      }
+    },
+    {
+      "id": "external_visibility",
+      "status": "FOUND",
+      "value": "none",
+      "citation": {
+        "doc_index": 0,
+        "text": "no press release or external communication of any kind"
+      }
+    },
+    {
+      "id": "affected_parties_scope",
+      "status": "FOUND",
+      "value": "cross_functional",
+      "citation": {
+        "doc_index": 0,
+        "text": "the renewal affects the Procurement, Engineering, and Quality functions"
+      }
+    }
+  ],
+  "expected_routing": {
+    "policy_ref": {
+      "policy_id": "kolvarra-risk",
+      "version": 1
+    },
+    "expected": {
+      "status": "ROUTED",
+      "tier": 2,
+      "binding_category": "financial",
+      "triggers_fired": []
+    }
+  }
+}

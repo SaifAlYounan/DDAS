@@ -15,6 +15,34 @@ importers:
         specifier: ^5.8.0
         version: 5.9.3
 
+  apps/cli:
+    dependencies:
+      '@ddas/engine':
+        specifier: workspace:*
+        version: link:../../packages/engine
+      '@ddas/extraction':
+        specifier: workspace:*
+        version: link:../../packages/extraction
+      '@ddas/policy':
+        specifier: workspace:*
+        version: link:../../packages/policy
+      '@ddas/testkit':
+        specifier: workspace:*
+        version: link:../../packages/testkit
+      commander:
+        specifier: ^13.1.0
+        version: 13.1.0
+    devDependencies:
+      '@types/node':
+        specifier: ^24.13.2
+        version: 24.13.2
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.1.0
+        version: 3.2.7(@types/node@24.13.2)(yaml@2.9.0)
+
   packages/engine:
     dependencies:
       '@ddas/policy':
@@ -36,8 +64,62 @@ importers:
       vitest:
         specifier: ^3.1.0
         version: 3.2.7(@types/node@24.13.2)(yaml@2.9.0)
+      yaml:
+        specifier: ^2.9.0
+        version: 2.9.0
+
+  packages/extraction:
+    dependencies:
+      '@ddas/engine':
+        specifier: workspace:*
+        version: link:../engine
+      '@ddas/policy':
+        specifier: workspace:*
+        version: link:../policy
+      zod:
+        specifier: ^3.24.0
+        version: 3.25.76
+    devDependencies:
+      '@types/node':
+        specifier: ^24.13.2
+        version: 24.13.2
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.1.0
+        version: 3.2.7(@types/node@24.13.2)(yaml@2.9.0)
 
   packages/policy:
+    dependencies:
+      ajv:
+        specifier: ^8.17.0
+        version: 8.20.0
+      ajv-formats:
+        specifier: ^3.0.0
+        version: 3.0.1(ajv@8.20.0)
+      yaml:
+        specifier: ^2.7.0
+        version: 2.9.0
+    devDependencies:
+      '@types/node':
+        specifier: ^24.13.2
+        version: 24.13.2
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.1.0
+        version: 3.2.7(@types/node@24.13.2)(yaml@2.9.0)
+
+  packages/testkit:
+    dependencies:
+      '@ddas/engine':
+        specifier: workspace:*
+        version: link:../engine
+      '@ddas/policy':
+        specifier: workspace:*
+        version: link:../policy
     devDependencies:
       '@types/node':
         specifier: ^24.13.2
@@ -54,11 +136,6 @@ importers:
       vitest:
         specifier: ^3.1.0
         version: 3.2.7(@types/node@24.13.2)(yaml@2.9.0)
-      yaml:
-        specifier: ^2.7.0
-        version: 2.9.0
-
-  packages/testkit: {}
 
 packages:
 
@@ -456,6 +533,10 @@ packages:
   check-error@2.1.3:
     resolution: {integrity: sha512-PAJdDJusoxnwm1VwW07VWwUN1sl7smmC3OKggvndJFadxxDRyFJBX/ggnu/KE4kQAB7a3Dp8f/YXC1FlUprWmA==}
     engines: {node: '>= 16'}
+
+  commander@13.1.0:
+    resolution: {integrity: sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==}
+    engines: {node: '>=18'}
 
   debug@4.4.3:
     resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
@@ -949,6 +1030,8 @@ snapshots:
       pathval: 2.0.1
 
   check-error@2.1.3: {}
+
+  commander@13.1.0: {}
 
   debug@4.4.3:
     dependencies:

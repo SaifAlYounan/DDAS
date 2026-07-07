@@ -1,0 +1,137 @@
+{
+  "case_id": "human-procurement-same-facts",
+  "description": "Moderate procurement (EUR 340,000) initiated by a human buyer. Financial binds at tier 1.",
+  "tags": [
+    "agent-human-pair"
+  ],
+  "documents": [
+    {
+      "path": "docs/human-procurement-same-facts.md",
+      "sha256": "baa13ad83458c824da5bd7fe7a5d1952de923e9f72e63c94d8051bbee95d28ac"
+    }
+  ],
+  "labeled_facts": [
+    {
+      "id": "amount_base_total",
+      "status": "FOUND",
+      "value": 340000,
+      "unit": "EUR",
+      "value_tolerance": 0.01,
+      "citation": {
+        "doc_index": 0,
+        "text": "The evaluated contract value is EUR 340,000"
+      }
+    },
+    {
+      "id": "action_type",
+      "status": "FOUND",
+      "value": "standard_procurement",
+      "citation": {
+        "doc_index": 0,
+        "text": "this request is a standard procurement of production materials under procedure PROC-STD-04"
+      }
+    },
+    {
+      "id": "counterparty_name",
+      "status": "FOUND",
+      "value": "Vosskamp Precision Castings GmbH",
+      "citation": {
+        "doc_index": 0,
+        "text": "Vosskamp Precision Castings GmbH, Giessereistrasse 8"
+      }
+    },
+    {
+      "id": "counterparty_jurisdiction",
+      "status": "FOUND",
+      "value": "DE",
+      "citation": {
+        "doc_index": 0,
+        "text": "44805 Bochum, Germany"
+      }
+    },
+    {
+      "id": "counterparty_rating",
+      "status": "FOUND",
+      "value": "BBB",
+      "citation": {
+        "doc_index": 0,
+        "text": "a rating equivalent to BBB on the international scale"
+      }
+    },
+    {
+      "id": "liability_cap_exists",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "caps the supplier's aggregate liability at 100% of the contract value"
+      }
+    },
+    {
+      "id": "termination_for_convenience",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "Kolvarra may terminate the contract for convenience at any time on thirty (30) days' written notice"
+      }
+    },
+    {
+      "id": "contract_term_months",
+      "status": "FOUND",
+      "value": 12,
+      "citation": {
+        "doc_index": 0,
+        "text": "The supply period is twelve (12) months from first call-off"
+      }
+    },
+    {
+      "id": "regulated_activity",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "their supply is not a regulated activity"
+      }
+    },
+    {
+      "id": "cross_border",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "Deliveries move cross-border from Bochum, Germany, to Eindhoven, the Netherlands"
+      }
+    },
+    {
+      "id": "external_visibility",
+      "status": "FOUND",
+      "value": "none",
+      "citation": {
+        "doc_index": 0,
+        "text": "the award has no external visibility"
+      }
+    },
+    {
+      "id": "affected_parties_scope",
+      "status": "FOUND",
+      "value": "cross_functional",
+      "citation": {
+        "doc_index": 0,
+        "text": "the change affects the Procurement, Engineering, and Quality functions"
+      }
+    }
+  ],
+  "expected_routing": {
+    "policy_ref": {
+      "policy_id": "kolvarra-risk",
+      "version": 1
+    },
+    "expected": {
+      "status": "ROUTED",
+      "tier": 1,
+      "binding_category": "financial",
+      "triggers_fired": []
+    }
+  }
+}

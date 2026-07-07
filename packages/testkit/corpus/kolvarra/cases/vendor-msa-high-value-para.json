@@ -1,0 +1,137 @@
+{
+  "case_id": "vendor-msa-high-value-para",
+  "description": "Paraphrase of vendor-msa-high-value: same deal rewritten as an internal approval memo. Identical fact values, new citations.",
+  "tags": [
+    "paraphrase-of:vendor-msa-high-value"
+  ],
+  "documents": [
+    {
+      "path": "docs/vendor-msa-high-value-para.md",
+      "sha256": "095c4f57189fdca9743725b4611c94d92bb4b777b15192e17f1c58e7a2149c48"
+    }
+  ],
+  "labeled_facts": [
+    {
+      "id": "amount_base_total",
+      "status": "FOUND",
+      "value": 2000000,
+      "unit": "USD",
+      "value_tolerance": 0.01,
+      "citation": {
+        "doc_index": 0,
+        "text": "committed spend of USD 2,000,000 across the whole extension period"
+      }
+    },
+    {
+      "id": "action_type",
+      "status": "FOUND",
+      "value": "vendor_contract_renewal",
+      "citation": {
+        "doc_index": 0,
+        "text": "this extension is a renewal of the Master Services Agreement signed in 2021"
+      }
+    },
+    {
+      "id": "counterparty_name",
+      "status": "FOUND",
+      "value": "Halcyon Drivetrain Components Inc.",
+      "citation": {
+        "doc_index": 0,
+        "text": "extend our existing master services agreement with Halcyon Drivetrain Components Inc."
+      }
+    },
+    {
+      "id": "counterparty_jurisdiction",
+      "status": "FOUND",
+      "value": "US",
+      "citation": {
+        "doc_index": 0,
+        "text": "Halcyon's plant in Wilmington, Delaware, United States"
+      }
+    },
+    {
+      "id": "counterparty_rating",
+      "status": "FOUND",
+      "value": "A-",
+      "citation": {
+        "doc_index": 0,
+        "text": "Fitch rates the company A- on its long-term issuer default scale"
+      }
+    },
+    {
+      "id": "liability_cap_exists",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "each party's exposure is capped at twelve months of trailing fees"
+      }
+    },
+    {
+      "id": "termination_for_convenience",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "either side can walk away for convenience with ninety (90) days' notice"
+      }
+    },
+    {
+      "id": "contract_term_months",
+      "status": "FOUND",
+      "value": 24,
+      "citation": {
+        "doc_index": 0,
+        "text": "The extension runs for twenty-four (24) months starting 1 July 2026"
+      }
+    },
+    {
+      "id": "regulated_activity",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "it is not a regulated activity and needs no licence or authority approval"
+      }
+    },
+    {
+      "id": "cross_border",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "parts continue to move cross-border from Halcyon's plant in Wilmington, Delaware, United States, into our Eindhoven line"
+      }
+    },
+    {
+      "id": "external_visibility",
+      "status": "FOUND",
+      "value": "none",
+      "citation": {
+        "doc_index": 0,
+        "text": "no announcement, no press activity, and nothing external whatsoever"
+      }
+    },
+    {
+      "id": "affected_parties_scope",
+      "status": "FOUND",
+      "value": "cross_functional",
+      "citation": {
+        "doc_index": 0,
+        "text": "it touches the Procurement, Engineering, and Quality functions"
+      }
+    }
+  ],
+  "expected_routing": {
+    "policy_ref": {
+      "policy_id": "kolvarra-risk",
+      "version": 1
+    },
+    "expected": {
+      "status": "ROUTED",
+      "tier": 2,
+      "binding_category": "financial",
+      "triggers_fired": []
+    }
+  }
+}

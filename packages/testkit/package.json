@@ -1,12 +1,26 @@
 {
   "name": "@ddas/testkit",
   "version": "2.0.0-alpha.0",
-  "description": "DDAS golden corpus and fixtures: one fictional company used four ways — extraction eval labels, engine snapshots, e2e expected routings, demo seed",
+  "description": "DDAS golden corpus and eval metrics: one fictional company (Kolvarra Industrial Systems B.V.) used four ways — extraction eval labels, engine snapshots, e2e expected routings, demo seed",
   "license": "MIT",
   "type": "module",
-  "files": ["schema", "corpus"],
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": ["dist", "schema", "corpus"],
   "scripts": {
-    "typecheck": "echo 'no sources yet (Phase 1)'",
-    "test": "echo 'no tests yet (Phase 1)'"
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ddas/engine": "workspace:*",
+    "@ddas/policy": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "ajv": "^8.17.0",
+    "ajv-formats": "^3.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
   }
 }

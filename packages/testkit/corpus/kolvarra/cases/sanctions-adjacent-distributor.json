@@ -1,0 +1,131 @@
+{
+  "case_id": "sanctions-adjacent-distributor",
+  "description": "Distribution agreement renewal with an Iranian counterparty: sanctions_exposure forces Supervisory Board (tier 4).",
+  "documents": [
+    {
+      "path": "docs/sanctions-adjacent-distributor.md",
+      "sha256": "539c382f2f1a4d9608198c0c68d4fa21789e63113889a7e2b23b5631cc461ee1"
+    }
+  ],
+  "labeled_facts": [
+    {
+      "id": "amount_base_total",
+      "status": "FOUND",
+      "value": 420000,
+      "unit": "EUR",
+      "value_tolerance": 0.01,
+      "citation": {
+        "doc_index": 0,
+        "text": "minimum purchases of EUR 420,000"
+      }
+    },
+    {
+      "id": "action_type",
+      "status": "FOUND",
+      "value": "vendor_contract_renewal",
+      "citation": {
+        "doc_index": 0,
+        "text": "the renewal of the Distribution and Aftermarket Services Agreement dated 3 August 2020"
+      }
+    },
+    {
+      "id": "counterparty_name",
+      "status": "FOUND",
+      "value": "Parsian Flow Equipment Co.",
+      "citation": {
+        "doc_index": 0,
+        "text": "Parsian Flow Equipment Co., No. 41 Valiasr Avenue"
+      }
+    },
+    {
+      "id": "counterparty_jurisdiction",
+      "status": "FOUND",
+      "value": "IR",
+      "citation": {
+        "doc_index": 0,
+        "text": "No. 41 Valiasr Avenue, Tehran, Iran"
+      }
+    },
+    {
+      "id": "counterparty_rating",
+      "status": "NOT_FOUND"
+    },
+    {
+      "id": "liability_cap_exists",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "The aggregate liability of each party under the renewed agreement is capped at the value of purchases in the six months preceding the claim"
+      }
+    },
+    {
+      "id": "termination_for_convenience",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "Either party may terminate the agreement for convenience on sixty (60) days' written notice"
+      }
+    },
+    {
+      "id": "contract_term_months",
+      "status": "FOUND",
+      "value": 12,
+      "citation": {
+        "doc_index": 0,
+        "text": "The renewal term is twelve (12) months from 1 June 2026"
+      }
+    },
+    {
+      "id": "regulated_activity",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "their sale and distribution is not a regulated activity"
+      }
+    },
+    {
+      "id": "cross_border",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "All shipments are cross-border from the Eindhoven or Poznań plants"
+      }
+    },
+    {
+      "id": "external_visibility",
+      "status": "FOUND",
+      "value": "industry",
+      "citation": {
+        "doc_index": 0,
+        "text": "with visibility limited to industry channels"
+      }
+    },
+    {
+      "id": "affected_parties_scope",
+      "status": "FOUND",
+      "value": "external_parties",
+      "citation": {
+        "doc_index": 0,
+        "text": "Performance of the agreement involves external parties: the Distributor, its sub-dealers, and end customers"
+      }
+    }
+  ],
+  "expected_routing": {
+    "policy_ref": {
+      "policy_id": "kolvarra-risk",
+      "version": 1
+    },
+    "expected": {
+      "status": "ROUTED",
+      "tier": 4,
+      "binding_category": "stakeholder_complexity",
+      "triggers_fired": [
+        "sanctions_exposure"
+      ]
+    }
+  }
+}

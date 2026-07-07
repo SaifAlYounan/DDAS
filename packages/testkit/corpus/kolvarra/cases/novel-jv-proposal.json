@@ -1,0 +1,136 @@
+{
+  "case_id": "novel-jv-proposal",
+  "description": "Pilot joint venture, an action type with no approved precedent: Novel precedent band + novel_precedent uplift on a stakeholder-bound base of 2 -> tier 3.",
+  "documents": [
+    {
+      "path": "docs/novel-jv-proposal.md",
+      "sha256": "16600225cdbe0489820a6aa6cc3e3a037df7d19f6c8603b7e6548b05be4e74ef"
+    }
+  ],
+  "labeled_facts": [
+    {
+      "id": "amount_base_total",
+      "status": "FOUND",
+      "value": 380000,
+      "unit": "EUR",
+      "value_tolerance": 0.01,
+      "citation": {
+        "doc_index": 0,
+        "text": "Kolvarra's total committed contribution to the pilot vehicle is EUR 380,000"
+      }
+    },
+    {
+      "id": "action_type",
+      "status": "FOUND",
+      "value": "joint_venture",
+      "citation": {
+        "doc_index": 0,
+        "text": "the proposed action is a first-of-kind joint venture formation with no matching precedent in the contract register"
+      }
+    },
+    {
+      "id": "counterparty_name",
+      "status": "FOUND",
+      "value": "Stromvik Hydraulik AB",
+      "citation": {
+        "doc_index": 0,
+        "text": "Stromvik Hydraulik AB of Gothenburg, Sweden"
+      }
+    },
+    {
+      "id": "counterparty_jurisdiction",
+      "status": "FOUND",
+      "value": "SE",
+      "citation": {
+        "doc_index": 0,
+        "text": "Stromvik Hydraulik AB of Gothenburg, Sweden"
+      }
+    },
+    {
+      "id": "counterparty_rating",
+      "status": "FOUND",
+      "value": "BBB",
+      "citation": {
+        "doc_index": 0,
+        "text": "a Standard & Poor's long-term rating of BBB"
+      }
+    },
+    {
+      "id": "liability_cap_exists",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "caps each party's liability to the other at the amount of its committed contribution"
+      }
+    },
+    {
+      "id": "termination_for_convenience",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "Either party may withdraw from the venture for convenience on ninety (90) days' written notice"
+      }
+    },
+    {
+      "id": "contract_term_months",
+      "status": "FOUND",
+      "value": 18,
+      "citation": {
+        "doc_index": 0,
+        "text": "The pilot phase runs for eighteen (18) months from formation"
+      }
+    },
+    {
+      "id": "regulated_activity",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "is not a regulated activity and requires no licence in the target markets"
+      }
+    },
+    {
+      "id": "cross_border",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "Operations will be cross-border by design: engineering in Eindhoven, assembly in Gothenburg"
+      }
+    },
+    {
+      "id": "external_visibility",
+      "status": "FOUND",
+      "value": "industry",
+      "citation": {
+        "doc_index": 0,
+        "text": "Launch communication is limited to industry channels"
+      }
+    },
+    {
+      "id": "affected_parties_scope",
+      "status": "FOUND",
+      "value": "external_parties",
+      "citation": {
+        "doc_index": 0,
+        "text": "The venture involves external parties beyond the two shareholders"
+      }
+    }
+  ],
+  "expected_routing": {
+    "policy_ref": {
+      "policy_id": "kolvarra-risk",
+      "version": 1
+    },
+    "expected": {
+      "status": "ROUTED",
+      "tier": 3,
+      "binding_category": "stakeholder_complexity",
+      "triggers_fired": [
+        "novel_precedent"
+      ]
+    }
+  }
+}

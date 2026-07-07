@@ -1,0 +1,139 @@
+{
+  "case_id": "adversarial-voided-cap",
+  "description": "Adversarial: section 9 states a liability cap, but Amendment No. 1 deletes and disapplies it. Correct label is liability_cap_exists=false, cited from the voiding clause; uncapped_liability lifts tier 1 to 2.",
+  "tags": [
+    "adversarial"
+  ],
+  "documents": [
+    {
+      "path": "docs/adversarial-voided-cap.md",
+      "sha256": "2f25f3cfe645123893c582e3ab063c67226824b4a659bc730535fe8127bb2ffb"
+    }
+  ],
+  "labeled_facts": [
+    {
+      "id": "amount_base_total",
+      "status": "FOUND",
+      "value": 310000,
+      "unit": "EUR",
+      "value_tolerance": 0.01,
+      "citation": {
+        "doc_index": 0,
+        "text": "The committed value for the renewal term is EUR 310,000"
+      }
+    },
+    {
+      "id": "action_type",
+      "status": "FOUND",
+      "value": "vendor_contract_renewal",
+      "citation": {
+        "doc_index": 0,
+        "text": "the renewal of the Automation Support Services Agreement dated 1 September 2022"
+      }
+    },
+    {
+      "id": "counterparty_name",
+      "status": "FOUND",
+      "value": "Corvatch Automation AG",
+      "citation": {
+        "doc_index": 0,
+        "text": "Corvatch Automation AG, Bahnhofstrasse 88"
+      }
+    },
+    {
+      "id": "counterparty_jurisdiction",
+      "status": "FOUND",
+      "value": "CH",
+      "citation": {
+        "doc_index": 0,
+        "text": "8001 Zurich, Switzerland"
+      }
+    },
+    {
+      "id": "counterparty_rating",
+      "status": "FOUND",
+      "value": "BBB+",
+      "citation": {
+        "doc_index": 0,
+        "text": "the equivalent of BBB+ on the international rating scale"
+      }
+    },
+    {
+      "id": "liability_cap_exists",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "section 9 (Limitation of liability) is deleted and disapplied in its entirety with effect from the start of the renewal term; no limitation of liability shall apply to either party"
+      }
+    },
+    {
+      "id": "termination_for_convenience",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "The Customer may terminate for convenience on sixty (60) days' written notice"
+      }
+    },
+    {
+      "id": "contract_term_months",
+      "status": "FOUND",
+      "value": 24,
+      "citation": {
+        "doc_index": 0,
+        "text": "The renewal term is twenty-four (24) months from 1 August 2026"
+      }
+    },
+    {
+      "id": "regulated_activity",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "they are not a regulated activity and require no permit or approval in either country"
+      }
+    },
+    {
+      "id": "cross_border",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "The services are performed cross-border by the Provider's Zurich engineering desk"
+      }
+    },
+    {
+      "id": "external_visibility",
+      "status": "FOUND",
+      "value": "none",
+      "citation": {
+        "doc_index": 0,
+        "text": "it has no external visibility"
+      }
+    },
+    {
+      "id": "affected_parties_scope",
+      "status": "FOUND",
+      "value": "cross_functional",
+      "citation": {
+        "doc_index": 0,
+        "text": "the renewal concerns the Maintenance, Controls Engineering, and IT/OT Security functions"
+      }
+    }
+  ],
+  "expected_routing": {
+    "policy_ref": {
+      "policy_id": "kolvarra-risk",
+      "version": 1
+    },
+    "expected": {
+      "status": "ROUTED",
+      "tier": 2,
+      "binding_category": "financial",
+      "triggers_fired": [
+        "uncapped_liability"
+      ]
+    }
+  }
+}

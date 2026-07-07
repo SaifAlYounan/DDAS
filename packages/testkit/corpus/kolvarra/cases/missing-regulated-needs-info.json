@@ -1,0 +1,124 @@
+{
+  "case_id": "missing-regulated-needs-info",
+  "description": "Analytics services agreement that never addresses whether the activity is regulated: the regulatory category's needs_info behavior blocks routing.",
+  "documents": [
+    {
+      "path": "docs/missing-regulated-needs-info.md",
+      "sha256": "cd4a559cd2f3aa27cb4780fe80ff8b57cc0b43ce96f312c8c77cd22d4f5f48c9"
+    }
+  ],
+  "labeled_facts": [
+    {
+      "id": "amount_base_total",
+      "status": "FOUND",
+      "value": 130000,
+      "unit": "EUR",
+      "value_tolerance": 0.01,
+      "citation": {
+        "doc_index": 0,
+        "text": "The total fee for the services is EUR 130,000"
+      }
+    },
+    {
+      "id": "action_type",
+      "status": "FOUND",
+      "value": "standard_procurement",
+      "citation": {
+        "doc_index": 0,
+        "text": "a standard procurement of professional services under procedure PROC-STD-04"
+      }
+    },
+    {
+      "id": "counterparty_name",
+      "status": "FOUND",
+      "value": "Brenholt Analytics ApS",
+      "citation": {
+        "doc_index": 0,
+        "text": "Brenholt Analytics ApS, Store Strandstraede 9"
+      }
+    },
+    {
+      "id": "counterparty_jurisdiction",
+      "status": "FOUND",
+      "value": "DK",
+      "citation": {
+        "doc_index": 0,
+        "text": "1255 Copenhagen, Denmark"
+      }
+    },
+    {
+      "id": "counterparty_rating",
+      "status": "NOT_FOUND"
+    },
+    {
+      "id": "liability_cap_exists",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "The Provider's aggregate liability is capped at the total fees paid"
+      }
+    },
+    {
+      "id": "termination_for_convenience",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "The Customer may terminate for convenience at any time on thirty (30) days' written notice"
+      }
+    },
+    {
+      "id": "contract_term_months",
+      "status": "FOUND",
+      "value": 12,
+      "citation": {
+        "doc_index": 0,
+        "text": "The service period is twelve (12) months from the start date"
+      }
+    },
+    {
+      "id": "regulated_activity",
+      "status": "NOT_FOUND"
+    },
+    {
+      "id": "cross_border",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "data delivered cross-border from the Eindhoven test facility to Denmark"
+      }
+    },
+    {
+      "id": "external_visibility",
+      "status": "FOUND",
+      "value": "none",
+      "citation": {
+        "doc_index": 0,
+        "text": "the engagement has no external visibility"
+      }
+    },
+    {
+      "id": "affected_parties_scope",
+      "status": "FOUND",
+      "value": "single_team",
+      "citation": {
+        "doc_index": 0,
+        "text": "The reports are used solely by the Test Engineering team"
+      }
+    }
+  ],
+  "expected_routing": {
+    "policy_ref": {
+      "policy_id": "kolvarra-risk",
+      "version": 1
+    },
+    "expected": {
+      "status": "INCOMPLETE",
+      "missing_facts": [
+        "regulated_activity"
+      ]
+    }
+  }
+}

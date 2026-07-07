@@ -4,7 +4,7 @@
  * must say so honestly.
  */
 import { describe, expect, it } from "vitest";
-import { classify, ENGINE_VERSION } from "./classify.js";
+import { ENGINE_VERSION } from "./classify.js";
 import { ClassificationResult, Derivation, Fact } from "./types.js";
 
 const canonicalDerivation = {
@@ -105,15 +105,8 @@ describe("fact contract", () => {
   });
 });
 
-describe("classify (Phase 1 pending)", () => {
-  it("is honestly unimplemented", () => {
-    expect(() =>
-      classify({
-        factSet: { facts: [] },
-        policy: { policyId: "x", version: 1, contentHash: "sha256:0", document: {} as never },
-        subject: { initiatorKind: "human", initiator: "user:someone" },
-        documents: [],
-      })
-    ).toThrow(/Not implemented/);
+describe("classify result contract", () => {
+  it("engine version constant matches the canonical example", () => {
+    expect(ENGINE_VERSION).toBe(canonicalDerivation.engineVersion);
   });
 });

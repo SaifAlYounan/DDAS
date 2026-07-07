@@ -1,0 +1,134 @@
+{
+  "case_id": "accumulation-plant-retrofit",
+  "description": "EUR 2.4M plant retrofit with national visibility and ecosystem-wide stakeholders: three categories rate High, accumulation lifts the reputational base of 3 to tier 4.",
+  "documents": [
+    {
+      "path": "docs/accumulation-plant-retrofit.md",
+      "sha256": "426c1126302a600a7b1e595b0d6f49109fd567eebb3bf45ffb6d6a5a707b20c5"
+    }
+  ],
+  "labeled_facts": [
+    {
+      "id": "amount_base_total",
+      "status": "FOUND",
+      "value": 2400000,
+      "unit": "EUR",
+      "value_tolerance": 0.01,
+      "citation": {
+        "doc_index": 0,
+        "text": "The contract price is EUR 2,400,000"
+      }
+    },
+    {
+      "id": "action_type",
+      "status": "FOUND",
+      "value": "standard_procurement",
+      "citation": {
+        "doc_index": 0,
+        "text": "the award is a standard procurement of construction and installation works under procedure PROC-STD-04"
+      }
+    },
+    {
+      "id": "counterparty_name",
+      "status": "FOUND",
+      "value": "Zelenko Industrial Contracting S.A.",
+      "citation": {
+        "doc_index": 0,
+        "text": "Zelenko Industrial Contracting S.A., ul. Przemysłowa 77"
+      }
+    },
+    {
+      "id": "counterparty_jurisdiction",
+      "status": "FOUND",
+      "value": "PL",
+      "citation": {
+        "doc_index": 0,
+        "text": "61-541 Poznań, Poland"
+      }
+    },
+    {
+      "id": "counterparty_rating",
+      "status": "FOUND",
+      "value": "BBB-",
+      "citation": {
+        "doc_index": 0,
+        "text": "rated BBB- on the international scale"
+      }
+    },
+    {
+      "id": "liability_cap_exists",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "The Contractor's aggregate liability is capped at 100% of the contract price"
+      }
+    },
+    {
+      "id": "termination_for_convenience",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "The Employer may terminate the contract for convenience at any time"
+      }
+    },
+    {
+      "id": "contract_term_months",
+      "status": "FOUND",
+      "value": 14,
+      "citation": {
+        "doc_index": 0,
+        "text": "The works are programmed over fourteen (14) months from site mobilization"
+      }
+    },
+    {
+      "id": "regulated_activity",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "the retrofit is not a regulated activity"
+      }
+    },
+    {
+      "id": "cross_border",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "the engagement is domestic to the plant's jurisdiction with no cross-border performance"
+      }
+    },
+    {
+      "id": "external_visibility",
+      "status": "FOUND",
+      "value": "national",
+      "citation": {
+        "doc_index": 0,
+        "text": "coverage in national Polish business press is anticipated"
+      }
+    },
+    {
+      "id": "affected_parties_scope",
+      "status": "FOUND",
+      "value": "ecosystem",
+      "citation": {
+        "doc_index": 0,
+        "text": "The project affects an ecosystem of stakeholders around the plant"
+      }
+    }
+  ],
+  "expected_routing": {
+    "policy_ref": {
+      "policy_id": "kolvarra-risk",
+      "version": 1
+    },
+    "expected": {
+      "status": "ROUTED",
+      "tier": 4,
+      "binding_category": "reputational",
+      "triggers_fired": []
+    }
+  }
+}

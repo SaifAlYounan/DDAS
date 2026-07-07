@@ -1,0 +1,136 @@
+{
+  "case_id": "uncapped-liability-tooling",
+  "description": "Tooling contract with liability expressly uncapped: base tier 1 (financial Moderate) + uncapped_liability uplift = tier 2.",
+  "documents": [
+    {
+      "path": "docs/uncapped-liability-tooling.md",
+      "sha256": "0bddc1117ff37a7533c08731916dca072b863ccf2fdd2995d07c91fe4f9cdf34"
+    }
+  ],
+  "labeled_facts": [
+    {
+      "id": "amount_base_total",
+      "status": "FOUND",
+      "value": 265000,
+      "unit": "EUR",
+      "value_tolerance": 0.01,
+      "citation": {
+        "doc_index": 0,
+        "text": "The fixed contract price is EUR 265,000"
+      }
+    },
+    {
+      "id": "action_type",
+      "status": "FOUND",
+      "value": "standard_procurement",
+      "citation": {
+        "doc_index": 0,
+        "text": "the award is a standard procurement of production tooling under procedure PROC-STD-04"
+      }
+    },
+    {
+      "id": "counterparty_name",
+      "status": "FOUND",
+      "value": "Aldervik Metals GmbH",
+      "citation": {
+        "doc_index": 0,
+        "text": "Aldervik Metals GmbH, Werkstrasse 19"
+      }
+    },
+    {
+      "id": "counterparty_jurisdiction",
+      "status": "FOUND",
+      "value": "DE",
+      "citation": {
+        "doc_index": 0,
+        "text": "73431 Aalen, Germany"
+      }
+    },
+    {
+      "id": "counterparty_rating",
+      "status": "FOUND",
+      "value": "BBB-",
+      "citation": {
+        "doc_index": 0,
+        "text": "at the equivalent of BBB- on the international rating scale"
+      }
+    },
+    {
+      "id": "liability_cap_exists",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "no limitation of liability shall apply to either party under this contract"
+      }
+    },
+    {
+      "id": "termination_for_convenience",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "The Purchaser may terminate for convenience at any stage on fourteen (14) days' written notice"
+      }
+    },
+    {
+      "id": "contract_term_months",
+      "status": "FOUND",
+      "value": 9,
+      "citation": {
+        "doc_index": 0,
+        "text": "The contract runs for nine (9) months from the order date"
+      }
+    },
+    {
+      "id": "regulated_activity",
+      "status": "FOUND",
+      "value": false,
+      "citation": {
+        "doc_index": 0,
+        "text": "Tool steel and machining services under this contract are not a regulated activity"
+      }
+    },
+    {
+      "id": "cross_border",
+      "status": "FOUND",
+      "value": true,
+      "citation": {
+        "doc_index": 0,
+        "text": "The finished tooling ships cross-border from Aalen, Germany, to the Poznań plant"
+      }
+    },
+    {
+      "id": "external_visibility",
+      "status": "FOUND",
+      "value": "none",
+      "citation": {
+        "doc_index": 0,
+        "text": "There is no external visibility: no announcement, publication, or customer communication"
+      }
+    },
+    {
+      "id": "affected_parties_scope",
+      "status": "FOUND",
+      "value": "cross_functional",
+      "citation": {
+        "doc_index": 0,
+        "text": "the project involves the Tooling, Manufacturing Engineering, and Purchasing departments across two plants"
+      }
+    }
+  ],
+  "expected_routing": {
+    "policy_ref": {
+      "policy_id": "kolvarra-risk",
+      "version": 1
+    },
+    "expected": {
+      "status": "ROUTED",
+      "tier": 2,
+      "binding_category": "financial",
+      "triggers_fired": [
+        "uncapped_liability"
+      ]
+    }
+  }
+}
