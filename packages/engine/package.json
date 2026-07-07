@@ -1,0 +1,27 @@
+{
+  "name": "@ddas/engine",
+  "version": "2.0.0-alpha.0",
+  "description": "DDAS deterministic classification core (ACOS). Pure: no I/O, no clock, no randomness.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ddas/policy": "workspace:*",
+    "zod": "^3.24.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "fast-check": "^3.23.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}

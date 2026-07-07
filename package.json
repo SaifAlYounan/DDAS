@@ -1,0 +1,26 @@
+{
+  "name": "ddas",
+  "private": true,
+  "version": "2.0.0-alpha.0",
+  "description": "Dynamic Delegation of Authority System — appetite-constrained authority routing for humans and AI agents",
+  "license": "MIT",
+  "author": "Alexios van der Slikke-Kirillov",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SaifAlYounan/DDAS.git"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "packageManager": "pnpm@11.0.9",
+  "scripts": {
+    "build": "turbo run build",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "^5.8.0"
+  }
+}

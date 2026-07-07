@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/SaifAlYounan/DDAS/main/packages/testkit/schema/golden-set.v1.schema.json",
+  "title": "DDAS golden-set case v1",
+  "description": "One labeled case in the golden corpus. Drives four harnesses: extraction eval (labels vs extractor output: precision/recall, value accuracy, citation fidelity, abstention quality), engine snapshots, end-to-end expected routings, and demo seeding.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["case_id", "documents", "labeled_facts"],
+  "properties": {
+    "case_id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "description": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "e.g. adversarial, paraphrase-of:<case_id>, synthetic, sector:energy"
+    },
+    "documents": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": { "type": "string", "description": "Relative to the corpus root." },
+          "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+        }
+      }
+    },
+    "labeled_facts": {
+      "type": "array",
+      "description": "Ground truth. Facts genuinely absent from the documents MUST be labeled NOT_FOUND — abstention quality (no hallucinated facts) is the metric that matters most: a fabricated liability cap silently LOWERS risk.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status"],
+        "properties": {
+          "id": { "type": "string" },
+          "status": { "enum": ["FOUND", "NOT_FOUND"] },
+          "value": {},
+          "unit": { "type": "string" },
+          "value_tolerance": { "type": "number", "description": "Acceptable relative deviation for numeric values (e.g. 0.01)." },
+          "citation": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["doc_index", "text"],
+            "properties": {
+              "doc_index": { "type": "integer", "minimum": 0 },
+              "text": { "type": "string", "minLength": 1, "description": "A verbatim span from the document that entails the fact. Extractor citations must overlap it." }
+            }
+          }
+        }
+      }
+    },
+    "expected_routing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policy_ref", "expected"],
+      "description": "Optional end-to-end expectation under a pinned policy.",
+      "properties": {
+        "policy_ref": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["policy_id", "version"],
+          "properties": {
+            "policy_id": { "type": "string" },
+            "version": { "type": "integer", "minimum": 1 }
+          }
+        },
+        "expected": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["status", "tier"],
+              "properties": {
+                "status": { "const": "ROUTED" },
+                "tier": { "type": "integer", "minimum": 0 },
+                "binding_category": { "type": "string" },
+                "triggers_fired": { "type": "array", "items": { "type": "string" } }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["status", "missing_facts"],
+              "properties": {
+                "status": { "const": "INCOMPLETE" },
+                "missing_facts": { "type": "array", "items": { "type": "string" } }
+              }
+            }
+          ]
+        },
+        "initiator_kind": { "enum": ["human", "agent"], "default": "human" }
+      }
+    }
+  }
+}

@@ -1,0 +1,279 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/SaifAlYounan/DDAS/main/packages/policy/schema/policy.v1.schema.json",
+  "title": "DDAS RiskPolicy v1",
+  "description": "A company's registered risk posture, as code. Authored in YAML, stored as RFC 8785 canonical JSON; the sha256 content hash is the policy's identity in every classification derivation. Band rules use the DDAS rule DSL: comparisons (fact op literal, op in == != < <= > >=), list membership (fact in list_name, or literal in fact), boolean combinations (and/or/not, parentheses), and the literal 'else' as the final catch-all band. The DSL is deliberately not Turing-complete: no loops, no function calls. Structural validity is this schema; semantic validity (monotone appetites, matrices monotone on both axes, exhaustive ordered bands, every referenced fact declared) is enforced by the policy compiler at registration.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "policy_id",
+    "name",
+    "version",
+    "effective_from",
+    "authority_ladder",
+    "likelihood_scale",
+    "rating_scale",
+    "fact_schema",
+    "categories",
+    "agent_policy"
+  ],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "policy_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "description": "Stable slug identifying the policy across versions."
+    },
+    "name": { "type": "string", "minLength": 1 },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Monotonically increasing. Policy versions are immutable once activated; any change is a new version."
+    },
+    "effective_from": { "type": "string", "format": "date" },
+    "approved_by": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role"],
+      "properties": {
+        "role": { "type": "string" },
+        "name": { "type": "string" },
+        "date": { "type": "string", "format": "date" }
+      },
+      "description": "Sign-off ceremony for the transcription of prose appetite statements into bands."
+    },
+    "authority_ladder": {
+      "type": "array",
+      "minItems": 2,
+      "description": "Ordered authority tiers mapped to the company's actual org. Tier 0 is self-approval; ascending tiers are ascending authority.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["tier", "name"],
+        "properties": {
+          "tier": { "type": "integer", "minimum": 0 },
+          "name": { "type": "string", "minLength": 1 },
+          "roles": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "Org roles that hold this authority (resolved against the live org structure at routing time)."
+          },
+          "quorum": {
+            "type": ["integer", "string"],
+            "description": "Number of approvers required, or 'majority'. Default 1."
+          }
+        }
+      }
+    },
+    "likelihood_scale": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["bands"],
+      "properties": {
+        "bands": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Ordered least→most likely, in the company's own vocabulary (e.g. Rare, Unlikely, Possible, Likely, Almost_certain)."
+        }
+      }
+    },
+    "rating_scale": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["ratings"],
+      "properties": {
+        "ratings": {
+          "type": "array",
+          "minItems": 2,
+          "items": { "type": "string", "minLength": 1 },
+          "description": "Ordered least→most severe risk ratings, in the company's own vocabulary (e.g. Low, Moderate, High, Critical). Risk-matrix cells and appetite keys must use these labels."
+        }
+      }
+    },
+    "fact_schema": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The typed fact vocabulary the extraction layer must fill. Every fact referenced by any band rule, likelihood rule, or trigger must be declared here.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "type"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "type": { "enum": ["money", "number", "string", "boolean", "date", "duration", "enum", "list"] },
+          "unit": { "type": "string", "description": "For money facts: ISO currency the value is normalized to (via fx_snapshot)." },
+          "values": { "type": "array", "items": { "type": "string" }, "description": "Allowed values for enum facts." },
+          "description": { "type": "string" }
+        }
+      }
+    },
+    "categories": {
+      "type": "array",
+      "minItems": 1,
+      "description": "The company's risk taxonomy. Each category independently demands a minimum authority tier; the engine takes the max.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "impact_scale", "risk_matrix", "appetite", "missing_info"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "name": { "type": "string" },
+          "impact_scale": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["bands"],
+            "properties": {
+              "bands": {
+                "type": "array",
+                "minItems": 2,
+                "description": "Ordered least→most severe. Rules are evaluated in order; exactly one must match ('else' as the last band's rule makes the scale exhaustive).",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["name", "rule"],
+                  "properties": {
+                    "name": { "type": "string", "minLength": 1 },
+                    "rule": { "type": "string", "minLength": 1, "description": "DDAS rule DSL expression over declared facts, or 'else'." },
+                    "description": { "type": "string" }
+                  }
+                }
+              },
+              "required_facts": {
+                "type": "array",
+                "items": { "type": "string" },
+                "description": "Facts that must be FOUND (or MANUAL) for this category to score. A NOT_FOUND required fact invokes missing_info."
+              }
+            }
+          },
+          "likelihood_rules": {
+            "type": "array",
+            "description": "Deterministic indicator rules, evaluated in order; the highest min_band among matching rules wins, else default_band. Never LLM judgment.",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "properties": {
+                "if": { "type": "string", "description": "DDAS rule DSL expression." },
+                "min_band": { "type": "string" },
+                "default_band": { "type": "string" }
+              },
+              "oneOf": [
+                { "required": ["if", "min_band"] },
+                { "required": ["default_band"] }
+              ]
+            }
+          },
+          "risk_matrix": {
+            "type": "object",
+            "description": "The company's registered grid: keys are impact-band names; values are arrays of ratings, one per likelihood band (least→most likely). Must be monotone along both axes.",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          },
+          "appetite": {
+            "type": "object",
+            "description": "The machine-readable risk appetite statement: rating → minimum authority tier. Must be monotone in rating severity.",
+            "additionalProperties": { "type": "integer", "minimum": 0 }
+          },
+          "appetite_agent_initiated": {
+            "type": "object",
+            "description": "Optional stricter appetite column for agent-initiated actions. Each tier must be >= the default appetite's tier for the same rating.",
+            "additionalProperties": { "type": "integer", "minimum": 0 }
+          },
+          "missing_info": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["behavior"],
+            "properties": {
+              "behavior": {
+                "enum": ["escalate", "needs_info"],
+                "description": "escalate: score at conservative_band (unknown = breach; never lowers a tier). needs_info: classification returns INCOMPLETE and blocks routing."
+              },
+              "conservative_band": { "type": "string", "description": "Required when behavior is 'escalate'." }
+            },
+            "if": { "properties": { "behavior": { "const": "escalate" } } },
+            "then": { "required": ["behavior", "conservative_band"] }
+          }
+        }
+      }
+    },
+    "escalation_triggers": {
+      "type": "array",
+      "description": "Named exceptional conditions — the decision-table overlay. Upward-only: a trigger can raise the tier, never lower it.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "rule", "rationale"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z][a-z0-9_]*$" },
+          "rule": { "type": "string", "minLength": 1 },
+          "min_tier": { "type": "integer", "minimum": 0 },
+          "tier_uplift": { "type": "integer", "minimum": 1 },
+          "rationale": { "type": "string", "minLength": 1, "description": "Flows verbatim into the decision explanation." }
+        },
+        "oneOf": [
+          { "required": ["min_tier"] },
+          { "required": ["tier_uplift"] }
+        ]
+      }
+    },
+    "accumulation_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["count_at_or_above", "threshold", "tier_uplift"],
+      "description": "The one thing max() legitimately misses: many medium risks. Counts categories, never sums scores.",
+      "properties": {
+        "count_at_or_above": { "type": "string", "description": "A rating from rating_scale." },
+        "threshold": { "type": "integer", "minimum": 2 },
+        "tier_uplift": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "agent_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["self_approve_allowed"],
+      "properties": {
+        "default_uplift": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Tier uplift for agent-initiated actions in categories without an appetite_agent_initiated column."
+        },
+        "self_approve_allowed": {
+          "type": "boolean",
+          "description": "Whether agent-initiated actions may ever resolve to tier 0. When false (default posture), agents never self-approve unless an action type is explicitly whitelisted."
+        },
+        "self_approve_whitelist": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Action types exempt from the self-approve floor."
+        },
+        "attestation_required_facts": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Facts that require human attestation when the initiator is an agent; unattested ones become needs-info items."
+        }
+      }
+    },
+    "reference_lists": {
+      "type": "object",
+      "description": "Named lists usable in rules via 'in' (sanctions_list, home_jurisdictions, approved_precedents...). Versioned with the policy.",
+      "additionalProperties": {
+        "type": "array",
+        "items": { "type": "string" }
+      }
+    },
+    "fx_snapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["base_currency", "as_of", "rates"],
+      "description": "Pinned FX rates for money-band comparison. Snapshotted per policy version so classifications are not time-dependent.",
+      "properties": {
+        "base_currency": { "type": "string", "pattern": "^[A-Z]{3}$" },
+        "as_of": { "type": "string", "format": "date" },
+        "rates": { "type": "object", "additionalProperties": { "type": "number", "exclusiveMinimum": 0 } }
+      }
+    }
+  }
+}

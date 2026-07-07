@@ -1,0 +1,35 @@
+# DDAS reference deployment — Phase 0 stub.
+# Phase 1 adds the `app` service (single container: API + console + workers).
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_USER: ddas
+      POSTGRES_PASSWORD: ddas
+      POSTGRES_DB: ddas
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ddas"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  # app:            # Phase 1
+  #   build:
+  #     context: ..
+  #     dockerfile: deploy/Dockerfile
+  #   env_file: ../.env
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - blobs:/data/blobs
+
+volumes:
+  pgdata:
+  # blobs:          # Phase 1
