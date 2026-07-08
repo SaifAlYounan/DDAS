@@ -252,6 +252,7 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
     await mk("Sofie", ["approver"]); // supervisory board
     await mk("Bram", ["approver"]); // supervisory board
     await mk("Astrid", ["auditor"]);
+    await mk("Mallory", ["requester"]); // a DIFFERENT requester — must not see Ruben's data
 
     const agent = await as("admin", {
       method: "POST",
@@ -329,6 +330,7 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
     await login("requester", "ruben@kolvarra.test", "ruben-password-123");
     await login("petra", "petra@kolvarra.test", "petra-password-123");
     await login("auditor", "astrid@kolvarra.test", "astrid-password-123");
+    await login("mallory", "mallory@kolvarra.test", "mallory-password-123");
   }, 60_000);
 
   afterAll(async () => {
@@ -562,6 +564,81 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
     const checkpoint = await as("auditor", { method: "GET", url: "/api/v1/audit/checkpoint" });
     expect(checkpoint.statusCode).toBe(200);
     expect((checkpoint.json() as { seq: number }).seq).toBeGreaterThan(0);
+  });
+
+  describe("multi-tenant confinement (review regression)", () => {
+    it("blocks a different requester from reading or mutating someone else's request", async () => {
+      const c = loadCase("routine-spares-po");
+      const { requestId, factSetId } = await submitCase(c, "human"); // owned by Ruben
+
+      // Mallory (a bare requester, not the owner) is denied every surface.
+      const read = await as("mallory", { method: "GET", url: `/api/v1/requests/${requestId}` });
+      expect(read.statusCode).toBe(403);
+
+      const patch = await as("mallory", {
+        method: "PATCH",
+        url: `/api/v1/fact-sets/${factSetId}/facts/amount_base_total`,
+        payload: { status: "NOT_FOUND" },
+      });
+      expect(patch.statusCode).toBe(403);
+
+      const confirm = await as("mallory", {
+        method: "POST",
+        url: `/api/v1/fact-sets/${factSetId}/confirm`,
+        payload: {},
+      });
+      expect(confirm.statusCode).toBe(403);
+
+      const clone = await as("mallory", {
+        method: "POST",
+        url: `/api/v1/fact-sets/${factSetId}/clone`,
+      });
+      expect(clone.statusCode).toBe(403);
+
+      // The owner still can (sanity: the guard isn't just denying everyone).
+      const ownerRead = await as("requester", {
+        method: "GET",
+        url: `/api/v1/requests/${requestId}`,
+      });
+      expect(ownerRead.statusCode).toBe(200);
+    }, 60_000);
+  });
+
+  describe("simulation activation gate (review regression)", () => {
+    it("rejects a run whose candidate does not match the version being activated", async () => {
+      // A completed run whose candidate is the CURRENT active policy (unchanged).
+      const sim = await as("admin", {
+        method: "POST",
+        url: "/api/v1/simulations",
+        payload: { baselinePolicyVersionId: policyVersionId, candidateYaml: kolvarraYaml },
+      });
+      const runId = (sim.json() as { id: string }).id;
+      await waitFor(async () => {
+        const poll = await as("admin", { method: "GET", url: `/api/v1/simulations/${runId}` });
+        return (poll.json() as { status: string }).status === "done";
+      }, 30_000);
+
+      // A brand-new DRAFT that changes the policy (different content hash).
+      const tweakedYaml = kolvarraYaml.replace("name: Kolvarra", "name: Kolvarra Tweaked");
+      const draft = await as("admin", {
+        method: "POST",
+        url: "/api/v1/policies/kolvarra-risk/versions",
+        payload: { sourceYaml: tweakedYaml },
+      });
+      const draftId = (draft.json() as { id: string }).id;
+
+      // Activating the tweaked draft with the run that tested the UNCHANGED
+      // policy must be refused — the run did not test this candidate.
+      const activate = await as("admin", {
+        method: "POST",
+        url: `/api/v1/policy-versions/${draftId}/activate`,
+        payload: { simulationRunId: runId },
+      });
+      expect(activate.statusCode).toBe(409);
+      expect((activate.json() as { error: { message: string } }).error.message).toMatch(
+        /different candidate/
+      );
+    }, 60_000);
   });
 
   describe("API keys (Phase 3)", () => {
