@@ -33,7 +33,7 @@ describe.skipIf(!TEST_DATABASE_URL)("@ddas/audit", () => {
   let t: TestDb;
 
   beforeAll(async () => {
-    t = await freshTestDb();
+    t = await freshTestDb("audit");
   }, 30_000);
 
   afterAll(async () => {

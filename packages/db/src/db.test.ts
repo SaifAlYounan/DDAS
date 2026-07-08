@@ -26,7 +26,7 @@ describe.skipIf(!TEST_DATABASE_URL)("@ddas/db", () => {
   let adminId: string;
 
   beforeAll(async () => {
-    t = await freshTestDb();
+    t = await freshTestDb("db");
     db = t.db;
     const [admin] = await db
       .insert(principals)
