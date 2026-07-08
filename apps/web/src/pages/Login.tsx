@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
 import { api } from "../api/client";
@@ -12,6 +12,11 @@ export function LoginPage() {
   const [password, setPassword] = useState("");
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const authConfig = useQuery({
+    queryKey: ["auth", "config"],
+    queryFn: () => api.get<{ oidcEnabled: boolean }>("/auth/config"),
+    staleTime: Infinity,
+  });
 
   const login = useMutation({
     mutationFn: () => api.post<Me>("/auth/login", { email, password }),
@@ -62,6 +67,14 @@ export function LoginPage() {
           <Button type="submit" className="w-full" disabled={login.isPending}>
             {login.isPending ? "Signing in…" : "Sign in"}
           </Button>
+          {authConfig.data?.oidcEnabled && (
+            <a
+              href="/api/v1/auth/oidc/login"
+              className="block w-full rounded-md border border-gray-300 bg-white px-3.5 py-2 text-center text-sm font-medium text-gray-700 shadow-sm transition-colors hover:bg-gray-50"
+            >
+              Sign in with SSO
+            </a>
+          )}
         </form>
       </div>
     </div>

@@ -38,6 +38,7 @@ import { registerPolicyRoutes } from "./routes/policies.js";
 import { registerRequestRoutes } from "./routes/requests.js";
 import { registerSimulationRoutes } from "./routes/simulations.js";
 import { registerMcpRoute } from "./routes/mcp.js";
+import { registerOidcRoutes } from "./routes/oidc.js";
 import { registerWebhookRoutes } from "./routes/webhooks.js";
 import { startWebhookWorker, WEBHOOK_DEFAULTS } from "./jobs/webhooks.js";
 
@@ -147,6 +148,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   await app.register(
     async (api) => {
       registerAuthRoutes(api as unknown as App, ctx);
+      registerOidcRoutes(api as unknown as App, ctx);
       registerAdminRoutes(api as unknown as App, ctx);
       registerOrgRoutes(api as unknown as App, ctx);
       registerPolicyRoutes(api as unknown as App, ctx);

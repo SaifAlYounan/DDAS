@@ -16,6 +16,16 @@ export const EnvSchema = z.object({
   DDAS_EXTRACTION_PROVIDER: z.string().optional(),
   DDAS_EXTRACTION_MODEL: z.string().optional(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
+  /** OIDC/SSO — set all three to enable; JIT-provisions on first login. */
+  OIDC_ISSUER_URL: z.string().url().optional(),
+  OIDC_CLIENT_ID: z.string().optional(),
+  OIDC_CLIENT_SECRET: z.string().optional(),
+  /** Must match the IdP registration, e.g. https://ddas.example.com/api/v1/auth/oidc/callback */
+  OIDC_REDIRECT_URL: z.string().url().optional(),
+  /** Roles granted to JIT-provisioned users (comma-separated). */
+  OIDC_DEFAULT_ROLES: z.string().default("requester"),
+  /** Allow http:// issuers — tests and lab setups only. */
+  OIDC_ALLOW_INSECURE: z.coerce.boolean().default(false),
   /** Webhook delivery worker tuning (tests shrink these). */
   WEBHOOK_POLL_MS: z.coerce.number().int().positive().optional(),
   WEBHOOK_RETRY_BASE_MS: z.coerce.number().int().positive().optional(),
