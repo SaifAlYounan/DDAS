@@ -153,8 +153,15 @@ In the console: **Policies → New draft**, paste the YAML, and DDAS shows lint 
 
 Agents are first-class principals, gated exactly like people — same pipeline, same inbox, same audit trail — but held to the (usually stricter) agent appetite, and never allowed to self-approve.
 
-1. Create an **agent** principal in **Admin** (it must name a human owner).
-2. Mint a scoped **API key** in **Admin → API keys**. The token is shown **once** — copy it then. Scopes: `requests:read`, `requests:write`, `facts:attest`, `mcp`.
+1. Create an **agent** principal in **Admin → Principals** (it must name a human owner).
+2. Mint a scoped **API key** for that agent (REST — the token is returned **once**):
+   ```bash
+   curl -X POST http://localhost:3000/api/v1/admin/api-keys \
+     -H 'content-type: application/json' -b <admin-session-cookie> \
+     -d '{"principalId":"<agent-id>","scopes":["requests:read","requests:write","facts:attest","mcp"]}'
+   # → { "id": "...", "prefix": "...", "token": "ddas_<prefix>_<secret>" }  ← copy the token now
+   ```
+   Available scopes: `requests:read`, `requests:write`, `facts:attest`, `mcp`.
 
 The agent then drives DDAS over **MCP** (streamable HTTP at `POST /mcp`, authenticated with the API key). Example client config:
 
