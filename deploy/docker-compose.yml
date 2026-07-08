@@ -1,14 +1,12 @@
-# DDAS reference deployment — Phase 0 stub.
-# Phase 1 adds the `app` service (single container: API + console + workers).
+# DDAS reference deployment: `docker compose up` = the whole product.
+# Postgres + one application container (API, web console, workers).
 services:
   postgres:
-    image: postgres:17
+    image: postgres:16
     environment:
       POSTGRES_USER: ddas
-      POSTGRES_PASSWORD: ddas
+      POSTGRES_PASSWORD: ddas # change in production
       POSTGRES_DB: ddas
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
@@ -17,19 +15,27 @@ services:
       timeout: 3s
       retries: 10
 
-  # app:            # Phase 1
-  #   build:
-  #     context: ..
-  #     dockerfile: deploy/Dockerfile
-  #   env_file: ../.env
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #   ports:
-  #     - "3000:3000"
-  #   volumes:
-  #     - blobs:/data/blobs
+  app:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgres://ddas:ddas@postgres:5432/ddas
+      # First boot creates this admin (only if no admin exists yet):
+      DDAS_ADMIN_EMAIL: admin@example.com
+      DDAS_ADMIN_PASSWORD: change-me-please # >= 12 chars
+      # LLM fact extraction (optional until you submit requests):
+      # DDAS_EXTRACTION_PROVIDER: anthropic
+      # DDAS_EXTRACTION_MODEL: claude-sonnet-5
+      # DDAS_EXTRACTION_API_KEY: sk-ant-...
+    ports:
+      - "3000:3000"
+    volumes:
+      - blobs:/data/blobs
 
 volumes:
   pgdata:
-  # blobs:          # Phase 1
+  blobs:

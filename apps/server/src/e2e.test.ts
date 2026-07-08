@@ -317,6 +317,14 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
     expect(wrongRole.statusCode).toBe(403);
   });
 
+  it("returns the session principal with roles as a real array", async () => {
+    const me = await as("requester", { method: "GET", url: "/api/v1/auth/me" });
+    expect(me.statusCode).toBe(200);
+    const body = me.json() as { name: string; roles: string[] };
+    expect(body.name).toBe("Ruben");
+    expect(body.roles).toEqual(["requester"]);
+  });
+
   it("runs the flagship case end-to-end: submit → review → classify → approve", async () => {
     const flagship = loadCase("vendor-msa-high-value");
     const { requestId, factSetId } = await submitCase(flagship, "human");

@@ -9,7 +9,9 @@
   },
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -20,7 +22,8 @@
     "@ddas/extraction": "workspace:*",
     "@ddas/policy": "workspace:*",
     "@ddas/testkit": "workspace:*",
-    "commander": "^13.1.0"
+    "commander": "^13.1.0",
+    "@ddas/db": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "^24.13.2",

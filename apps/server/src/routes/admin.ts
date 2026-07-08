@@ -36,7 +36,7 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
         roles: string[] | null;
       }>(
         `SELECT p.id, p.kind, p.name, p.email, p.owner_principal_id, p.disabled_at,
-                array_agg(r.role) FILTER (WHERE r.role IS NOT NULL) AS roles
+                array_agg(r.role::text) FILTER (WHERE r.role IS NOT NULL) AS roles
          FROM principals p LEFT JOIN role_assignments r ON r.principal_id = p.id
          GROUP BY p.id ORDER BY p.created_at`
       );

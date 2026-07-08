@@ -158,6 +158,21 @@ export async function buildApp(deps: AppDeps): Promise<App> {
     await registerJobs(app as App, ctx);
   }
 
+  // Host the built web console when configured: static assets + SPA fallback
+  // for anything that is not an API route.
+  if (env.WEB_DIST) {
+    const { default: fastifyStatic } = await import("@fastify/static");
+    await app.register(fastifyStatic, { root: env.WEB_DIST, wildcard: false });
+    app.setNotFoundHandler((request, reply) => {
+      if (request.url.startsWith("/api") || request.method !== "GET") {
+        return reply
+          .status(404)
+          .send({ error: { code: "not_found", message: "route not found" } });
+      }
+      return (reply as unknown as { sendFile: (f: string) => unknown }).sendFile("index.html");
+    });
+  }
+
   app.addHook("onClose", async () => {
     if (boss) await boss.stop({ graceful: false });
   });

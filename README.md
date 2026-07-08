@@ -4,7 +4,7 @@
 
 **DDAS replaces the corporate Delegation of Authority table with your registered risk appetite, executed as code.** Any transaction or action — initiated by a human or an AI agent — is classified against your own enterprise risk matrix and risk tolerance, producing the required authority tier and a fully auditable derivation. The same action, in a different context, routes to a different approver. Not because the rules changed — because the risk did.
 
-> ⚠️ **Status: headless core working (Phase 1 of 3).** The deterministic ACOS engine, policy compiler, LLM fact extraction, golden corpus, and `ddas` CLI are built and property-tested — policy in, documents in, tier + cited derivation out. The platform (web console, approval routing, audit chain) is Phase 2. The original March 2026 hackathon proof of concept is preserved on the [`archive/poc`](../../tree/archive/poc) branch.
+> ⚠️ **Status: platform working (Phase 2 of 3).** The deterministic ACOS engine, policy compiler, and LLM fact extraction (Phase 1) now run behind a full self-hosted platform: REST API, approval routing against your live org structure, hash-chained audit log, policy console, fact-review screen with highlighted citations, approver inbox, and LLM-free policy simulation — `docker compose up` in [`deploy/`](deploy/) is the whole product. Phase 3 (OIDC/SSO, webhooks, the MCP server for agents) is next. The original March 2026 hackathon proof of concept is preserved on the [`archive/poc`](../../tree/archive/poc) branch.
 
 ---
 
@@ -52,8 +52,22 @@ Self-hosted, single container + Postgres, `docker compose up`:
 |---|---|---|
 | 0 | Repo reset, architecture decisions ([ADRs](docs/adr/)), policy schema v1, engine contracts, golden-set format | ✅ |
 | 1 | Headless core: ACOS engine (property-tested), policy compiler/linter, cited fact extraction, `ddas` CLI, golden corpus + eval harness, LLM-free policy simulation | ✅ |
-| 2 | The platform: routing, org, audit chain, web console, approver inbox | next |
-| 3 | Enterprise & agents: OIDC/SSO, webhooks, MCP server, Helm | |
+| 2 | The platform: routing, org, audit chain, web console, approver inbox | ✅ |
+| 3 | Enterprise & agents: OIDC/SSO, webhooks, MCP server, Helm | next |
+
+## Run the platform
+
+```bash
+cd deploy
+# edit docker-compose.yml: set DDAS_ADMIN_EMAIL / DDAS_ADMIN_PASSWORD
+# (and the DDAS_EXTRACTION_* vars when you want LLM fact extraction)
+docker compose up --build
+# → web console + API at http://localhost:3000, log in with the admin you set
+```
+
+Running from source instead: `pnpm install && pnpm build`, set the env vars in
+[`.env.example`](.env.example), then `node apps/server/dist/main.js`. Migrations
+apply automatically at boot (or explicitly via `ddas migrate`).
 
 ## Try it (headless)
 

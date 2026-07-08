@@ -77,6 +77,26 @@ program
   .option("--out <file>", "write the extraction scoreboard JSON here")
   .action(async (opts) => process.exit(await cmdEval(opts, out)));
 
+program
+  .command("migrate")
+  .description("apply pending database migrations (DATABASE_URL)")
+  .option("--database-url <url>", "Postgres connection string (default: DATABASE_URL env)")
+  .action(async (opts: { databaseUrl?: string }) => {
+    const url = opts.databaseUrl ?? process.env["DATABASE_URL"];
+    if (!url) {
+      out.error("DATABASE_URL is not set (or pass --database-url)");
+      process.exit(2);
+    }
+    const { createDb, createPool, migrate } = await import("@ddas/db");
+    const pool = createPool(url);
+    try {
+      await migrate(createDb(pool));
+      out.log("migrations applied — schema is current");
+    } finally {
+      await pool.end();
+    }
+  });
+
 program.parseAsync().catch((e) => {
   console.error(e instanceof Error ? e.message : String(e));
   process.exit(1);

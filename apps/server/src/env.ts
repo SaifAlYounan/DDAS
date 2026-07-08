@@ -6,6 +6,8 @@ export const EnvSchema = z.object({
   HOST: z.string().default("0.0.0.0"),
   /** Where content-addressed document blobs live. */
   BLOB_DIR: z.string().default("/data/blobs"),
+  /** Built SPA directory; when set, the server hosts the web console. */
+  WEB_DIST: z.string().optional(),
   /** Boot-time admin bootstrap: created iff no admin exists yet. */
   DDAS_ADMIN_EMAIL: z.string().email().optional(),
   DDAS_ADMIN_PASSWORD: z.string().min(12).optional(),

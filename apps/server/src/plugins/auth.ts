@@ -61,7 +61,7 @@ export const authPlugin = fp(async (app, opts: { pool: pg.Pool }) => {
       roles: Role[] | null;
     }>(
       `SELECT p.id, s.id AS session_id, p.kind, p.name, p.email,
-              array_agg(r.role) FILTER (WHERE r.role IS NOT NULL) AS roles
+              array_agg(r.role::text) FILTER (WHERE r.role IS NOT NULL) AS roles
        FROM sessions s
        JOIN principals p ON p.id = s.principal_id
        LEFT JOIN role_assignments r ON r.principal_id = p.id
