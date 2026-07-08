@@ -1,0 +1,6 @@
+apiVersion: v2
+name: ddas
+description: Dynamic Delegation of Authority System — single-replica reference chart (bring your own Postgres)
+type: application
+version: 0.1.0
+appVersion: "2.0.0-alpha.0"

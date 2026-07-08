@@ -1,0 +1,43 @@
+# DDAS reference values. Single replica by design: the SLA/webhook workers
+# claim work with SKIP LOCKED so replicas are safe, but HA is a Phase-4
+# concern — start simple.
+image:
+  repository: ghcr.io/saifalyounan/ddas
+  tag: "" # defaults to appVersion
+  pullPolicy: IfNotPresent
+
+# Bring your own Postgres. Either set databaseUrl (the chart writes it into
+# a Secret) or point existingSecret at one holding a DATABASE_URL key.
+database:
+  url: ""
+  existingSecret: ""
+  existingSecretKey: DATABASE_URL
+
+# First-boot admin (created only if no admin exists). Leave empty to skip.
+admin:
+  email: ""
+  password: ""
+
+# LLM fact extraction (see .env.example). "stub" = manual-entry pipeline.
+extraction:
+  provider: ""
+  model: ""
+  apiKey: ""
+  baseUrl: ""
+
+blobs:
+  size: 10Gi
+  storageClassName: ""
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    memory: 1Gi
+
+env: {} # extra env vars, e.g. OIDC_* — see .env.example

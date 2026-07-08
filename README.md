@@ -4,7 +4,7 @@
 
 **DDAS replaces the corporate Delegation of Authority table with your registered risk appetite, executed as code.** Any transaction or action — initiated by a human or an AI agent — is classified against your own enterprise risk matrix and risk tolerance, producing the required authority tier and a fully auditable derivation. The same action, in a different context, routes to a different approver. Not because the rules changed — because the risk did.
 
-> ⚠️ **Status: platform working (Phase 2 of 3).** The deterministic ACOS engine, policy compiler, and LLM fact extraction (Phase 1) now run behind a full self-hosted platform: REST API, approval routing against your live org structure, hash-chained audit log, policy console, fact-review screen with highlighted citations, approver inbox, and LLM-free policy simulation — `docker compose up` in [`deploy/`](deploy/) is the whole product. Phase 3 (OIDC/SSO, webhooks, the MCP server for agents) is next. The original March 2026 hackathon proof of concept is preserved on the [`archive/poc`](../../tree/archive/poc) branch.
+> **Status: feature-complete (Phase 3 of 3).** The deterministic ACOS engine, policy compiler, and LLM fact extraction (Phase 1) now run behind a full self-hosted platform: REST API, approval routing against your live org structure, hash-chained audit log, policy console, fact-review screen with highlighted citations, approver inbox, and LLM-free policy simulation — `docker compose up` in [`deploy/`](deploy/) is the whole product. Phase 3 added OIDC/SSO, HMAC-signed webhooks, API keys for agents, the MCP server (an agent requests authority; a human approves in the inbox), Prometheus metrics, a Helm chart, and verified backup/restore. The original March 2026 hackathon proof of concept is preserved on the [`archive/poc`](../../tree/archive/poc) branch.
 
 ---
 
@@ -43,7 +43,9 @@ Self-hosted, single container + Postgres, `docker compose up`:
 - **Extraction** — bring-your-own-model fact extraction (Anthropic or any OpenAI-compatible endpoint) with citation validation.
 - **Simulation & backtest** — replay stored facts under a draft policy without re-running any LLM: *"under this policy, 14 requests the CFO approved would have routed to the Board."* Policy activation without a simulation run requires an audited override.
 - **Routing & inbox** — approval workflow against your live org structure: escalations, SLAs, delegations.
-- **Audit** — append-only, hash-chained decision log; tamper-evidence verifiable offline.
+- **Audit** — append-only, hash-chained decision log; tamper-evidence verifiable offline; exportable checkpoints defeat database-level rewrites.
+- **Agents over MCP** — an agent authenticates with a scoped API key, requests authority, attests facts (except the human-gated ones), and proceeds only after a human approves in the inbox. Same pipeline, same audit trail.
+- **Integration** — HMAC-signed webhooks on the audit stream (atomic fanout, retries, redeliver), OIDC/SSO with JIT provisioning, Prometheus metrics, `ddas backup`/`restore` with chain verification.
 - **Console** — policy authoring/diff/simulate/activate, a fact-review screen with highlighted citations, approver inbox.
 
 ## Roadmap
@@ -53,7 +55,7 @@ Self-hosted, single container + Postgres, `docker compose up`:
 | 0 | Repo reset, architecture decisions ([ADRs](docs/adr/)), policy schema v1, engine contracts, golden-set format | ✅ |
 | 1 | Headless core: ACOS engine (property-tested), policy compiler/linter, cited fact extraction, `ddas` CLI, golden corpus + eval harness, LLM-free policy simulation | ✅ |
 | 2 | The platform: routing, org, audit chain, web console, approver inbox | ✅ |
-| 3 | Enterprise & agents: OIDC/SSO, webhooks, MCP server, Helm | next |
+| 3 | Enterprise & agents: API keys, OIDC/SSO, webhooks, MCP server, metrics, Helm, backup/restore | ✅ |
 
 ## Run the platform
 

@@ -77,6 +77,56 @@ program
   .option("--out <file>", "write the extraction scoreboard JSON here")
   .action(async (opts) => process.exit(await cmdEval(opts, out)));
 
+const backup = program.command("backup").description("backup and restore the whole deployment");
+backup
+  .command("create")
+  .description("pg_dump + blob tarball + manifest with the audit-chain head")
+  .requiredOption("--out <dir>", "output directory")
+  .option("--database-url <url>", "Postgres connection string (default: DATABASE_URL env)")
+  .option("--blob-dir <dir>", "blob directory (default: BLOB_DIR env or /data/blobs)")
+  .action(async (opts: { out: string; databaseUrl?: string; blobDir?: string }) => {
+    const url = opts.databaseUrl ?? process.env["DATABASE_URL"];
+    if (!url) {
+      out.error("DATABASE_URL is not set (or pass --database-url)");
+      process.exit(2);
+    }
+    const { cmdBackupCreate } = await import("./backup.js");
+    process.exit(
+      await cmdBackupCreate(
+        {
+          databaseUrl: url,
+          blobDir: opts.blobDir ?? process.env["BLOB_DIR"] ?? "/data/blobs",
+          out: opts.out,
+        },
+        out
+      )
+    );
+  });
+backup
+  .command("restore")
+  .description("restore a backup into an EMPTY database; verifies the audit chain against the manifest")
+  .requiredOption("--in <dir>", "backup directory")
+  .option("--database-url <url>", "Postgres connection string (default: DATABASE_URL env)")
+  .option("--blob-dir <dir>", "blob directory (default: BLOB_DIR env or /data/blobs)")
+  .action(async (opts: { in: string; databaseUrl?: string; blobDir?: string }) => {
+    const url = opts.databaseUrl ?? process.env["DATABASE_URL"];
+    if (!url) {
+      out.error("DATABASE_URL is not set (or pass --database-url)");
+      process.exit(2);
+    }
+    const { cmdBackupRestore } = await import("./backup.js");
+    process.exit(
+      await cmdBackupRestore(
+        {
+          databaseUrl: url,
+          blobDir: opts.blobDir ?? process.env["BLOB_DIR"] ?? "/data/blobs",
+          in: opts.in,
+        },
+        out
+      )
+    );
+  });
+
 program
   .command("migrate")
   .description("apply pending database migrations (DATABASE_URL)")

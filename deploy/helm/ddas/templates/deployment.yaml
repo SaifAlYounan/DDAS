@@ -1,0 +1,100 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ddas.fullname" . }}
+  labels:
+    {{- include "ddas.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate # single writer over the blob volume
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ddas
+      app.kubernetes.io/instance: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        {{- include "ddas.labels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: ddas
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ddas.databaseSecretName" . }}
+                  key: {{ .Values.database.existingSecretKey }}
+            - name: BLOB_DIR
+              value: /data/blobs
+            {{- if .Values.admin.email }}
+            - name: DDAS_ADMIN_EMAIL
+              value: {{ .Values.admin.email | quote }}
+            - name: DDAS_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ddas.fullname" . }}-app
+                  key: DDAS_ADMIN_PASSWORD
+            {{- end }}
+            {{- if .Values.extraction.provider }}
+            - name: DDAS_EXTRACTION_PROVIDER
+              value: {{ .Values.extraction.provider | quote }}
+            {{- end }}
+            {{- if .Values.extraction.model }}
+            - name: DDAS_EXTRACTION_MODEL
+              value: {{ .Values.extraction.model | quote }}
+            {{- end }}
+            {{- if .Values.extraction.apiKey }}
+            - name: DDAS_EXTRACTION_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "ddas.fullname" . }}-app
+                  key: DDAS_EXTRACTION_API_KEY
+            {{- end }}
+            {{- if .Values.extraction.baseUrl }}
+            - name: DDAS_EXTRACTION_BASE_URL
+              value: {{ .Values.extraction.baseUrl | quote }}
+            {{- end }}
+            {{- range $name, $value := .Values.env }}
+            - name: {{ $name }}
+              value: {{ $value | quote }}
+            {{- end }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: blobs
+              mountPath: /data/blobs
+      volumes:
+        - name: blobs
+          persistentVolumeClaim:
+            claimName: {{ include "ddas.fullname" . }}-blobs
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ include "ddas.fullname" . }}-blobs
+  labels:
+    {{- include "ddas.labels" . | nindent 4 }}
+spec:
+  accessModes: [ReadWriteOnce]
+  {{- if .Values.blobs.storageClassName }}
+  storageClassName: {{ .Values.blobs.storageClassName }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.blobs.size }}

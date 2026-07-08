@@ -1,0 +1,12 @@
+DDAS {{ .Chart.AppVersion }} deployed.
+
+Console + API:
+  kubectl port-forward svc/{{ include "ddas.fullname" . }} 3000:{{ .Values.service.port }}
+  open http://localhost:3000
+
+Migrations apply automatically at boot. First boot creates the admin from
+admin.email / admin.password (only if no admin exists yet).
+
+Remember: export an audit checkpoint (GET /api/v1/audit/checkpoint) and store
+it OUTSIDE the cluster — that is your defense against database-level history
+rewrites.

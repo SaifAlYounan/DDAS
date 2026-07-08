@@ -35,6 +35,13 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
 
+  helm-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: helm lint deploy/helm/ddas --set database.url=postgres://x:x@db:5432/ddas
+      - run: helm template ddas deploy/helm/ddas --set database.url=postgres://x:x@db:5432/ddas > /dev/null
+
   browser-smoke:
     runs-on: ubuntu-latest
     services:

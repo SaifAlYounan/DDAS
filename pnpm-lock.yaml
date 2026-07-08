@@ -17,6 +17,9 @@ importers:
 
   apps/cli:
     dependencies:
+      '@ddas/audit':
+        specifier: workspace:*
+        version: link:../../packages/audit
       '@ddas/db':
         specifier: workspace:*
         version: link:../../packages/db
@@ -35,10 +38,16 @@ importers:
       commander:
         specifier: ^13.1.0
         version: 13.1.0
+      pg:
+        specifier: ^8.16.0
+        version: 8.22.0
     devDependencies:
       '@types/node':
         specifier: ^24.13.2
         version: 24.13.2
+      '@types/pg':
+        specifier: ^8.15.0
+        version: 8.20.0
       typescript:
         specifier: ^5.8.0
         version: 5.9.3
