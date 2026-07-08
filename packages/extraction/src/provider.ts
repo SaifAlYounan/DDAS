@@ -83,9 +83,25 @@ export function openaiCompatProvider(cfg: {
   };
 }
 
+/**
+ * The stub provider extracts NOTHING: every declared fact resolves NOT_FOUND
+ * and a human enters values in fact review. For CI, demos, and deployments
+ * that want a purely manual pipeline — never a substitute for a real model.
+ */
+export function stubProvider(): ExtractionProvider {
+  return {
+    id: "stub",
+    model: "stub-not-found-v1",
+    async complete() {
+      return JSON.stringify({ facts: [] });
+    },
+  };
+}
+
 /** Provider from DDAS_EXTRACTION_* env (see .env.example). */
 export function providerFromEnv(env: Record<string, string | undefined> = process.env): ExtractionProvider {
   const kind = env["DDAS_EXTRACTION_PROVIDER"] ?? "anthropic";
+  if (kind === "stub") return stubProvider();
   const model = env["DDAS_EXTRACTION_MODEL"];
   if (!model) throw new Error("DDAS_EXTRACTION_MODEL is not set");
   if (kind === "anthropic") {
