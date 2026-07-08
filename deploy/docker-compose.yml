@@ -32,7 +32,8 @@ services:
       # DDAS_EXTRACTION_MODEL: claude-sonnet-5
       # DDAS_EXTRACTION_API_KEY: sk-ant-...
     ports:
-      - "3000:3000"
+      # Override with DDAS_PORT when 3000 is taken (e.g. DDAS_PORT=3210 docker compose up)
+      - "${DDAS_PORT:-3000}:3000"
     volumes:
       - blobs:/data/blobs
 
