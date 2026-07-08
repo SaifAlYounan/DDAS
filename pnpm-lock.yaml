@@ -43,6 +43,31 @@ importers:
         specifier: ^3.1.0
         version: 3.2.7(@types/node@24.13.2)(tsx@4.23.0)(yaml@2.9.0)
 
+  packages/audit:
+    dependencies:
+      '@ddas/policy':
+        specifier: workspace:*
+        version: link:../policy
+      pg:
+        specifier: ^8.16.0
+        version: 8.22.0
+    devDependencies:
+      '@ddas/db':
+        specifier: workspace:*
+        version: link:../db
+      '@types/node':
+        specifier: ^24.13.2
+        version: 24.13.2
+      '@types/pg':
+        specifier: ^8.15.0
+        version: 8.20.0
+      typescript:
+        specifier: ^5.8.0
+        version: 5.9.3
+      vitest:
+        specifier: ^3.1.0
+        version: 3.2.7(@types/node@24.13.2)(tsx@4.23.0)(yaml@2.9.0)
+
   packages/db:
     dependencies:
       drizzle-orm:
