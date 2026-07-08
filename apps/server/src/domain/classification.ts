@@ -10,9 +10,11 @@ import { classify, type ClassificationResult, type Fact, type FactSet, type Subj
 import { canonicalize, compileDocument, type CompiledPolicy, type JsonValue } from "@ddas/policy";
 import { resolveApprovers, type ResolutionResult } from "@ddas/routing";
 import type pg from "pg";
+import type PgBoss from "pg-boss";
 import { ApiError } from "../errors.js";
 import { loadOrgView, requesterUnitId } from "./org-view.js";
 import { transition } from "./request-machine.js";
+import { bossDb } from "./tx.js";
 
 export function derivationHash(derivation: unknown): string {
   return createHash("sha256")
@@ -109,6 +111,8 @@ export async function classifyConfirmedFactSet(
     factSetId: string;
     actor: AuditActor;
     now?: Date;
+    /** Passed so the SLA timer is enqueued INSIDE this transaction. */
+    boss?: PgBoss | null;
   }
 ): Promise<ClassifyOutcome> {
   const now = args.now ?? new Date();
@@ -118,8 +122,9 @@ export async function classifyConfirmedFactSet(
     requester_id: string;
     policy_version_id: string;
     state: string;
+    action_type: string | null;
   }>(
-    "SELECT id, requester_id, policy_version_id, state FROM requests WHERE id = $1 FOR UPDATE",
+    "SELECT id, requester_id, policy_version_id, state, action_type FROM requests WHERE id = $1 FOR UPDATE",
     [args.requestId]
   );
   const request = requestRow.rows[0];
@@ -170,6 +175,7 @@ export async function classifyConfirmedFactSet(
     ...(requester.kind === "agent" && requester.owner_principal_id
       ? { onBehalfOf: requester.owner_principal_id }
       : {}),
+    ...(request.action_type ? { actionType: request.action_type } : {}),
   };
 
   const result = classify({
@@ -259,6 +265,7 @@ export async function classifyConfirmedFactSet(
     policy: compiled,
     actor: args.actor,
     now,
+    boss: args.boss ?? null,
   });
   await transition(client, args.requestId, "pending_approval", args.actor, {
     taskId: task.taskId,
@@ -284,6 +291,7 @@ export async function createApprovalTask(
     policy: CompiledPolicy;
     actor: AuditActor;
     now: Date;
+    boss?: PgBoss | null;
   }
 ): Promise<{ taskId: string; approvers: number; quorum: number; routingFailed: boolean }> {
   const ladderEntry = args.policy.document.authority_ladder.find((l) => l.tier === args.tier);
@@ -377,6 +385,17 @@ export async function createApprovalTask(
       routingFailed,
     },
   });
+
+  // Enqueue the SLA timer INSIDE this transaction — it commits with the task,
+  // so a crash right after commit can never leave a task whose escalation
+  // never fires.
+  if (args.boss) {
+    await args.boss.send(
+      "sla.check",
+      { taskId },
+      { startAfter: dueAt, db: bossDb(client) }
+    );
+  }
 
   return { taskId, approvers: approverCount, quorum, routingFailed };
 }

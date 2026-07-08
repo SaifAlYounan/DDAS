@@ -32,7 +32,7 @@ spec:
                   key: {{ .Values.database.existingSecretKey }}
             - name: BLOB_DIR
               value: /data/blobs
-            {{- if .Values.admin.email }}
+            {{- if and .Values.admin.email .Values.admin.password }}
             - name: DDAS_ADMIN_EMAIL
               value: {{ .Values.admin.email | quote }}
             - name: DDAS_ADMIN_PASSWORD

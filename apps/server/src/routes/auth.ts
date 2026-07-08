@@ -28,7 +28,14 @@ const PrincipalOut = z.object({
 });
 
 export function registerAuthRoutes(app: App, ctx: AppContext): void {
-  const rateLimiter = makeLoginRateLimiter();
+  // Per-email limiter (guesses at one account) AND a coarser per-IP limiter
+  // (credential stuffing across many emails from one source).
+  const perEmailLimiter = makeLoginRateLimiter(10, 60_000);
+  const perIpLimiter = makeLoginRateLimiter(50, 60_000);
+  // A fixed argon2id hash to verify against when no account matches, so the
+  // response takes the same time whether or not the email exists (no
+  // enumeration oracle). Computed once at boot.
+  const decoyHashPromise = argon2.hash("ddas-login-decoy-password", ARGON2_OPTS);
 
   app.post(
     "/auth/login",
@@ -41,8 +48,7 @@ export function registerAuthRoutes(app: App, ctx: AppContext): void {
     },
     async (request, reply) => {
       const { email, password } = request.body;
-      const key = `${request.ip}:${email.toLowerCase()}`;
-      if (!rateLimiter.check(key)) {
+      if (!perIpLimiter.check(request.ip) || !perEmailLimiter.check(`${request.ip}:${email.toLowerCase()}`)) {
         throw new ApiError("forbidden", "too many login attempts — try again later");
       }
       const row = await ctx.pool.query<{
@@ -57,10 +63,13 @@ export function registerAuthRoutes(app: App, ctx: AppContext): void {
         [email]
       );
       const principal = row.rows[0];
-      const valid =
-        principal?.password_hash != null &&
-        (await argon2.verify(principal.password_hash, password));
-      if (!principal || !valid) {
+      // Always run a verify — the real hash if the account exists, a decoy
+      // otherwise — so timing does not reveal whether the email is registered.
+      const valid = await argon2.verify(
+        principal?.password_hash ?? (await decoyHashPromise),
+        password
+      );
+      if (!principal || principal.password_hash == null || !valid) {
         await withTx(ctx.pool, (client) =>
           appendAuditEvent(client, {
             actor: { kind: "system" },

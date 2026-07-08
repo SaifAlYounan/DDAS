@@ -348,8 +348,13 @@ export function registerPolicyRoutes(app: App, ctx: AppContext): void {
       const actor = { kind: "principal" as const, id: request.principal!.id };
 
       return withTx(ctx.pool, async (client) => {
-        const row = await client.query<{ id: string; policy_id: string; status: string }>(
-          "SELECT id, policy_id, status FROM policy_versions WHERE id = $1 FOR UPDATE",
+        const row = await client.query<{
+          id: string;
+          policy_id: string;
+          status: string;
+          content_hash: string;
+        }>(
+          "SELECT id, policy_id, status, content_hash FROM policy_versions WHERE id = $1 FOR UPDATE",
           [id]
         );
         const version = row.rows[0];
@@ -358,13 +363,35 @@ export function registerPolicyRoutes(app: App, ctx: AppContext): void {
           throw new ApiError("state_conflict", `cannot activate a ${version.status} version`);
         }
         if (simulationRunId) {
-          const run = await client.query<{ status: string }>(
-            "SELECT status FROM simulation_runs WHERE id = $1",
+          const run = await client.query<{
+            status: string;
+            candidate_content_hash: string;
+            baseline_policy_version_id: string;
+          }>(
+            "SELECT status, candidate_content_hash, baseline_policy_version_id FROM simulation_runs WHERE id = $1",
             [simulationRunId]
           );
           if (!run.rows[0]) throw new ApiError("not_found", "simulation run not found");
           if (run.rows[0].status !== "done") {
             throw new ApiError("state_conflict", "simulation run has not completed");
+          }
+          // The run must have tested THIS candidate (byte-identical) against a
+          // baseline of the SAME policy — not an unrelated or stale run.
+          if (run.rows[0].candidate_content_hash !== version.content_hash) {
+            throw new ApiError(
+              "state_conflict",
+              "the simulation run tested a different candidate than this version — re-run the simulation"
+            );
+          }
+          const baseline = await client.query<{ policy_id: string }>(
+            "SELECT policy_id FROM policy_versions WHERE id = $1",
+            [run.rows[0].baseline_policy_version_id]
+          );
+          if (baseline.rows[0]?.policy_id !== version.policy_id) {
+            throw new ApiError(
+              "state_conflict",
+              "the simulation run was against a different policy"
+            );
           }
         }
         // Retire the current active version, if any.

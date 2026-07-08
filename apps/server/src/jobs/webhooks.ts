@@ -2,7 +2,8 @@
  * Webhook delivery worker. Rows are created by the Postgres fanout trigger
  * atomically with their audit event; this worker only SENDS. Claims are
  * FOR UPDATE SKIP LOCKED so multiple server replicas never double-send.
- * Retry ×WEBHOOK_MAX_ATTEMPTS with exponential backoff → dead + audit event.
+ * Retry (up to WEBHOOK_DEFAULTS.maxAttempts, currently 8) with exponential
+ * backoff → dead + audit event.
  *
  * Signature: X-DDAS-Signature: t=<unix-seconds>,v1=hmac_sha256(secret, t + "." + body)
  * Receivers must reject |now - t| > 300s (replay window) and can use

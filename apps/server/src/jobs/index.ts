@@ -13,7 +13,7 @@ import { loadCompiledPolicy } from "../domain/classification.js";
 import { loadOrgView, requesterUnitId } from "../domain/org-view.js";
 import { transition } from "../domain/request-machine.js";
 import { runSimulation } from "../domain/simulation.js";
-import { withTx } from "../domain/tx.js";
+import { bossDb, withTx } from "../domain/tx.js";
 
 export async function registerJobs(app: App, ctx: AppContext): Promise<void> {
   const boss = ctx.boss;
@@ -74,7 +74,7 @@ export async function runExtraction(ctx: AppContext, requestId: string): Promise
   const provider = ctx.extractionProvider;
   if (!provider) {
     throw new Error(
-      "no extraction provider configured (set EXTRACTION_PROVIDER + credentials)"
+      "no extraction provider configured (set DDAS_EXTRACTION_PROVIDER + credentials, or DDAS_EXTRACTION_PROVIDER=stub)"
     );
   }
 
@@ -178,7 +178,18 @@ export async function runSlaCheck(ctx: AppContext, taskId: string): Promise<void
     }>("SELECT * FROM approval_tasks WHERE id = $1 FOR UPDATE", [taskId]);
     const task = tasks.rows[0];
     if (!task || task.status !== "open") return; // decided in time — nothing to do
-    if (task.due_at.getTime() > Date.now()) return; // rescheduled/early delivery
+    if (task.due_at.getTime() > Date.now()) {
+      // Early delivery / clock skew: re-arm for the real due time rather than
+      // silently dropping the check — otherwise the escalation chain dies here.
+      if (ctx.boss) {
+        await ctx.boss.send(
+          "sla.check",
+          { taskId },
+          { startAfter: task.due_at, db: bossDb(client) }
+        );
+      }
+      return;
+    }
 
     const requestRow = await client.query<{ requester_id: string }>(
       "SELECT requester_id FROM requests WHERE id = $1",

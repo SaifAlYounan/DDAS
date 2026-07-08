@@ -25,10 +25,14 @@ export interface SimulationSummary {
 }
 
 export async function runSimulation(pool: pg.Pool, runId: string): Promise<void> {
-  await pool.query(
+  const claim = await pool.query(
     "UPDATE simulation_runs SET status = 'running' WHERE id = $1 AND status = 'pending'",
     [runId]
   );
+  // Only the worker that wins the pending→running claim runs it; a redelivered
+  // or concurrent job sees 0 rows and returns, so terminal audit events and
+  // result rows are never duplicated.
+  if (claim.rowCount === 0) return;
   try {
     await withTx(pool, async (client) => {
       const runs = await client.query<{
@@ -46,7 +50,10 @@ export async function runSimulation(pool: pg.Pool, runId: string): Promise<void>
       const baseline = compileDocument(baselineRow.rows[0]!.canonical_json);
       const candidate = compilePolicy(run.candidate_source_yaml);
 
-      // Every CONFIRMED fact set whose request ran under the baseline's policy family.
+      // The LATEST confirmed fact set per request whose request ran under the
+      // baseline's policy (any version of it) — exactly the set that produced
+      // real decisions, one row per request, so the summary and the stored
+      // results agree and no stale v1 shadows the actual outcome.
       const factSets = await client.query<{
         id: string;
         request_id: string;
@@ -55,14 +62,19 @@ export async function runSimulation(pool: pg.Pool, runId: string): Promise<void>
         requester_id: string;
         requester_kind: "human" | "agent";
         owner_principal_id: string | null;
+        action_type: string | null;
       }>(
-        `SELECT fs.id, fs.request_id, fs.extraction_model, fs.prompt_hash,
-                r.requester_id, p.kind AS requester_kind, p.owner_principal_id
+        `SELECT DISTINCT ON (fs.request_id)
+                fs.id, fs.request_id, fs.extraction_model, fs.prompt_hash,
+                r.requester_id, r.action_type, p.kind AS requester_kind, p.owner_principal_id
          FROM fact_sets fs
          JOIN requests r ON r.id = fs.request_id
          JOIN principals p ON p.id = r.requester_id
+         JOIN policy_versions pv ON pv.id = r.policy_version_id
          WHERE fs.status = 'confirmed'
-         ORDER BY fs.created_at`
+           AND pv.policy_id = (SELECT policy_id FROM policy_versions WHERE id = $1)
+         ORDER BY fs.request_id, fs.version DESC`,
+        [run.baseline_policy_version_id]
       );
 
       let changed = 0;
@@ -90,6 +102,7 @@ export async function runSimulation(pool: pg.Pool, runId: string): Promise<void>
           ...(factSet.requester_kind === "agent" && factSet.owner_principal_id
             ? { onBehalfOf: factSet.owner_principal_id }
             : {}),
+          ...(factSet.action_type ? { actionType: factSet.action_type } : {}),
         };
         const docs = documents.rows.map((d) => ({ name: d.name, sha256: d.sha256 }));
 

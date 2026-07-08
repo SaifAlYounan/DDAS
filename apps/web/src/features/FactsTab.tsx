@@ -31,15 +31,20 @@ interface EditorState {
   status: FactStatus;
   value: string;
   unit: string;
+  /** The stored value is a string[] — parse the input as a comma-separated list. */
+  isList: boolean;
   citation: { docIndex: number; start: number; end: number; text: string } | null;
 }
 
 export function FactsTab({
   request,
   onClassified,
+  canEdit,
 }: {
   request: RequestDetail;
   onClassified: (result: ConfirmResult) => void;
+  /** The viewer holds a role (requester/approver) the server lets edit facts. */
+  canEdit: boolean;
 }) {
   const toast = useToast();
   const queryClient = useQueryClient();
@@ -58,7 +63,8 @@ export function FactsTab({
   const [missing, setMissing] = useState<MissingFacts | null>(null);
 
   const factSetId = factSet?.id ?? "";
-  const readOnly = factSet !== undefined && factSet.status !== "draft";
+  // Read-only unless the fact set is a live draft AND the viewer may edit.
+  const readOnly = !canEdit || (factSet !== undefined && factSet.status !== "draft");
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["requests", request.id] });
@@ -69,6 +75,7 @@ export function FactsTab({
       status: fact.status,
       value: fact.value === null || fact.value === undefined ? "" : formatFactValue(fact.value),
       unit: fact.unit ?? "",
+      isList: Array.isArray(fact.value),
       citation: fact.citation
         ? {
             docIndex: fact.citation.docIndex,
@@ -119,6 +126,16 @@ export function FactsTab({
     onError: (err) => toast.push(errorMessage(err), "error"),
   });
 
+  const reopen = useMutation({
+    mutationFn: () => api.post<{ id: string; version: number }>(`/fact-sets/${factSetId}/clone`),
+    onSuccess: () => {
+      setMissing(null);
+      toast.push("Re-opened for corrections — edit the facts and confirm again", "success");
+      void invalidate();
+    },
+    onError: (err) => toast.push(errorMessage(err), "error"),
+  });
+
   const confirm = useMutation({
     mutationFn: () => api.post<ConfirmResult>(`/fact-sets/${factSetId}/confirm`),
     onSuccess: (res) => {
@@ -157,7 +174,7 @@ export function FactsTab({
       if (editor.value.trim().length === 0 || !editor.citation) return;
       body = {
         status: "FOUND",
-        value: parseFactValue(editor.value),
+        value: parseFactValue(editor.value, editor.isList),
         citation: {
           docIndex: editor.citation.docIndex,
           start: editor.citation.start,
@@ -167,7 +184,7 @@ export function FactsTab({
       if (editor.unit.trim().length > 0) body.unit = editor.unit.trim();
     } else if (editor.status === "MANUAL") {
       if (editor.value.trim().length === 0) return;
-      body = { status: "MANUAL", value: parseFactValue(editor.value) };
+      body = { status: "MANUAL", value: parseFactValue(editor.value, editor.isList) };
       if (editor.unit.trim().length > 0) body.unit = editor.unit.trim();
     } else {
       body = { status: "NOT_FOUND" };
@@ -297,6 +314,24 @@ export function FactsTab({
             </Button>
           </div>
         )}
+
+        {canEdit &&
+          factSet.status === "confirmed" &&
+          (request.state === "facts_review" || request.state === "classified") && (
+            <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3">
+              <p className="text-xs text-gray-500">
+                This fact set is frozen. Re-open a fresh editable draft to correct facts and
+                re-classify.
+              </p>
+              <Button
+                variant="secondary"
+                onClick={() => reopen.mutate()}
+                disabled={reopen.isPending}
+              >
+                Re-open for corrections
+              </Button>
+            </div>
+          )}
       </div>
 
       {/* Right pane: document viewer */}

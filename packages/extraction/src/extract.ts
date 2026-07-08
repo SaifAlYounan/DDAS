@@ -38,7 +38,9 @@ export interface ExtractionRunReport {
 
 const RawFact = z.object({
   id: z.string(),
-  status: z.enum(["FOUND", "NOT_FOUND"]),
+  // MANUAL is accepted so one stray MANUAL from the model doesn't fail the
+  // whole parse; it is dropped (attestation is a human act) and counted.
+  status: z.enum(["FOUND", "NOT_FOUND", "MANUAL"]),
   value: z.union([z.string(), z.number(), z.boolean(), z.array(z.string())]).optional(),
   unit: z.string().optional(),
   confidence: z.number().optional(),
@@ -129,6 +131,11 @@ export async function extractFacts(
 
   const byId = new Map<string, RawFactT>();
   for (const f of raw) {
+    if (f.status === "MANUAL") {
+      // The model never attests; a human does. Drop and count it.
+      report.manualEntriesIgnored += 1;
+      continue;
+    }
     if (!declared.has(f.id)) {
       report.undeclaredIdsDropped.push(f.id);
       continue;

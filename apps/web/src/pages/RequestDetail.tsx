@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { requestQuery } from "../api/queries";
 import type { ConfirmResult, RequestDetail } from "../api/types";
 import { ErrorNote, Loading } from "../components/Loading";
+import { hasRole, useMe } from "../components/MeContext";
 import { Badge, stateTone } from "../components/ui/Badge";
 import { Tabs, type TabDef } from "../components/ui/Tabs";
 import { DecisionTab } from "../features/DecisionTab";
@@ -79,6 +80,9 @@ export function RequestDetailPage({
   search: { tab?: string; task?: string };
 }) {
   const navigate = useNavigate();
+  const me = useMe();
+  const canEditFacts = hasRole(me, "requester", "approver");
+  const canReplay = hasRole(me, "auditor", "approver", "policy_author");
   const request = useQuery({
     ...requestQuery(id),
     refetchInterval: (query) =>
@@ -167,10 +171,12 @@ export function RequestDetailPage({
       ) : (
         <>
           <Tabs tabs={tabs} active={activeTab} onChange={setTab} />
-          {activeTab === "facts" && <FactsTab request={r} onClassified={onClassified} />}
+          {activeTab === "facts" && (
+            <FactsTab request={r} onClassified={onClassified} canEdit={canEditFacts} />
+          )}
           {activeTab === "classification" &&
             (latestClassification ? (
-              <DerivationView classificationId={latestClassification.id} showReplay />
+              <DerivationView classificationId={latestClassification.id} showReplay={canReplay} />
             ) : (
               <p className="py-8 text-center text-sm text-gray-400">No classification yet.</p>
             ))}

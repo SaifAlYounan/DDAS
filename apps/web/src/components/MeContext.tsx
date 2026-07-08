@@ -9,6 +9,7 @@ export function useMe(): Me {
   return me;
 }
 
+/** Mirror the server's guard: admin satisfies every role check. */
 export function hasRole(me: Me, ...roles: string[]): boolean {
-  return roles.some((r) => me.roles.includes(r));
+  return me.roles.includes("admin") || roles.some((r) => me.roles.includes(r));
 }

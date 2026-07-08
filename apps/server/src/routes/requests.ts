@@ -4,6 +4,7 @@ import type { App, AppContext } from "../app.js";
 import {
   activePolicyVersionId,
   assertMayAttest,
+  assertRequestAccess,
   createRequest,
 } from "../domain/requests.js";
 import {
@@ -224,6 +225,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
       }>("SELECT * FROM requests WHERE id = $1", [id]);
       const req = requestRow.rows[0];
       if (!req) throw new ApiError("not_found", "request not found");
+      await assertRequestAccess(ctx.pool, id, request.principal!, "read");
 
       const docs = await ctx.pool.query<{
         id: string;
@@ -323,12 +325,18 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
       preHandler: [app.requireAuth, app.requireScope("requests:read")],
     },
     async (request) => {
-      const rows = await ctx.pool.query<{ id: string; name: string; extracted_text: string }>(
-        "SELECT id, name, extracted_text FROM documents WHERE id = $1",
+      const rows = await ctx.pool.query<{
+        id: string;
+        name: string;
+        request_id: string;
+        extracted_text: string;
+      }>(
+        "SELECT id, name, request_id, extracted_text FROM documents WHERE id = $1",
         [request.params.id]
       );
       const doc = rows.rows[0];
       if (!doc) throw new ApiError("not_found", "document not found");
+      await assertRequestAccess(ctx.pool, doc.request_id, request.principal!, "read");
       return { id: doc.id, name: doc.name, text: doc.extracted_text };
     }
   );
@@ -385,6 +393,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
           [id]
         );
         if (!setRow.rows[0]) throw new ApiError("not_found", "fact set not found");
+        await assertRequestAccess(client, setRow.rows[0].request_id, request.principal!, "write");
         if (setRow.rows[0].status !== "draft") {
           throw new ApiError("state_conflict", "fact set is confirmed and frozen — corrections need a new version");
         }
@@ -507,6 +516,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
           [id]
         );
         if (!setRow.rows[0]) throw new ApiError("not_found", "fact set not found");
+        await assertRequestAccess(client, setRow.rows[0].request_id, request.principal!, "write");
         if (setRow.rows[0].status !== "draft") {
           throw new ApiError("state_conflict", "fact set already confirmed");
         }
@@ -514,25 +524,13 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
           requestId: setRow.rows[0].request_id,
           factSetId: id,
           actor,
+          boss: ctx.boss,
         });
       });
 
       ctx.counters.classifications.inc({ status: outcome.result.status });
       if (outcome.routing.kind === "auto_approved") {
         ctx.counters.decisions.inc({ outcome: "auto_approved" });
-      }
-      if (ctx.boss && outcome.routing.kind === "task_created") {
-        const task = await ctx.pool.query<{ due_at: Date }>(
-          "SELECT due_at FROM approval_tasks WHERE id = $1",
-          [outcome.routing.taskId]
-        );
-        if (task.rows[0]) {
-          await ctx.boss.send(
-            "sla.check",
-            { taskId: outcome.routing.taskId },
-            { startAfter: task.rows[0].due_at }
-          );
-        }
       }
 
       return {
@@ -580,6 +578,22 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
         ]);
         if (!source.rows[0]) throw new ApiError("not_found", "fact set not found");
         const requestId = source.rows[0].request_id;
+        await assertRequestAccess(client, requestId, request.principal!, "write");
+        // Cloning is only for re-opening review: an INCOMPLETE request (in
+        // facts_review) or a classified-but-not-yet-routed one. A request with
+        // an open approval task must be cancelled first; a decided/cancelled
+        // one is terminal.
+        const state = await client.query<{ state: string }>(
+          "SELECT state FROM requests WHERE id = $1 FOR UPDATE",
+          [requestId]
+        );
+        const current = state.rows[0]?.state;
+        if (current !== "facts_review" && current !== "classified") {
+          throw new ApiError(
+            "state_conflict",
+            `cannot re-open a request in state "${current}" — cancel any pending approval first`
+          );
+        }
         const nextVersion = await client.query<{ next: number }>(
           "SELECT coalesce(max(version), 0) + 1 AS next FROM fact_sets WHERE request_id = $1",
           [requestId]
@@ -602,12 +616,9 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
            FROM facts WHERE fact_set_id = $1`,
           [request.params.id, created.rows[0]!.id]
         );
-        // A re-opened request goes back to facts_review if it had moved on.
-        const req = await client.query<{ state: string }>(
-          "SELECT state FROM requests WHERE id = $1 FOR UPDATE",
-          [requestId]
-        );
-        if (req.rows[0]?.state === "classified") {
+        // A classified request goes back to facts_review; an INCOMPLETE one
+        // (already in facts_review) stays put.
+        if (current === "classified") {
           await transition(client, requestId, "facts_review", actor, {
             reason: "fact set re-opened",
           });
@@ -642,7 +653,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
           }),
         },
       },
-      preHandler: [app.requireAuth],
+      preHandler: [app.requireAuth, app.requireScope("requests:read")],
     },
     async (request) => {
       const rows = await ctx.pool.query<{
@@ -661,6 +672,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
       }>("SELECT * FROM classifications WHERE id = $1", [request.params.id]);
       const c = rows.rows[0];
       if (!c) throw new ApiError("not_found", "classification not found");
+      await assertRequestAccess(ctx.pool, c.request_id, request.principal!, "read");
       return {
         id: c.id,
         requestId: c.request_id,
@@ -715,10 +727,10 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
         const stored = rows.rows[0];
         if (!stored) throw new ApiError("not_found", "classification not found");
 
-        const requestRow = await client.query<{ requester_id: string }>(
-          "SELECT requester_id FROM requests WHERE id = $1",
-          [stored.request_id]
-        );
+        const requestRow = await client.query<{
+          requester_id: string;
+          action_type: string | null;
+        }>("SELECT requester_id, action_type FROM requests WHERE id = $1", [stored.request_id]);
         const requester = await client.query<{
           kind: "human" | "agent";
           owner_principal_id: string | null;
@@ -748,6 +760,9 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
           initiator: requestRow.rows[0]!.requester_id,
           ...(requester.rows[0]!.kind === "agent" && requester.rows[0]!.owner_principal_id
             ? { onBehalfOf: requester.rows[0]!.owner_principal_id }
+            : {}),
+          ...(requestRow.rows[0]!.action_type
+            ? { actionType: requestRow.rows[0]!.action_type }
             : {}),
         };
         const replayed = classify({

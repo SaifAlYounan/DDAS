@@ -7,9 +7,10 @@ import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { appendAuditEvent, type AuditActor } from "@ddas/audit";
 import type { CompiledPolicy } from "@ddas/policy";
+import type pg from "pg";
 import type { AppContext } from "../app.js";
 import { ApiError } from "../errors.js";
-import { withTx } from "./tx.js";
+import { bossDb, withTx } from "./tx.js";
 
 export interface SubmittedDoc {
   name: string;
@@ -99,14 +100,52 @@ export async function createRequest(
         payload: { requestId: id, name: doc.name, sha256 },
       });
     }
+    // Enqueue extraction INSIDE the transaction — the job commits with the
+    // request, so a crash right after commit can never leave it stranded in
+    // 'extracting' with no job queued.
+    if (ctx.boss) {
+      await ctx.boss.send(
+        "extraction.run",
+        { requestId: id },
+        { retryLimit: 2, retryDelay: 5, db: bossDb(client) }
+      );
+    }
     return id;
   });
 
-  if (ctx.boss) {
-    await ctx.boss.send("extraction.run", { requestId }, { retryLimit: 2, retryDelay: 5 });
-  }
   ctx.counters.requests.inc();
   return requestId;
+}
+
+export type AccessMode = "read" | "write";
+
+/**
+ * Multi-tenant confinement for a single request. The requester owns it; an
+ * admin sees everything; approvers and auditors are trusted reviewers
+ * (auditors read-only). A bare requester can therefore never reach ANOTHER
+ * requester's facts, citations, derivation, or state — the hole the MCP
+ * ownRequest guard already closed for agents, now closed on the REST side too.
+ * Returns the owning requester's id.
+ */
+export async function assertRequestAccess(
+  client: pg.ClientBase | pg.Pool,
+  requestId: string,
+  principal: { id: string; roles: readonly string[] },
+  mode: AccessMode
+): Promise<string> {
+  const row = await client.query<{ requester_id: string }>(
+    "SELECT requester_id FROM requests WHERE id = $1",
+    [requestId]
+  );
+  if (!row.rows[0]) throw new ApiError("not_found", `request ${requestId} not found`);
+  const requesterId = row.rows[0].requester_id;
+  const ok =
+    requesterId === principal.id ||
+    principal.roles.includes("admin") ||
+    principal.roles.includes("approver") ||
+    (mode === "read" && principal.roles.includes("auditor"));
+  if (!ok) throw new ApiError("forbidden", "you do not have access to this request");
+  return requesterId;
 }
 
 /**

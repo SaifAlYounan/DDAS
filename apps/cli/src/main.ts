@@ -21,7 +21,7 @@ const out: Output = {
 
 const program = new Command()
   .name("ddas")
-  .description("Dynamic Delegation of Authority System — headless CLI (Phase 1)")
+  .description("Dynamic Delegation of Authority System — CLI (policy, submit, simulate, eval, migrate, backup)")
   .option("--data-dir <dir>", "storage directory (default ./.ddas or DDAS_DATA_DIR)");
 
 const store = () => openStore(program.opts()["dataDir"]);

@@ -43,8 +43,22 @@ export function formatFactValue(value: unknown): string {
   return String(value);
 }
 
-/** Coerce a free-text input into the API's fact value union. */
-export function parseFactValue(raw: string): string | number | boolean {
+/**
+ * Coerce a free-text input into the API's fact value union. When `asList` is
+ * set (the fact is list-typed), the input is split on commas into a string[] —
+ * without this, editing a list fact would silently store a single joined
+ * string and the engine's `in`-list rules would resolve to Unknown.
+ */
+export function parseFactValue(
+  raw: string,
+  asList = false
+): string | number | boolean | string[] {
+  if (asList) {
+    return raw
+      .split(",")
+      .map((part) => part.trim())
+      .filter((part) => part.length > 0);
+  }
   const trimmed = raw.trim();
   if (/^-?\d+(\.\d+)?$/.test(trimmed)) return Number(trimmed);
   if (trimmed === "true") return true;

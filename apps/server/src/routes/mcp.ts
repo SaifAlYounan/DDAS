@@ -256,24 +256,12 @@ function buildMcpServer(
             requestId: params.request_id,
             factSetId: factSet.rows[0].id,
             actor,
+            boss: ctx.boss,
           });
         });
         ctx.counters.classifications.inc({ status: outcome.result.status });
         if (outcome.routing.kind === "auto_approved") {
           ctx.counters.decisions.inc({ outcome: "auto_approved" });
-        }
-        if (ctx.boss && outcome.routing.kind === "task_created") {
-          const task = await ctx.pool.query<{ due_at: Date }>(
-            "SELECT due_at FROM approval_tasks WHERE id = $1",
-            [outcome.routing.taskId]
-          );
-          if (task.rows[0]) {
-            await ctx.boss.send(
-              "sla.check",
-              { taskId: outcome.routing.taskId },
-              { startAfter: task.rows[0].due_at }
-            );
-          }
         }
         return textResult({
           request_id: params.request_id,

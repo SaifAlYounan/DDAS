@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { approvalTaskQuery } from "../api/queries";
 import type { RequestDetail, ResolutionTrace } from "../api/types";
 import { ErrorNote, Loading } from "../components/Loading";
+import { hasRole, useMe } from "../components/MeContext";
 import { Badge, type BadgeTone } from "../components/ui/Badge";
 import { Card } from "../components/ui/Card";
 import { Table, Td } from "../components/ui/Table";
@@ -20,6 +21,9 @@ export function DecisionTab({
   request: RequestDetail;
   taskId: string | undefined;
 }) {
+  const me = useMe();
+  // The task detail endpoint is approver/auditor-only; a bare requester would 403.
+  const canSeeTask = hasRole(me, "approver", "auditor");
   return (
     <div className="space-y-6">
       <Card title="Decision">
@@ -54,12 +58,13 @@ export function DecisionTab({
         )}
       </Card>
 
-      {taskId ? (
+      {taskId && canSeeTask ? (
         <ApprovalTaskView taskId={taskId} />
       ) : (
         <p className="text-xs text-gray-400">
-          No approval task is linked in this view. Open the request from the approver inbox (or
-          re-classify) to attach the task and its routing trace.
+          {canSeeTask
+            ? "No approval task is linked in this view. Open the request from the approver inbox (or re-classify) to attach the task and its routing trace."
+            : "The routing trace and approval task are visible to approvers and auditors."}
         </p>
       )}
     </div>
