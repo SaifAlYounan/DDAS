@@ -57,14 +57,8 @@ export function FactsTab({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [missing, setMissing] = useState<MissingFacts | null>(null);
 
-  if (!factSet) {
-    return (
-      <p className="py-8 text-center text-sm text-gray-400">
-        No fact set yet — extraction has not finished.
-      </p>
-    );
-  }
-  const readOnly = factSet.status !== "draft";
+  const factSetId = factSet?.id ?? "";
+  const readOnly = factSet !== undefined && factSet.status !== "draft";
 
   const invalidate = () =>
     queryClient.invalidateQueries({ queryKey: ["requests", request.id] });
@@ -116,7 +110,7 @@ export function FactsTab({
 
   const patchFact = useMutation({
     mutationFn: (args: { factId: string; body: PatchFactBody }) =>
-      api.patch<FactRow>(`/fact-sets/${factSet.id}/facts/${args.factId}`, args.body),
+      api.patch<FactRow>(`/fact-sets/${factSetId}/facts/${args.factId}`, args.body),
     onSuccess: () => {
       toast.push("Fact updated", "success");
       setEditor(null);
@@ -126,7 +120,7 @@ export function FactsTab({
   });
 
   const confirm = useMutation({
-    mutationFn: () => api.post<ConfirmResult>(`/fact-sets/${factSet.id}/confirm`),
+    mutationFn: () => api.post<ConfirmResult>(`/fact-sets/${factSetId}/confirm`),
     onSuccess: (res) => {
       setConfirmOpen(false);
       void invalidate();
@@ -147,6 +141,14 @@ export function FactsTab({
       toast.push(errorMessage(err), "error");
     },
   });
+
+  if (!factSet) {
+    return (
+      <p className="py-8 text-center text-sm text-gray-400">
+        No fact set yet — extraction has not finished.
+      </p>
+    );
+  }
 
   const saveEditor = () => {
     if (!editor) return;
@@ -312,7 +314,7 @@ export function FactsTab({
       <Dialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
-        title="Confirm facts &amp; classify"
+        title="Confirm facts & classify"
         footer={
           <>
             <Button variant="secondary" onClick={() => setConfirmOpen(false)}>
