@@ -4,6 +4,7 @@ import { appendAuditEvent } from "@ddas/audit";
 import type { App, AppContext } from "../app.js";
 import { withTx } from "../domain/tx.js";
 import { ApiError } from "../errors.js";
+import { newApiKey } from "../plugins/auth.js";
 import { ARGON2_OPTS } from "./auth.js";
 
 const RoleEnum = z.enum(["admin", "policy_author", "approver", "requester", "auditor"]);
@@ -157,6 +158,135 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
         }
         return { roles: [...after].sort() };
       });
+    }
+  );
+
+  // ---------- API keys ----------
+
+  const ScopeEnum = z.enum(["requests:read", "requests:write", "facts:attest", "mcp"]);
+
+  app.post(
+    "/admin/api-keys",
+    {
+      schema: {
+        tags: ["admin"],
+        body: z.object({
+          principalId: z.string().uuid(),
+          scopes: z.array(ScopeEnum).min(1),
+        }),
+        response: {
+          200: z.object({
+            id: z.string(),
+            prefix: z.string(),
+            /** Shown ONCE — only its sha256 is stored. */
+            token: z.string(),
+          }),
+        },
+      },
+      preHandler: [app.requireRole("admin")],
+    },
+    async (request) => {
+      const { principalId, scopes } = request.body;
+      const actor = { kind: "principal" as const, id: request.principal!.id };
+      const principal = await ctx.pool.query<{ id: string }>(
+        "SELECT id FROM principals WHERE id = $1 AND disabled_at IS NULL",
+        [principalId]
+      );
+      if (!principal.rows[0]) throw new ApiError("not_found", "principal not found");
+
+      const { token, prefix, tokenSha256 } = newApiKey();
+      return withTx(ctx.pool, async (client) => {
+        const inserted = await client.query<{ id: string }>(
+          `INSERT INTO api_keys (principal_id, prefix, key_sha256, scopes)
+           VALUES ($1, $2, $3, $4) RETURNING id`,
+          [principalId, prefix, tokenSha256, scopes]
+        );
+        await appendAuditEvent(client, {
+          actor,
+          type: "api_key.created",
+          entity: { type: "api_key", id: inserted.rows[0]!.id },
+          payload: { principalId, prefix, scopes },
+        });
+        return { id: inserted.rows[0]!.id, prefix, token };
+      });
+    }
+  );
+
+  app.get(
+    "/admin/api-keys",
+    {
+      schema: {
+        tags: ["admin"],
+        response: {
+          200: z.array(
+            z.object({
+              id: z.string(),
+              prefix: z.string(),
+              principalId: z.string(),
+              principalName: z.string(),
+              scopes: z.array(z.string()),
+              createdAt: z.string(),
+              revokedAt: z.string().nullable(),
+            })
+          ),
+        },
+      },
+      preHandler: [app.requireRole("admin")],
+    },
+    async () => {
+      const rows = await ctx.pool.query<{
+        id: string;
+        prefix: string;
+        principal_id: string;
+        name: string;
+        scopes: string[];
+        created_at: Date;
+        revoked_at: Date | null;
+      }>(
+        `SELECT k.id, k.prefix, k.principal_id, p.name, k.scopes, k.created_at, k.revoked_at
+         FROM api_keys k JOIN principals p ON p.id = k.principal_id
+         ORDER BY k.created_at DESC`
+      );
+      return rows.rows.map((k) => ({
+        id: k.id,
+        prefix: k.prefix,
+        principalId: k.principal_id,
+        principalName: k.name,
+        scopes: k.scopes,
+        createdAt: k.created_at.toISOString(),
+        revokedAt: k.revoked_at?.toISOString() ?? null,
+      }));
+    }
+  );
+
+  app.delete(
+    "/admin/api-keys/:id",
+    {
+      schema: {
+        tags: ["admin"],
+        params: z.object({ id: z.string().uuid() }),
+        response: { 200: z.object({ ok: z.boolean() }) },
+      },
+      preHandler: [app.requireRole("admin")],
+    },
+    async (request) => {
+      const actor = { kind: "principal" as const, id: request.principal!.id };
+      await withTx(ctx.pool, async (client) => {
+        const revoked = await client.query(
+          "UPDATE api_keys SET revoked_at = now() WHERE id = $1 AND revoked_at IS NULL",
+          [request.params.id]
+        );
+        if (revoked.rowCount === 0) {
+          throw new ApiError("not_found", "api key not found or already revoked");
+        }
+        await appendAuditEvent(client, {
+          actor,
+          type: "api_key.revoked",
+          entity: { type: "api_key", id: request.params.id },
+          payload: {},
+        });
+      });
+      return { ok: true };
     }
   );
 

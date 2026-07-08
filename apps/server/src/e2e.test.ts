@@ -115,12 +115,16 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
     }));
   }
 
+  let agentToken = "";
+
   async function as(user: string, opts: { method: string; url: string; payload?: unknown; headers?: Record<string, string> }) {
+    const auth: Record<string, string> =
+      user === "agent" ? { authorization: `Bearer ${agentToken}` } : { cookie: cookies[user]! };
     const response = await app.inject({
       method: opts.method as "GET",
       url: opts.url,
       ...(opts.payload !== undefined ? { payload: opts.payload as string } : {}),
-      headers: { ...(opts.headers ?? {}), cookie: cookies[user]! },
+      headers: { ...(opts.headers ?? {}), ...auth },
     });
     return response;
   }
@@ -172,22 +176,20 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
       expect(response.statusCode).toBe(200);
       requestId = (response.json() as { id: string }).id;
     } else {
-      // Agent submission arrives via API key + MCP in Phase 3; Phase 2 seeds
-      // the agent's request directly and runs the same pipeline behind it.
-      const inserted = await pool.query<{ id: string }>(
-        `INSERT INTO requests (requester_id, policy_version_id, title, state)
-         VALUES ($1, $2, $3, 'extracting') RETURNING id`,
-        [principalIds["agent"], policyVersionId, c.case_id]
+      // Phase 3: the agent submits over REST with its API key — same
+      // pipeline, initiator_kind=agent flows from the principal.
+      const { payload, headers } = multipart(
+        { title: c.case_id, policySlug: "kolvarra-risk" },
+        caseDocs(c)
       );
-      requestId = inserted.rows[0]!.id;
-      for (const [docIndex, doc] of caseDocs(c).entries()) {
-        await pool.query(
-          `INSERT INTO documents (request_id, doc_index, name, sha256, content_type, size_bytes, extracted_text)
-           VALUES ($1, $2, $3, $4, 'text/plain', $5, $6)`,
-          [requestId, docIndex, doc.filename, c.documents[docIndex]!.sha256, doc.content.length, doc.content]
-        );
-      }
-      await app.ctx.boss!.send("extraction.run", { requestId }, { retryLimit: 2 });
+      const response = await as("agent", {
+        method: "POST",
+        url: "/api/v1/requests",
+        payload,
+        headers,
+      });
+      expect(response.statusCode).toBe(200);
+      requestId = (response.json() as { id: string }).id;
     }
     await pollState("requester", requestId, "facts_review");
     const detail = await as("requester", { method: "GET", url: `/api/v1/requests/${requestId}` });
@@ -249,6 +251,17 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
       },
     });
     principalIds["agent"] = (agent.json() as { id: string }).id;
+
+    const key = await as("admin", {
+      method: "POST",
+      url: "/api/v1/admin/api-keys",
+      payload: {
+        principalId: principalIds["agent"],
+        scopes: ["requests:read", "requests:write", "facts:attest"],
+      },
+    });
+    expect(key.statusCode).toBe(200);
+    agentToken = (key.json() as { token: string }).token;
 
     const unit = await as("admin", {
       method: "POST",
@@ -536,6 +549,88 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
     const checkpoint = await as("auditor", { method: "GET", url: "/api/v1/audit/checkpoint" });
     expect(checkpoint.statusCode).toBe(200);
     expect((checkpoint.json() as { seq: number }).seq).toBeGreaterThan(0);
+  });
+
+  describe("API keys (Phase 3)", () => {
+    it("rejects bad tokens, wrong scopes, and revoked keys", async () => {
+      const bad = await app.inject({
+        method: "GET",
+        url: "/api/v1/requests",
+        headers: { authorization: "Bearer ddas_deadbeef_0000000000000000" },
+      });
+      expect(bad.statusCode).toBe(401);
+
+      const readOnly = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/api-keys",
+        payload: { principalId: principalIds["agent"], scopes: ["requests:read"] },
+      });
+      const readToken = (readOnly.json() as { token: string; id: string });
+
+      const list = await app.inject({
+        method: "GET",
+        url: "/api/v1/requests",
+        headers: { authorization: `Bearer ${readToken.token}` },
+      });
+      expect(list.statusCode).toBe(200);
+
+      const { payload, headers } = multipart(
+        { title: "scope test", policySlug: "kolvarra-risk" },
+        [{ filename: "x.txt", content: "hello" }]
+      );
+      const write = await app.inject({
+        method: "POST",
+        url: "/api/v1/requests",
+        payload,
+        headers: { ...headers, authorization: `Bearer ${readToken.token}` },
+      });
+      expect(write.statusCode).toBe(403);
+      expect((write.json() as { error: { message: string } }).error.message).toMatch(/scope/);
+
+      const revoke = await as("admin", {
+        method: "DELETE",
+        url: `/api/v1/admin/api-keys/${readToken.id}`,
+      });
+      expect(revoke.statusCode).toBe(200);
+      const afterRevoke = await app.inject({
+        method: "GET",
+        url: "/api/v1/requests",
+        headers: { authorization: `Bearer ${readToken.token}` },
+      });
+      expect(afterRevoke.statusCode).toBe(401);
+    });
+
+    it("refuses an agent attesting an attestation-required fact", async () => {
+      const c = loadCase("agent-procurement-same-facts");
+      const { factSetId } = await submitCase(c, "agent");
+
+      // The agent may attest ordinary facts…
+      const ordinary = await as("agent", {
+        method: "PATCH",
+        url: `/api/v1/fact-sets/${factSetId}/facts/contract_term_months`,
+        payload: { status: "MANUAL", value: 12 },
+      });
+      expect(ordinary.statusCode).toBe(200);
+
+      // …but counterparty_name is attestation_required: humans only.
+      const gated = await as("agent", {
+        method: "PATCH",
+        url: `/api/v1/fact-sets/${factSetId}/facts/counterparty_name`,
+        payload: { status: "MANUAL", value: "Vosskamp Precision Castings GmbH" },
+      });
+      expect(gated.statusCode).toBe(403);
+      expect((gated.json() as { error: { message: string } }).error.message).toMatch(
+        /accountable human/
+      );
+
+      // The accountable human owner attests it fine.
+      const human = await as("requester", {
+        method: "PATCH",
+        url: `/api/v1/fact-sets/${factSetId}/facts/counterparty_name`,
+        payload: { status: "MANUAL", value: "Vosskamp Precision Castings GmbH" },
+      });
+      expect(human.statusCode).toBe(200);
+    });
   });
 
   it("serves the OpenAPI document and matches the committed spec", async () => {

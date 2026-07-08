@@ -1,9 +1,11 @@
-import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import { z } from "zod";
 import { appendAuditEvent } from "@ddas/audit";
 import type { App, AppContext } from "../app.js";
+import {
+  activePolicyVersionId,
+  assertMayAttest,
+  createRequest,
+} from "../domain/requests.js";
 import {
   classifyConfirmedFactSet,
   derivationHash,
@@ -15,8 +17,6 @@ import { transition } from "../domain/request-machine.js";
 import { withTx } from "../domain/tx.js";
 import { ApiError } from "../errors.js";
 import { classify, type Subject } from "@ddas/engine";
-
-const ALLOWED_EXTENSIONS = new Set([".txt", ".md"]);
 
 const FactOut = z.object({
   factId: z.string(),
@@ -113,23 +113,16 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
     "/requests",
     {
       schema: { tags: ["requests"] },
-      preHandler: [app.requireRole("requester")],
+      preHandler: [app.requireRole("requester"), app.requireScope("requests:write")],
     },
     async (request) => {
       // Multipart: fields title (required), policySlug (required), actionType?;
       // one or more .txt/.md files.
       const fields: Record<string, string> = {};
-      const files: Array<{ filename: string; content: Buffer }> = [];
+      const files: Array<{ name: string; content: Buffer }> = [];
       for await (const part of request.parts()) {
         if (part.type === "file") {
-          const ext = path.extname(part.filename ?? "").toLowerCase();
-          if (!ALLOWED_EXTENSIONS.has(ext)) {
-            throw new ApiError(
-              "validation_failed",
-              `unsupported document type "${ext}" — Phase 2 accepts .txt and .md`
-            );
-          }
-          files.push({ filename: part.filename ?? "document.txt", content: await part.toBuffer() });
+          files.push({ name: part.filename ?? "document.txt", content: await part.toBuffer() });
         } else {
           fields[part.fieldname] = String(part.value);
         }
@@ -139,66 +132,15 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
       if (!title || !policySlug) {
         throw new ApiError("validation_failed", "title and policySlug are required");
       }
-      if (files.length === 0) {
-        throw new ApiError("validation_failed", "at least one document is required");
-      }
-
-      const activeVersion = await ctx.pool.query<{ id: string }>(
-        `SELECT v.id FROM policy_versions v JOIN policies p ON p.id = v.policy_id
-         WHERE p.slug = $1 AND v.status = 'active'`,
-        [policySlug]
-      );
-      if (!activeVersion.rows[0]) {
-        throw new ApiError("not_found", `no active policy version for slug "${policySlug}"`);
-      }
-      const policyVersionId = activeVersion.rows[0].id;
-      const actor = { kind: "principal" as const, id: request.principal!.id };
-
-      await mkdir(ctx.env.BLOB_DIR, { recursive: true });
-
-      const requestId = await withTx(ctx.pool, async (client) => {
-        const inserted = await client.query<{ id: string }>(
-          `INSERT INTO requests (requester_id, policy_version_id, title, action_type, state)
-           VALUES ($1, $2, $3, $4, 'extracting') RETURNING id`,
-          [request.principal!.id, policyVersionId, title, fields["actionType"] ?? null]
-        );
-        const id = inserted.rows[0]!.id;
-        await appendAuditEvent(client, {
-          actor,
-          type: "request.submitted",
-          entity: { type: "request", id },
-          payload: { title, policySlug, documents: files.length },
-        });
-
-        for (const [docIndex, file] of files.entries()) {
-          const sha256 = createHash("sha256").update(file.content).digest("hex");
-          await writeFile(path.join(ctx.env.BLOB_DIR, sha256), file.content);
-          const doc = await client.query<{ id: string }>(
-            `INSERT INTO documents (request_id, doc_index, name, sha256, content_type, size_bytes, extracted_text)
-             VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-            [
-              id,
-              docIndex,
-              file.filename,
-              sha256,
-              file.filename.endsWith(".md") ? "text/markdown" : "text/plain",
-              file.content.length,
-              file.content.toString("utf8"),
-            ]
-          );
-          await appendAuditEvent(client, {
-            actor,
-            type: "document.uploaded",
-            entity: { type: "document", id: doc.rows[0]!.id },
-            payload: { requestId: id, name: file.filename, sha256 },
-          });
-        }
-        return id;
+      const requestId = await createRequest(ctx, {
+        requesterId: request.principal!.id,
+        policyVersionId: await activePolicyVersionId(ctx, policySlug),
+        title,
+        actionType: fields["actionType"],
+        documents: files,
+        actor: { kind: "principal", id: request.principal!.id },
+        meta: { policySlug },
       });
-
-      if (ctx.boss) {
-        await ctx.boss.send("extraction.run", { requestId }, { retryLimit: 2, retryDelay: 5 });
-      }
       return { id: requestId, state: "extracting" };
     }
   );
@@ -224,7 +166,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
           ),
         },
       },
-      preHandler: [app.requireAuth],
+      preHandler: [app.requireAuth, app.requireScope("requests:read")],
     },
     async (request) => {
       const clauses: string[] = [];
@@ -266,7 +208,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
         params: z.object({ id: z.string().uuid() }),
         response: { 200: RequestOut },
       },
-      preHandler: [app.requireAuth],
+      preHandler: [app.requireAuth, app.requireScope("requests:read")],
     },
     async (request) => {
       const { id } = request.params;
@@ -378,7 +320,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
           200: z.object({ id: z.string(), name: z.string(), text: z.string() }),
         },
       },
-      preHandler: [app.requireAuth],
+      preHandler: [app.requireAuth, app.requireScope("requests:read")],
     },
     async (request) => {
       const rows = await ctx.pool.query<{ id: string; name: string; extracted_text: string }>(
@@ -430,7 +372,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
         body: FactPatch,
         response: { 200: FactOut },
       },
-      preHandler: [app.requireRole("requester", "approver")],
+      preHandler: [app.requireRole("requester", "approver"), app.requireScope("facts:attest")],
     },
     async (request) => {
       const { id, factId } = request.params;
@@ -445,6 +387,19 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
         if (!setRow.rows[0]) throw new ApiError("not_found", "fact set not found");
         if (setRow.rows[0].status !== "draft") {
           throw new ApiError("state_conflict", "fact set is confirmed and frozen — corrections need a new version");
+        }
+
+        if (patch.status === "MANUAL") {
+          // Attestation-required facts demand a HUMAN attester.
+          const requestPolicyRow = await client.query<{ policy_version_id: string }>(
+            "SELECT policy_version_id FROM requests WHERE id = $1",
+            [setRow.rows[0].request_id]
+          );
+          const { compiled } = await loadCompiledPolicy(
+            client,
+            requestPolicyRow.rows[0]!.policy_version_id
+          );
+          assertMayAttest(compiled, factId, request.principal!.kind);
         }
 
         let citationText: string | null = null;
@@ -540,7 +495,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
           }),
         },
       },
-      preHandler: [app.requireRole("requester", "approver")],
+      preHandler: [app.requireRole("requester", "approver"), app.requireScope("requests:write")],
     },
     async (request) => {
       const { id } = request.params;
@@ -606,7 +561,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
         params: z.object({ id: z.string().uuid() }),
         response: { 200: z.object({ id: z.string(), version: z.number() }) },
       },
-      preHandler: [app.requireRole("requester", "approver")],
+      preHandler: [app.requireRole("requester", "approver"), app.requireScope("requests:write")],
     },
     async (request) => {
       const actor = { kind: "principal" as const, id: request.principal!.id };
@@ -830,7 +785,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
         params: z.object({ id: z.string().uuid() }),
         response: { 200: z.object({ state: z.string() }) },
       },
-      preHandler: [app.requireRole("requester")],
+      preHandler: [app.requireRole("requester"), app.requireScope("requests:write")],
     },
     async (request) => {
       const actor = { kind: "principal" as const, id: request.principal!.id };
