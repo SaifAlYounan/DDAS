@@ -1,0 +1,30 @@
+{
+  "name": "@ddas/db",
+  "version": "2.0.0-alpha.0",
+  "description": "DDAS persistence: Drizzle schema, migrations, and the Postgres immutability layer (freeze/INSERT-only triggers)",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "migrations"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "generate": "drizzle-kit generate"
+  },
+  "dependencies": {
+    "drizzle-orm": "^0.44.0",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "@types/pg": "^8.15.0",
+    "drizzle-kit": "^0.31.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}
