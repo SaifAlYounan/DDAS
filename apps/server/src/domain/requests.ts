@@ -120,11 +120,13 @@ export async function createRequest(
 export type AccessMode = "read" | "write";
 
 /**
- * Multi-tenant confinement for a single request. The requester owns it; an
- * admin sees everything; approvers and auditors are trusted reviewers
- * (auditors read-only). A bare requester can therefore never reach ANOTHER
- * requester's facts, citations, derivation, or state — the hole the MCP
- * ownRequest guard already closed for agents, now closed on the REST side too.
+ * Multi-tenant confinement for a single request. Access is granted to: the
+ * requester who owns it; the accountable HUMAN OWNER when the requester is an
+ * agent (so the owner can attest the human-gated facts on the agent's
+ * request); an admin (everything); approvers and auditors as trusted
+ * reviewers (auditors read-only). A bare requester can therefore never reach
+ * ANOTHER requester's facts, citations, derivation, or state — the hole the
+ * MCP ownRequest guard already closed for agents, now closed on the REST side.
  * Returns the owning requester's id.
  */
 export async function assertRequestAccess(
@@ -133,14 +135,17 @@ export async function assertRequestAccess(
   principal: { id: string; roles: readonly string[] },
   mode: AccessMode
 ): Promise<string> {
-  const row = await client.query<{ requester_id: string }>(
-    "SELECT requester_id FROM requests WHERE id = $1",
+  const row = await client.query<{ requester_id: string; owner_principal_id: string | null }>(
+    `SELECT r.requester_id, p.owner_principal_id
+     FROM requests r JOIN principals p ON p.id = r.requester_id
+     WHERE r.id = $1`,
     [requestId]
   );
   if (!row.rows[0]) throw new ApiError("not_found", `request ${requestId} not found`);
   const requesterId = row.rows[0].requester_id;
   const ok =
     requesterId === principal.id ||
+    row.rows[0].owner_principal_id === principal.id ||
     principal.roles.includes("admin") ||
     principal.roles.includes("approver") ||
     (mode === "read" && principal.roles.includes("auditor"));
