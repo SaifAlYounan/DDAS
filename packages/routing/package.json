@@ -1,0 +1,22 @@
+{
+  "name": "@ddas/routing",
+  "version": "2.0.0-alpha.0",
+  "description": "DDAS approval routing resolver. Pure: no I/O, no clock, no randomness — the org snapshot and asOf come in as data.",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.2",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}
