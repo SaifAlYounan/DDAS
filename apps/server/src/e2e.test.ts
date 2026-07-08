@@ -270,7 +270,7 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
       url: "/api/v1/admin/api-keys",
       payload: {
         principalId: principalIds["agent"],
-        scopes: ["requests:read", "requests:write", "facts:attest"],
+        scopes: ["requests:read", "requests:write", "facts:attest", "mcp"],
       },
     });
     expect(key.statusCode).toBe(200);
@@ -763,6 +763,140 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
 
       await new Promise<void>((resolve) => receiver.close(() => resolve()));
     }, 60_000);
+  });
+
+  describe("MCP (Phase 3) — the money demo", () => {
+    it("agent requests authority over MCP; a human approves in the inbox; the agent proceeds", async () => {
+      // Serve on a real socket — the MCP client speaks HTTP, not inject().
+      await app.listen({ port: 0, host: "127.0.0.1" });
+      const port = (app.server.address() as { port: number }).port;
+      const { Client } = await import("@modelcontextprotocol/sdk/client/index.js");
+      const { StreamableHTTPClientTransport } = await import(
+        "@modelcontextprotocol/sdk/client/streamableHttp.js"
+      );
+
+      const connect = async (headers: Record<string, string>) => {
+        const client = new Client({ name: "e2e-agent", version: "1.0.0" });
+        const transport = new StreamableHTTPClientTransport(
+          new URL(`http://127.0.0.1:${port}/mcp`),
+          { requestInit: { headers } }
+        );
+        await client.connect(transport as unknown as Parameters<typeof client.connect>[0]);
+        return client;
+      };
+
+      // No key → the endpoint refuses before any MCP handshake.
+      await expect(connect({})).rejects.toThrow(/401|Unauthorized/i);
+
+      const mcp = await connect({ authorization: `Bearer ${agentToken}` });
+      const tools = await mcp.listTools();
+      expect(tools.tools.map((t) => t.name).sort()).toEqual([
+        "attest_fact",
+        "confirm_facts",
+        "get_decision_status",
+        "list_my_pending_requests",
+        "request_authority",
+      ]);
+
+      // 1. The agent requests authority for the procurement action.
+      const c = loadCase("agent-procurement-same-facts");
+      provider.current = c;
+      const docs = caseDocs(c).map((d) => ({ name: d.filename, content: d.content }));
+      const submitted = await mcp.callTool({
+        name: "request_authority",
+        arguments: {
+          title: "MCP: Vosskamp castings order",
+          policy_slug: "kolvarra-risk",
+          documents: docs,
+        },
+      });
+      const { request_id } = JSON.parse(
+        (submitted.content as Array<{ text: string }>)[0]!.text
+      ) as { request_id: string };
+
+      // 2. Poll status until extraction lands the draft facts.
+      await waitFor(async () => {
+        const status = await mcp.callTool({
+          name: "get_decision_status",
+          arguments: { request_id },
+        });
+        const body = JSON.parse((status.content as Array<{ text: string }>)[0]!.text) as {
+          state: string;
+        };
+        return body.state === "facts_review";
+      }, 30_000);
+
+      // 3. The agent tries to attest the gated fact — refused; its owner attests.
+      const gated = await mcp.callTool({
+        name: "attest_fact",
+        arguments: {
+          request_id,
+          fact_id: "counterparty_name",
+          value: "Vosskamp Precision Castings GmbH",
+        },
+      });
+      expect(gated.isError).toBe(true);
+      expect(JSON.stringify(gated.content)).toMatch(/accountable human/);
+
+      const detail = await as("requester", {
+        method: "GET",
+        url: `/api/v1/requests/${request_id}`,
+      });
+      const draftSet = (detail.json() as { factSets: Array<{ id: string; status: string }> })
+        .factSets.find((fs) => fs.status === "draft")!;
+      const ownerAttest = await as("requester", {
+        method: "PATCH",
+        url: `/api/v1/fact-sets/${draftSet.id}/facts/counterparty_name`,
+        payload: { status: "MANUAL", value: "Vosskamp Precision Castings GmbH" },
+      });
+      expect(ownerAttest.statusCode).toBe(200);
+
+      // 4. The agent confirms → agent-initiated appetite routes it to tier 2.
+      const confirmed = await mcp.callTool({
+        name: "confirm_facts",
+        arguments: { request_id },
+      });
+      const outcome = JSON.parse(
+        (confirmed.content as Array<{ text: string }>)[0]!.text
+      ) as { classification: string; tier: number; routing: { kind: string; taskId: string } };
+      expect(outcome.classification).toBe("ROUTED");
+      expect(outcome.tier).toBe(2);
+      expect(outcome.routing.kind).toBe("task_created");
+
+      // 5. It shows up as pending for the agent…
+      const pending = await mcp.callTool({ name: "list_my_pending_requests", arguments: {} });
+      expect(JSON.stringify(pending.content)).toContain(request_id);
+
+      // 6. …Petra approves it in HER inbox (a human, over REST)…
+      const approve = await as("petra", {
+        method: "POST",
+        url: `/api/v1/approval-tasks/${outcome.routing.taskId}/approve`,
+        payload: { comment: "within plant budget — approved for the bot" },
+      });
+      expect(approve.statusCode).toBe(200);
+
+      // 7. …and the agent sees the green light.
+      const finalStatus = await mcp.callTool({
+        name: "get_decision_status",
+        arguments: { request_id },
+      });
+      const finalBody = JSON.parse(
+        (finalStatus.content as Array<{ text: string }>)[0]!.text
+      ) as { state: string; decision: { outcome: string } };
+      expect(finalBody.state).toBe("decided");
+      expect(finalBody.decision.outcome).toBe("approved");
+
+      // Every MCP call is on the audit trail.
+      const events = await as("auditor", {
+        method: "GET",
+        url: "/api/v1/audit/events?type=mcp.call&limit=100",
+      });
+      const calls = events.json() as Array<{ payload: { tool: string } }>;
+      expect(calls.length).toBeGreaterThanOrEqual(6);
+      expect(new Set(calls.map((e) => e.payload.tool))).toContain("request_authority");
+
+      await mcp.close();
+    }, 90_000);
   });
 
   it("serves the OpenAPI document and matches the committed spec", async () => {

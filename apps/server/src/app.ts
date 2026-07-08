@@ -37,6 +37,7 @@ import { registerOrgRoutes } from "./routes/org.js";
 import { registerPolicyRoutes } from "./routes/policies.js";
 import { registerRequestRoutes } from "./routes/requests.js";
 import { registerSimulationRoutes } from "./routes/simulations.js";
+import { registerMcpRoute } from "./routes/mcp.js";
 import { registerWebhookRoutes } from "./routes/webhooks.js";
 import { startWebhookWorker, WEBHOOK_DEFAULTS } from "./jobs/webhooks.js";
 
@@ -141,6 +142,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
     return metrics.metrics();
   });
   app.get("/api/openapi.json", async () => app.swagger());
+  registerMcpRoute(app as App, ctx);
 
   await app.register(
     async (api) => {
