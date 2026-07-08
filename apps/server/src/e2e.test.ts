@@ -5,7 +5,9 @@
  * The Kolvarra golden corpus is replayed case-by-case: HTTP parity with the
  * engine's own corpus suite.
  */
+import { createHmac } from "node:crypto";
 import { mkdtempSync, readFileSync } from "node:fs";
+import http from "node:http";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -158,6 +160,15 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
     }
   }
 
+  async function waitFor(check: () => boolean | Promise<boolean>, timeoutMs: number) {
+    const startedAt = Date.now();
+    for (;;) {
+      if (await check()) return;
+      if (Date.now() - startedAt > timeoutMs) throw new Error("waitFor timed out");
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
+  }
+
   /** Submit a case end-to-end up to facts_review; returns request + fact set ids. */
   async function submitCase(c: CorpusCase, requesterKind: "human" | "agent") {
     provider.current = c;
@@ -209,6 +220,8 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
       DDAS_ADMIN_EMAIL: "admin@kolvarra.test",
       DDAS_ADMIN_PASSWORD: "admin-password-123",
       LOG_LEVEL: "error",
+      WEBHOOK_POLL_MS: "50",
+      WEBHOOK_RETRY_BASE_MS: "10",
     });
     app = await buildApp({ pool, env, extractionProvider: provider });
     await bootstrapAdmin(pool, env);
@@ -631,6 +644,125 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
       });
       expect(human.statusCode).toBe(200);
     });
+  });
+
+  describe("webhooks (Phase 3)", () => {
+    interface Hit {
+      body: string;
+      signature: string;
+      deliveryId: string;
+      eventType: string;
+    }
+
+    it("delivers signed events, retries to dead, then redelivers on demand", async () => {
+      const hits: Hit[] = [];
+      let failing = false;
+      const receiver = http.createServer((request, response) => {
+        let body = "";
+        request.on("data", (chunk: Buffer) => (body += chunk.toString()));
+        request.on("end", () => {
+          hits.push({
+            body,
+            signature: String(request.headers["x-ddas-signature"]),
+            deliveryId: String(request.headers["x-ddas-delivery"]),
+            eventType: String(request.headers["x-ddas-event"]),
+          });
+          response.statusCode = failing ? 500 : 200;
+          response.end();
+        });
+      });
+      await new Promise<void>((resolve) => receiver.listen(0, "127.0.0.1", resolve));
+      const port = (receiver.address() as { port: number }).port;
+      const secret = "e2e-webhook-secret-0123456789";
+
+      const hook = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/webhooks",
+        payload: {
+          url: `http://127.0.0.1:${port}/hook`,
+          events: ["org_unit.created"],
+          secret,
+        },
+      });
+      expect(hook.statusCode).toBe(200);
+      const webhookId = (hook.json() as { id: string }).id;
+
+      // Unknown event names are refused (closed union).
+      const badEvents = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/webhooks",
+        payload: { url: "http://127.0.0.1:9/x", events: ["nope.nope"] },
+      });
+      expect(badEvents.statusCode).toBe(422);
+
+      // Trigger: create a unit -> fanout row in the same tx -> worker sends.
+      await as("admin", {
+        method: "POST",
+        url: "/api/v1/org/units",
+        payload: { name: "Webhook Test Unit", parentId: rootUnitId },
+      });
+      await waitFor(() => hits.length >= 1, 10_000);
+      const hit = hits[0]!;
+      expect(hit.eventType).toBe("org_unit.created");
+      const parsed = JSON.parse(hit.body) as {
+        deliveryId: string;
+        event: { type: string; payload: { name: string } };
+      };
+      expect(parsed.event.payload.name).toBe("Webhook Test Unit");
+      expect(parsed.deliveryId).toBe(hit.deliveryId);
+      // Signature verifies against the raw body.
+      const match = /^t=(\d+),v1=([0-9a-f]{64})$/.exec(hit.signature);
+      expect(match).not.toBeNull();
+      const recomputed = createHmac("sha256", secret)
+        .update(`${match![1]}.${hit.body}`)
+        .digest("hex");
+      expect(recomputed).toBe(match![2]);
+
+      // Failure path: 500s exhaust 8 attempts -> dead + audit event.
+      failing = true;
+      const before = hits.length;
+      await as("admin", {
+        method: "POST",
+        url: "/api/v1/org/units",
+        payload: { name: "Doomed Unit", parentId: rootUnitId },
+      });
+      await waitFor(async () => {
+        const log = await as("admin", {
+          method: "GET",
+          url: `/api/v1/admin/webhooks/${webhookId}/deliveries`,
+        });
+        return (log.json() as Array<{ status: string }>).some((d) => d.status === "dead");
+      }, 20_000);
+      expect(hits.length - before).toBe(8); // every attempt reached the receiver
+
+      const log = await as("admin", {
+        method: "GET",
+        url: `/api/v1/admin/webhooks/${webhookId}/deliveries`,
+      });
+      const dead = (log.json() as Array<{ id: string; status: string; attempts: number }>).find(
+        (d) => d.status === "dead"
+      )!;
+      expect(dead.attempts).toBe(8);
+
+      // Redeliver once the receiver recovers.
+      failing = false;
+      const redeliver = await as("admin", {
+        method: "POST",
+        url: `/api/v1/admin/webhook-deliveries/${dead.id}/redeliver`,
+      });
+      expect(redeliver.statusCode).toBe(200);
+      await waitFor(async () => {
+        const after = await as("admin", {
+          method: "GET",
+          url: `/api/v1/admin/webhooks/${webhookId}/deliveries`,
+        });
+        return (after.json() as Array<{ id: string; status: string }>).some(
+          (d) => d.id === dead.id && d.status === "delivered"
+        );
+      }, 10_000);
+
+      await new Promise<void>((resolve) => receiver.close(() => resolve()));
+    }, 60_000);
   });
 
   it("serves the OpenAPI document and matches the committed spec", async () => {

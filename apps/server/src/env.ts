@@ -16,6 +16,9 @@ export const EnvSchema = z.object({
   DDAS_EXTRACTION_PROVIDER: z.string().optional(),
   DDAS_EXTRACTION_MODEL: z.string().optional(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
+  /** Webhook delivery worker tuning (tests shrink these). */
+  WEBHOOK_POLL_MS: z.coerce.number().int().positive().optional(),
+  WEBHOOK_RETRY_BASE_MS: z.coerce.number().int().positive().optional(),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

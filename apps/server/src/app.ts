@@ -37,6 +37,8 @@ import { registerOrgRoutes } from "./routes/org.js";
 import { registerPolicyRoutes } from "./routes/policies.js";
 import { registerRequestRoutes } from "./routes/requests.js";
 import { registerSimulationRoutes } from "./routes/simulations.js";
+import { registerWebhookRoutes } from "./routes/webhooks.js";
+import { startWebhookWorker, WEBHOOK_DEFAULTS } from "./jobs/webhooks.js";
 
 export interface AppDeps {
   pool: pg.Pool;
@@ -150,12 +152,24 @@ export async function buildApp(deps: AppDeps): Promise<App> {
       registerApprovalRoutes(api as unknown as App, ctx);
       registerSimulationRoutes(api as unknown as App, ctx);
       registerAuditRoutes(api as unknown as App, ctx);
+      registerWebhookRoutes(api as unknown as App, ctx);
     },
     { prefix: "/api/v1" }
   );
 
   if (boss) {
     await registerJobs(app as App, ctx);
+    const stopWebhookWorker = startWebhookWorker(
+      ctx,
+      {
+        pollMs: env.WEBHOOK_POLL_MS ?? WEBHOOK_DEFAULTS.pollMs,
+        retryBaseMs: env.WEBHOOK_RETRY_BASE_MS ?? WEBHOOK_DEFAULTS.retryBaseMs,
+        maxAttempts: WEBHOOK_DEFAULTS.maxAttempts,
+        timeoutMs: WEBHOOK_DEFAULTS.timeoutMs,
+      },
+      (err) => app.log.error({ err }, "webhook sweep failed")
+    );
+    app.addHook("onClose", async () => stopWebhookWorker());
   }
 
   // Host the built web console when configured: static assets + SPA fallback

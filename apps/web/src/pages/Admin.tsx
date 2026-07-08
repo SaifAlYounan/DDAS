@@ -60,6 +60,8 @@ export function AdminPage() {
 
       <SlaSettings />
 
+      <WebhooksSection />
+
       {createOpen && (
         <CreatePrincipalDialog
           onClose={() => setCreateOpen(false)}
@@ -343,5 +345,196 @@ function SlaSettings() {
         </div>
       )}
     </Card>
+  );
+}
+
+interface WebhookRow {
+  id: string;
+  url: string;
+  events: string[];
+  active: boolean;
+  createdAt: string;
+}
+
+interface DeliveryRow {
+  id: string;
+  eventSeq: number;
+  eventType: string;
+  status: "pending" | "delivered" | "dead";
+  attempts: number;
+  lastError: string | null;
+  deliveredAt: string | null;
+  createdAt: string;
+}
+
+const DELIVERY_TONE: Record<DeliveryRow["status"], "green" | "amber" | "red"> = {
+  delivered: "green",
+  pending: "amber",
+  dead: "red",
+};
+
+function WebhooksSection() {
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const webhooks = useQuery({
+    queryKey: ["admin", "webhooks"],
+    queryFn: () => api.get<WebhookRow[]>("/admin/webhooks"),
+  });
+  const [url, setUrl] = useState("");
+  const [events, setEvents] = useState("decision.recorded, approval_task.created");
+  const [selected, setSelected] = useState<string | null>(null);
+  const [mintedSecret, setMintedSecret] = useState<string | null>(null);
+
+  const create = useMutation({
+    mutationFn: () =>
+      api.post<{ id: string; secret: string }>("/admin/webhooks", {
+        url,
+        events: events
+          .split(",")
+          .map((event) => event.trim())
+          .filter(Boolean),
+      }),
+    onSuccess: (result) => {
+      setMintedSecret(result.secret);
+      setUrl("");
+      toast.push("Webhook registered", "success");
+      void queryClient.invalidateQueries({ queryKey: ["admin", "webhooks"] });
+    },
+    onError: (err) => toast.push(errorMessage(err), "error"),
+  });
+
+  const deactivate = useMutation({
+    mutationFn: (id: string) => api.del(`/admin/webhooks/${id}`),
+    onSuccess: () => {
+      toast.push("Webhook deactivated", "success");
+      void queryClient.invalidateQueries({ queryKey: ["admin", "webhooks"] });
+    },
+    onError: (err) => toast.push(errorMessage(err), "error"),
+  });
+
+  return (
+    <Card title="Webhooks">
+      <div className="space-y-4">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="min-w-64 flex-1">
+            <Field label="Endpoint URL">
+              <Input
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://erp.example.com/hooks/ddas"
+              />
+            </Field>
+          </div>
+          <div className="min-w-64 flex-1">
+            <Field label="Events (comma-separated audit event types)">
+              <Input value={events} onChange={(e) => setEvents(e.target.value)} />
+            </Field>
+          </div>
+          <Button
+            onClick={() => create.mutate()}
+            disabled={url.trim().length === 0 || create.isPending}
+          >
+            Register
+          </Button>
+        </div>
+        {mintedSecret && (
+          <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            Signing secret (shown once — store it now):{" "}
+            <code className="font-mono">{mintedSecret}</code>
+          </p>
+        )}
+
+        {webhooks.isPending && <Loading />}
+        {webhooks.isError && <ErrorNote error={webhooks.error} />}
+        {webhooks.isSuccess && (
+          <Table head={["URL", "Events", "Status", ""]}>
+            {webhooks.data.length === 0 && <EmptyRow colSpan={4} message="No webhooks registered." />}
+            {webhooks.data.map((hook) => (
+              <tr key={hook.id}>
+                <Td className="font-mono text-xs">{hook.url}</Td>
+                <Td>
+                  <span className="flex flex-wrap gap-1">
+                    {hook.events.map((event) => (
+                      <Badge key={event} tone="gray">
+                        {event}
+                      </Badge>
+                    ))}
+                  </span>
+                </Td>
+                <Td>
+                  <Badge tone={hook.active ? "green" : "gray"}>
+                    {hook.active ? "active" : "inactive"}
+                  </Badge>
+                </Td>
+                <Td className="text-right whitespace-nowrap">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelected(selected === hook.id ? null : hook.id)}
+                  >
+                    {selected === hook.id ? "Hide deliveries" : "Deliveries"}
+                  </Button>
+                  {hook.active && (
+                    <Button variant="ghost" size="sm" onClick={() => deactivate.mutate(hook.id)}>
+                      Deactivate
+                    </Button>
+                  )}
+                </Td>
+              </tr>
+            ))}
+          </Table>
+        )}
+        {selected && <DeliveryLog webhookId={selected} />}
+      </div>
+    </Card>
+  );
+}
+
+function DeliveryLog({ webhookId }: { webhookId: string }) {
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const deliveries = useQuery({
+    queryKey: ["admin", "webhooks", webhookId, "deliveries"],
+    queryFn: () => api.get<DeliveryRow[]>(`/admin/webhooks/${webhookId}/deliveries`),
+    refetchInterval: 5000,
+  });
+  const redeliver = useMutation({
+    mutationFn: (id: string) => api.post(`/admin/webhook-deliveries/${id}/redeliver`),
+    onSuccess: () => {
+      toast.push("Requeued for delivery", "success");
+      void queryClient.invalidateQueries({
+        queryKey: ["admin", "webhooks", webhookId, "deliveries"],
+      });
+    },
+    onError: (err) => toast.push(errorMessage(err), "error"),
+  });
+
+  if (deliveries.isPending) return <Loading />;
+  if (deliveries.isError) return <ErrorNote error={deliveries.error} />;
+  return (
+    <Table head={["Event", "Status", "Attempts", "Last error", ""]}>
+      {deliveries.data.length === 0 && <EmptyRow colSpan={5} message="No deliveries yet." />}
+      {deliveries.data.map((delivery) => (
+        <tr key={delivery.id}>
+          <Td>
+            <span className="font-mono text-xs">
+              #{delivery.eventSeq} {delivery.eventType}
+            </span>
+          </Td>
+          <Td>
+            <Badge tone={DELIVERY_TONE[delivery.status]}>{delivery.status}</Badge>
+          </Td>
+          <Td>{delivery.attempts}</Td>
+          <Td className="max-w-64 truncate text-xs text-gray-500">{delivery.lastError ?? "—"}</Td>
+          <Td className="text-right">
+            {delivery.status !== "pending" && (
+              <Button variant="ghost" size="sm" onClick={() => redeliver.mutate(delivery.id)}>
+                Redeliver
+              </Button>
+            )}
+          </Td>
+        </tr>
+      ))}
+    </Table>
   );
 }
