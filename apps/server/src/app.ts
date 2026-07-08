@@ -23,7 +23,7 @@ import {
 } from "fastify-type-provider-zod";
 import type pg from "pg";
 import PgBoss from "pg-boss";
-import { collectDefaultMetrics, Registry } from "prom-client";
+import { collectDefaultMetrics, Counter, Registry } from "prom-client";
 import { ZodError } from "zod";
 import type { Env } from "./env.js";
 import { ApiError, toEnvelope } from "./errors.js";
@@ -51,6 +51,15 @@ export interface AppDeps {
   withJobs?: boolean;
 }
 
+export interface AppCounters {
+  requests: Counter;
+  classifications: Counter<"status">;
+  decisions: Counter<"outcome">;
+  extractionRuns: Counter<"outcome">;
+  webhookDeliveries: Counter<"outcome">;
+  mcpCalls: Counter<"tool">;
+}
+
 export interface AppContext {
   pool: pg.Pool;
   db: Db;
@@ -58,6 +67,7 @@ export interface AppContext {
   boss: PgBoss | null;
   extractionProvider: ExtractionProvider | null;
   metrics: Registry;
+  counters: AppCounters;
 }
 
 /** FastifyInstance WITH the Zod type provider — route modules keep schema inference. */
@@ -83,6 +93,43 @@ export async function buildApp(deps: AppDeps): Promise<App> {
 
   const metrics = new Registry();
   collectDefaultMetrics({ register: metrics });
+  const counters: AppCounters = {
+    requests: new Counter({
+      name: "ddas_requests_total",
+      help: "Authority requests submitted",
+      registers: [metrics],
+    }),
+    classifications: new Counter({
+      name: "ddas_classifications_total",
+      help: "Classifications by result status",
+      labelNames: ["status"],
+      registers: [metrics],
+    }),
+    decisions: new Counter({
+      name: "ddas_decisions_total",
+      help: "Decisions by outcome",
+      labelNames: ["outcome"],
+      registers: [metrics],
+    }),
+    extractionRuns: new Counter({
+      name: "ddas_extraction_runs_total",
+      help: "LLM extraction runs by outcome",
+      labelNames: ["outcome"],
+      registers: [metrics],
+    }),
+    webhookDeliveries: new Counter({
+      name: "ddas_webhook_deliveries_total",
+      help: "Webhook delivery attempts by outcome",
+      labelNames: ["outcome"],
+      registers: [metrics],
+    }),
+    mcpCalls: new Counter({
+      name: "ddas_mcp_calls_total",
+      help: "MCP tool calls",
+      labelNames: ["tool"],
+      registers: [metrics],
+    }),
+  };
 
   let boss: PgBoss | null = null;
   if (deps.withJobs !== false) {
@@ -98,6 +145,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
     boss,
     extractionProvider: deps.extractionProvider,
     metrics,
+    counters,
   };
   (app as App).ctx = ctx;
 

@@ -237,6 +237,7 @@ export function registerApprovalRoutes(app: App, ctx: AppContext): void {
         [task.request_id, taskId, verdict === "approved" ? "approved" : "rejected", principalId]
       );
       await transition(client, task.request_id, "decided", actor, { outcome: verdict });
+      ctx.counters.decisions.inc({ outcome: verdict });
       await appendAuditEvent(client, {
         actor,
         type: "decision.recorded",

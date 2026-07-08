@@ -145,7 +145,8 @@ export async function sweepWebhookDeliveries(
       );
       const row = claimed.rows[0];
       if (!row) return false;
-      await deliverOne(ctx, client, row, options);
+      const outcome = await deliverOne(ctx, client, row, options);
+      ctx.counters.webhookDeliveries.inc({ outcome });
       return true;
     });
     if (!processed) return handled;

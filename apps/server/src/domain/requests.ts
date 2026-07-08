@@ -105,6 +105,7 @@ export async function createRequest(
   if (ctx.boss) {
     await ctx.boss.send("extraction.run", { requestId }, { retryLimit: 2, retryDelay: 5 });
   }
+  ctx.counters.requests.inc();
   return requestId;
 }
 

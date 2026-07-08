@@ -31,7 +31,9 @@ export async function registerJobs(app: App, ctx: AppContext): Promise<void> {
     const { requestId } = job.data;
     try {
       await runExtraction(ctx, requestId);
+      ctx.counters.extractionRuns.inc({ outcome: "completed" });
     } catch (err) {
+      ctx.counters.extractionRuns.inc({ outcome: "failed" });
       app.log.error({ err, requestId }, "extraction failed");
       const meta = job as unknown as { retryLimit?: number; retryCount?: number };
       const retriesLeft = (meta.retryLimit ?? 0) - (meta.retryCount ?? 0);

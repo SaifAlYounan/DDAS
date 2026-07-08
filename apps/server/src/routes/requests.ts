@@ -517,6 +517,10 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
         });
       });
 
+      ctx.counters.classifications.inc({ status: outcome.result.status });
+      if (outcome.routing.kind === "auto_approved") {
+        ctx.counters.decisions.inc({ outcome: "auto_approved" });
+      }
       if (ctx.boss && outcome.routing.kind === "task_created") {
         const task = await ctx.pool.query<{ due_at: Date }>(
           "SELECT due_at FROM approval_tasks WHERE id = $1",
