@@ -19,9 +19,11 @@ RUN pnpm --filter @ddas/server deploy --prod --legacy /out
 FROM node:24-slim
 ENV NODE_ENV=production
 WORKDIR /app
-COPY --from=prod-deps /out ./
-COPY --from=build /repo/apps/web/dist ./web
-RUN mkdir -p /data/blobs && chown -R node:node /data /app
+# --chown at copy time: a recursive chown over node_modules after the fact
+# doubles layer size and gets OOM-killed on small builders.
+COPY --from=prod-deps --chown=node:node /out ./
+COPY --from=build --chown=node:node /repo/apps/web/dist ./web
+RUN mkdir -p /data/blobs && chown node:node /data /data/blobs
 USER node
 ENV PORT=3000 BLOB_DIR=/data/blobs WEB_DIST=/app/web
 EXPOSE 3000
