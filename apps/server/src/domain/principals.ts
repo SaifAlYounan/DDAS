@@ -21,19 +21,33 @@ export async function assertNotLastAdmin(
   principalId: string,
   action: string
 ): Promise<void> {
-  const target = await client.query(
-    `SELECT 1 FROM role_assignments WHERE principal_id = $1 AND role = 'admin'`,
-    [principalId]
+  // Lock EVERY admin row before reading, so two concurrent admin removals
+  // serialize here instead of both passing a stale SELECT and dropping the
+  // count to zero (authn-C4 TOCTOU). The audit chain's advisory lock is taken
+  // lazily inside appendAuditEvent — after this read-then-act — so it cannot
+  // serialize the guard. Both callers request the same row set in the same
+  // order, so this blocks cleanly (no deadlock): the loser re-reads the
+  // committed state and sees only itself left.
+  //
+  // Lock BOTH tables (FOR UPDATE OF r, p): the two mutation paths touch
+  // different rows — role-revoke DELETEs role_assignments (r), deactivate
+  // UPDATEs principals.disabled_at (p) — and READ COMMITTED only re-reads a
+  // concurrently-modified row on unblock if THIS query locked it. Locking r
+  // alone let a parallel deactivate's disabled_at stay stale on reread.
+  const admins = await client.query<{ principal_id: string; disabled_at: Date | null }>(
+    `SELECT r.principal_id, p.disabled_at
+       FROM role_assignments r
+       JOIN principals p ON p.id = r.principal_id
+      WHERE r.role = 'admin'
+      ORDER BY r.principal_id
+      FOR UPDATE OF r, p`
   );
-  if (!target.rows[0]) return; // not an admin — nothing to guard
-  const others = await client.query(
-    `SELECT 1 FROM role_assignments r
-     JOIN principals p ON p.id = r.principal_id
-     WHERE r.role = 'admin' AND p.disabled_at IS NULL AND p.id <> $1
-     LIMIT 1`,
-    [principalId]
+  const targetIsAdmin = admins.rows.some((a) => a.principal_id === principalId);
+  if (!targetIsAdmin) return; // not an admin — nothing to guard
+  const anotherEnabledAdmin = admins.rows.some(
+    (a) => a.principal_id !== principalId && a.disabled_at === null
   );
-  if (!others.rows[0]) {
+  if (!anotherEnabledAdmin) {
     throw new ApiError("conflict", `cannot ${action} the last enabled admin`);
   }
 }

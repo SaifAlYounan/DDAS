@@ -1062,6 +1062,67 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
       expect(deleted.statusCode).toBe(200);
       await expectAuditEvent("role.deleted");
     }, 60_000);
+
+    it("refuses an agent granted decisions.decide from deciding (authz-S1)", async () => {
+      // decisions.decide is grantable to custom roles, so permission alone no
+      // longer proves human-ness. Give an AGENT that permission and prove it
+      // still cannot approve or reject — "agents never decide" is enforced by
+      // principal kind, defense-in-depth over the permission gate.
+      const role = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/roles",
+        payload: { name: "Auto Decider", permissions: ["decisions.decide"] },
+      });
+      expect(role.statusCode).toBe(200);
+      const roleId = (role.json() as { id: string }).id;
+
+      const bot = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/principals",
+        payload: {
+          kind: "agent",
+          name: "decider-bot",
+          ownerPrincipalId: principalIds["ruben"],
+          roles: [],
+        },
+      });
+      expect(bot.statusCode).toBe(200);
+      const botId = (bot.json() as { id: string }).id;
+      await as("admin", {
+        method: "POST",
+        url: `/api/v1/admin/principals/${botId}/custom-roles`,
+        payload: { roleIds: [roleId] },
+      });
+      const key = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/api-keys",
+        payload: { principalId: botId, scopes: ["requests:read"] },
+      });
+      const botToken = (key.json() as { token: string }).token;
+
+      // The kind guard fires before any task lookup, so a placeholder id is fine.
+      const approve = await app.inject({
+        method: "POST",
+        url: `/api/v1/approval-tasks/${anyUuid}/approve`,
+        headers: { authorization: `Bearer ${botToken}` },
+        payload: {},
+      });
+      expect(approve.statusCode).toBe(403);
+      expect((approve.json() as { error: { message: string } }).error.message).toContain(
+        "agents cannot approve"
+      );
+
+      const reject = await app.inject({
+        method: "POST",
+        url: `/api/v1/approval-tasks/${anyUuid}/reject`,
+        headers: { authorization: `Bearer ${botToken}` },
+        payload: { comment: "nope" },
+      });
+      expect(reject.statusCode).toBe(403);
+      expect((reject.json() as { error: { message: string } }).error.message).toContain(
+        "agents cannot reject"
+      );
+    });
   });
 
   describe("simulation activation gate (review regression)", () => {

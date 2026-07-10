@@ -265,8 +265,14 @@ export function registerApprovalRoutes(app: App, ctx: AppContext): void {
       },
       preHandler: [app.requirePermission("decisions.decide")],
     },
-    async (request) =>
-      act(request.params.id, request.principal!.id, "approve", request.body.comment ?? null)
+    async (request) => {
+      // Agents never approve (authz-S1). decisions.decide is grantable to custom
+      // roles, so permission alone is no longer proof of human-ness — enforce
+      // the kind invariant here as defense-in-depth.
+      if (request.principal?.kind === "agent")
+        throw new ApiError("forbidden", "agents cannot approve");
+      return act(request.params.id, request.principal!.id, "approve", request.body.comment ?? null);
+    }
   );
 
   app.post(
@@ -280,7 +286,11 @@ export function registerApprovalRoutes(app: App, ctx: AppContext): void {
       },
       preHandler: [app.requirePermission("decisions.decide")],
     },
-    async (request) =>
-      act(request.params.id, request.principal!.id, "reject", request.body.comment)
+    async (request) => {
+      // Agents never decide, reject included (authz-S1).
+      if (request.principal?.kind === "agent")
+        throw new ApiError("forbidden", "agents cannot reject");
+      return act(request.params.id, request.principal!.id, "reject", request.body.comment);
+    }
   );
 }
