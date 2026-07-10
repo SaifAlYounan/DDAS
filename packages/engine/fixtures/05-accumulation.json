@@ -146,7 +146,7 @@
         "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
       }
     ],
-    "engineVersion": "2.0.0-alpha.0",
+    "engineVersion": "2.0.0",
     "explanation": "Routed to Board: Financial exposure was assessed 'Major' impact × 'Unlikely' likelihood → 'High', which your appetite maps to C-Suite. 3 categories rated at or above 'High' (threshold 3); one tier added.",
     "factSet": {
       "facts": [

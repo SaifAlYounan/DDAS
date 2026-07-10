@@ -232,7 +232,7 @@ describe.skipIf(!TEST_DATABASE_URL)("@ddas/db", () => {
           requestId,
           factSetId,
           policyVersionId: pv!.id,
-          engineVersion: "2.0.0-alpha.0",
+          engineVersion: "2.0.0",
           status: "ROUTED",
           tier: 2,
           tierName: "CFO",

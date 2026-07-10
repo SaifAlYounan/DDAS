@@ -1,6 +1,6 @@
 {
   "name": "@ddas/policy",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0",
   "description": "DDAS policy-as-code: the RiskPolicy schema, YAML→canonical-JSON compiler, semantic linter, and content hashing",
   "license": "MIT",
   "type": "module",

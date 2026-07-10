@@ -1,6 +1,6 @@
 {
   "name": "@ddas/testkit",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0",
   "description": "DDAS golden corpus and eval metrics: one fictional company (Kolvarra Industrial Systems B.V.) used four ways — extraction eval labels, engine snapshots, e2e expected routings, demo seed",
   "license": "MIT",
   "type": "module",

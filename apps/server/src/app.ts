@@ -205,7 +205,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
       openapi: "3.1.0",
       info: {
         title: "LQGovernance - DDAS API",
-        version: "2.0.0-alpha.0",
+        version: "2.0.0",
         description:
           "Dynamic Delegation of Authority System — appetite-constrained authority routing for humans and AI agents.",
       },

@@ -146,7 +146,7 @@
         "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
       }
     ],
-    "engineVersion": "2.0.0-alpha.0",
+    "engineVersion": "2.0.0",
     "explanation": "Routed to Board: Financial exposure was assessed 'Minor' impact × 'Unlikely' likelihood → 'Low', which your appetite maps to Self-approve. Trigger 'sanctions_exposure': Zero appetite for sanctions exposure; Board only.",
     "factSet": {
       "facts": [

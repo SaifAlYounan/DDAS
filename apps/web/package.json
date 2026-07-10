@@ -1,6 +1,6 @@
 {
   "name": "@ddas/web",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0",
   "description": "DDAS web console: requests, fact review, classification derivations, approvals, policy authoring, simulations, org, audit",
   "license": "MIT",
   "private": true,

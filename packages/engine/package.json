@@ -1,6 +1,6 @@
 {
   "name": "@ddas/engine",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0",
   "description": "DDAS deterministic classification core (ACOS). Pure: no I/O, no clock, no randomness.",
   "license": "MIT",
   "type": "module",

@@ -1,6 +1,6 @@
 {
   "name": "@ddas/audit",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0",
   "description": "DDAS append-only audit chain: hash-linked events, streaming verifier, exportable checkpoints",
   "license": "MIT",
   "type": "module",

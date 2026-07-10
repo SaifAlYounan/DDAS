@@ -31,7 +31,7 @@ import {
   type TriggerOutcome,
 } from "./types.js";
 
-export const ENGINE_VERSION = "2.0.0-alpha.0";
+export const ENGINE_VERSION = "2.0.0";
 
 export interface ClassifyInput {
   factSet: FactSet;

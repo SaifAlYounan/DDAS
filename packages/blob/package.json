@@ -1,6 +1,6 @@
 {
   "name": "@ddas/blob",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0",
   "description": "DDAS blob storage drivers: content-addressed document blobs on the local filesystem or any S3-compatible store, behind one narrow interface",
   "license": "MIT",
   "type": "module",

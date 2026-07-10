@@ -195,7 +195,7 @@ describe("ACOS classification paths (starter-balanced)", () => {
     if (r.status !== "ROUTED") throw new Error("expected ROUTED");
     expect(r.derivation.policy.contentHash).toBe(policy.contentHash);
     expect(r.derivation.factSet).toEqual(input);
-    expect(r.derivation.engineVersion).toBe("2.0.0-alpha.0");
+    expect(r.derivation.engineVersion).toBe("2.0.0");
   });
 
   it("distance-from-boundary matches the canonical example shape", () => {

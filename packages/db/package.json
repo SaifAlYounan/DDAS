@@ -1,6 +1,6 @@
 {
   "name": "@ddas/db",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0",
   "description": "DDAS persistence: Drizzle schema, migrations, and the Postgres immutability layer (freeze/INSERT-only triggers)",
   "license": "MIT",
   "type": "module",

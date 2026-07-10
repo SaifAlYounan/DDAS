@@ -149,7 +149,7 @@
         "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
       }
     ],
-    "engineVersion": "2.0.0-alpha.0",
+    "engineVersion": "2.0.0",
     "explanation": "Routed to C-Suite: Reversibility was assessed 'Locked_in' impact × 'Likely' likelihood → 'Critical', which your appetite maps to C-Suite. Reversibility was conservatively assessed at 'Locked_in' per your missing-information policy (termination_for_convenience, contract_term_months not found).",
     "factSet": {
       "facts": [

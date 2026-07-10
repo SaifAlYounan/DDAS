@@ -150,7 +150,7 @@
         "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
       }
     ],
-    "engineVersion": "2.0.0-alpha.0",
+    "engineVersion": "2.0.0",
     "explanation": "Routed to Manager: Financial exposure was assessed 'Minor' impact × 'Unlikely' likelihood → 'Low', which your agent-initiated appetite maps to Manager.",
     "factSet": {
       "facts": [

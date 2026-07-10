@@ -37,7 +37,7 @@ function buildMcpServer(
   principal: AuthedPrincipal,
   apiKey: AuthedApiKey | null
 ): McpServer {
-  const server = new McpServer({ name: "ddas", version: "2.0.0-alpha.0" });
+  const server = new McpServer({ name: "ddas", version: "2.0.0" });
   const actor: AuditActor = apiKey
     ? { kind: "api_key", id: apiKey.id, principalId: principal.id }
     : { kind: "principal", id: principal.id };

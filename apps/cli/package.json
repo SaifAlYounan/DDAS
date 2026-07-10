@@ -1,6 +1,6 @@
 {
   "name": "@ddas/cli",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0",
   "description": "The ddas CLI: register policies, submit transactions, classify, simulate policy drafts, run the eval harness",
   "license": "MIT",
   "type": "module",

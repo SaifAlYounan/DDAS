@@ -1,6 +1,6 @@
 {
   "name": "@ddas/extraction",
-  "version": "2.0.0-alpha.0",
+  "version": "2.0.0",
   "description": "DDAS fact extraction: the only package that talks to an LLM. Produces cited fact sets, never tiers. Fail-closed: an ungroundable citation downgrades to NOT_FOUND.",
   "license": "MIT",
   "type": "module",
