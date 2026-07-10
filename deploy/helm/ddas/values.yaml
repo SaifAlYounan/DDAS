@@ -1,4 +1,4 @@
-# DDAS reference values. Runs single-replica by default; set replicaCount > 1
+# LQGovernance - DDAS reference values. Runs single-replica by default; set replicaCount > 1
 # for HA (N app replicas over one Postgres). With replicas > 1 the blob store
 # must be shared: set env.DDAS_BLOB_DRIVER=s3 (+ the DDAS_S3_* env vars) or
 # blobs.accessMode=ReadWriteMany on an RWX storage class — the chart refuses

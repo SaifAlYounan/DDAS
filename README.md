@@ -1,4 +1,4 @@
-# DDAS — Dynamic Delegation of Authority System
+# LQGovernance - DDAS — Dynamic Delegation of Authority System
 
 > *Static approval matrices assume a static world. This one doesn't.*
 
@@ -29,8 +29,8 @@ Every decision explains itself in your own language, from a **derivation object*
 **Prerequisites:** Docker with Compose v2 (`docker compose version`). Nothing else — no local Node, Postgres, or build tools needed for this path.
 
 ```bash
-git clone https://github.com/SaifAlYounan/DDAS.git
-cd DDAS/deploy
+git clone https://github.com/LegalQuants/LQGovernance-DDAS.git
+cd LQGovernance-DDAS/deploy
 ```
 
 Open `deploy/docker-compose.yml` and set, at minimum, the bootstrap admin (created only on first boot, only if no admin exists yet):
