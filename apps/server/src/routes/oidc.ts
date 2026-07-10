@@ -1,8 +1,10 @@
 /**
  * OIDC/SSO: authorization-code + PKCE via openid-client v6, with JIT
  * provisioning — (issuer, sub) match first, then email link, then create
- * with the env-configured default roles. Role elevation stays in-app;
- * group-claim mapping and SCIM are deliberately out of scope.
+ * with the env-configured default roles. Role elevation stays in-app or
+ * comes via SCIM group membership (routes/scim.ts); the email link is also
+ * what binds an OIDC login to a SCIM-provisioned principal (no duplicates).
+ * Group-claim mapping is deliberately out of scope.
  */
 import * as oidc from "openid-client";
 import { z } from "zod";

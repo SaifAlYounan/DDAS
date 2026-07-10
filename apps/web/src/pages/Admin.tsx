@@ -4,6 +4,7 @@ import { api } from "../api/client";
 import { principalsQuery, settingsQuery } from "../api/queries";
 import { ALL_ROLES, type AdminPrincipal, type AdminSettings, type Role } from "../api/types";
 import { ErrorNote, Loading, errorMessage } from "../components/Loading";
+import { useMe } from "../components/MeContext";
 import { useToast } from "../components/Toast";
 import { Badge } from "../components/ui/Badge";
 import { Button } from "../components/ui/Button";
@@ -59,6 +60,8 @@ export function AdminPage() {
       )}
 
       <SlaSettings />
+
+      <ScimSection />
 
       <WebhooksSection />
 
@@ -344,6 +347,111 @@ function SlaSettings() {
           </Button>
         </div>
       )}
+    </Card>
+  );
+}
+
+interface ApiKeyRow {
+  id: string;
+  prefix: string;
+  principalId: string;
+  principalName: string;
+  scopes: string[];
+  createdAt: string;
+  revokedAt: string | null;
+}
+
+/**
+ * SCIM provisioning tokens — the credential an IdP (Okta / Entra) uses to
+ * push users and role groups into DDAS. Backed by the existing API-key
+ * store with the exclusive "scim" scope; full setup guide: docs/scim.md.
+ */
+function ScimSection() {
+  const toast = useToast();
+  const queryClient = useQueryClient();
+  const me = useMe();
+  const keys = useQuery({
+    queryKey: ["admin", "api-keys"],
+    queryFn: () => api.get<ApiKeyRow[]>("/admin/api-keys"),
+  });
+  const [mintedToken, setMintedToken] = useState<string | null>(null);
+  const baseUrl = `${window.location.origin}/scim/v2`;
+
+  const mint = useMutation({
+    mutationFn: () =>
+      api.post<{ id: string; prefix: string; token: string }>("/admin/api-keys", {
+        principalId: me.id,
+        scopes: ["scim"],
+      }),
+    onSuccess: (result) => {
+      setMintedToken(result.token);
+      toast.push("SCIM token minted", "success");
+      void queryClient.invalidateQueries({ queryKey: ["admin", "api-keys"] });
+    },
+    onError: (err) => toast.push(errorMessage(err), "error"),
+  });
+
+  const revoke = useMutation({
+    mutationFn: (id: string) => api.del(`/admin/api-keys/${id}`),
+    onSuccess: () => {
+      toast.push("SCIM token revoked", "success");
+      void queryClient.invalidateQueries({ queryKey: ["admin", "api-keys"] });
+    },
+    onError: (err) => toast.push(errorMessage(err), "error"),
+  });
+
+  const scimKeys = (keys.data ?? []).filter((k) => k.scopes.includes("scim"));
+
+  return (
+    <Card
+      title="SCIM provisioning (Okta / Entra)"
+      actions={
+        <Button size="sm" onClick={() => mint.mutate()} disabled={mint.isPending}>
+          {mint.isPending ? "Minting…" : "Mint token"}
+        </Button>
+      }
+    >
+      <div className="space-y-3">
+        <p className="text-sm text-gray-600">
+          Point your identity provider at{" "}
+          <code className="rounded bg-gray-100 px-1 font-mono text-xs">{baseUrl}</code> with a
+          bearer token minted here. Users sync to principals; the six “DDAS …” groups grant and
+          revoke roles. Deactivating a user kills their sessions and API keys immediately. Setup
+          steps: <code className="font-mono text-xs">docs/scim.md</code>.
+        </p>
+        {mintedToken && (
+          <p className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            SCIM bearer token (shown once — store it in your IdP now):{" "}
+            <code className="font-mono">{mintedToken}</code>
+          </p>
+        )}
+        {keys.isPending && <Loading />}
+        {keys.isError && <ErrorNote error={keys.error} />}
+        {keys.isSuccess && (
+          <Table head={["Prefix", "Minted by", "Created", "Status", ""]}>
+            {scimKeys.length === 0 && <EmptyRow colSpan={5} message="No SCIM tokens minted." />}
+            {scimKeys.map((key) => (
+              <tr key={key.id}>
+                <Td className="font-mono text-xs">ddas_{key.prefix}_…</Td>
+                <Td>{key.principalName}</Td>
+                <Td className="text-gray-500">{new Date(key.createdAt).toLocaleDateString()}</Td>
+                <Td>
+                  <Badge tone={key.revokedAt ? "gray" : "green"}>
+                    {key.revokedAt ? "revoked" : "active"}
+                  </Badge>
+                </Td>
+                <Td className="text-right">
+                  {!key.revokedAt && (
+                    <Button variant="ghost" size="sm" onClick={() => revoke.mutate(key.id)}>
+                      Revoke
+                    </Button>
+                  )}
+                </Td>
+              </tr>
+            ))}
+          </Table>
+        )}
+      </div>
     </Card>
   );
 }

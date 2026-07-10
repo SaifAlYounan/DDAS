@@ -2,6 +2,7 @@ import argon2 from "argon2";
 import { z } from "zod";
 import { appendAuditEvent } from "@ddas/audit";
 import type { App, AppContext } from "../app.js";
+import { assertNotLastAdmin } from "../domain/principals.js";
 import { withTx } from "../domain/tx.js";
 import { ApiError } from "../errors.js";
 import { newApiKey } from "../plugins/auth.js";
@@ -135,6 +136,9 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
         );
         const before = new Set(existing.rows.map((r) => r.role));
         const after = new Set<string>(roles);
+        if (before.has("admin") && !after.has("admin")) {
+          await assertNotLastAdmin(client, id, "remove the admin role from");
+        }
         for (const role of after) {
           if (!before.has(role)) {
             await client.query(
@@ -170,7 +174,7 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
 
   // ---------- API keys ----------
 
-  const ScopeEnum = z.enum(["requests:read", "requests:write", "facts:attest", "mcp"]);
+  const ScopeEnum = z.enum(["requests:read", "requests:write", "facts:attest", "mcp", "scim"]);
 
   app.post(
     "/admin/api-keys",
@@ -194,6 +198,14 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
     },
     async (request) => {
       const { principalId, scopes } = request.body;
+      // "scim" is the IdP provisioning credential — exclusive by design, so a
+      // single token can never straddle the SCIM and application surfaces.
+      if (scopes.includes("scim") && scopes.length > 1) {
+        throw new ApiError(
+          "validation_failed",
+          'the "scim" scope is exclusive — mint a separate key for other scopes'
+        );
+      }
       const actor = { kind: "principal" as const, id: request.principal!.id };
       const principal = await ctx.pool.query<{ id: string }>(
         "SELECT id FROM principals WHERE id = $1 AND disabled_at IS NULL",

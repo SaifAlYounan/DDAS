@@ -162,7 +162,7 @@ Agents are first-class principals, gated exactly like people — same pipeline, 
      -d '{"principalId":"<agent-id>","scopes":["requests:read","requests:write","facts:attest","mcp"]}'
    # → { "id": "...", "prefix": "...", "token": "ddas_<prefix>_<secret>" }  ← copy the token now
    ```
-   Available scopes: `requests:read`, `requests:write`, `facts:attest`, `mcp`.
+   Available scopes: `requests:read`, `requests:write`, `facts:attest`, `mcp` — plus the exclusive `scim` scope for IdP provisioning tokens (see [docs/scim.md](docs/scim.md); it cannot be combined with the others).
 
 The agent then drives DDAS over **MCP** (streamable HTTP at `POST /mcp`, authenticated with the API key). Example client config:
 
@@ -193,6 +193,8 @@ Reject anything where `|now − t| > 300s`; use `X-DDAS-Delivery` for idempotenc
 
 **SSO (OIDC)** — set `OIDC_ISSUER_URL`, `OIDC_CLIENT_ID`, `OIDC_CLIENT_SECRET`, `OIDC_REDIRECT_URL` (and optionally `OIDC_DEFAULT_ROLES`). A "Sign in with SSO" button appears; first login provisions the user just-in-time, linking to an existing account by email.
 
+**SCIM provisioning (Okta / Entra)** — SCIM 2.0 at `/scim/v2`: your IdP creates, updates, and deactivates users, and drives roles through six fixed groups ("DDAS Admins" … "DDAS Viewers" — membership = role grant/revoke). Mint the dedicated bearer token in **Admin → SCIM provisioning** (an API key with the exclusive `scim` scope: it works nowhere else, and nothing else works on `/scim/v2`). Deactivation kills the user's sessions and API keys in the same transaction; the last enabled admin can never be deactivated or demoted; every mutation is on the audit chain. SCIM users and OIDC JIT logins dedup by email in both directions — no duplicate principals. Endpoint list + Okta/Entra setup: [docs/scim.md](docs/scim.md).
+
 **Metrics** — Prometheus at `GET /metrics` (`ddas_*` counters). Dashboard queries: [docs/dashboards.md](docs/dashboards.md).
 
 **Rate limits** — every route is rate-limited by class (fixed window, **Postgres-backed**, so the limits hold across every app node sharing the database). Over the limit → `429` with a `Retry-After` header and error code `rate_limited`. `/healthz` and `/metrics` are never limited. Configure per class (limit = max requests per window; `0` disables a class):
@@ -202,7 +204,7 @@ Reject anything where `|now − t| > 300s`; use `X-DDAS-Delivery` for idempotenc
 | auth | `POST /auth/login`, `/auth/oidc/*` | per IP | `RATE_LIMIT_AUTH_LIMIT` (30) | `RATE_LIMIT_AUTH_WINDOW_SEC` (60) |
 | mutation | any other POST/PUT/PATCH/DELETE (incl. `/mcp`) | per principal | `RATE_LIMIT_MUTATION_LIMIT` (120) | `RATE_LIMIT_MUTATION_WINDOW_SEC` (60) |
 | read | any other GET | per principal | `RATE_LIMIT_READ_LIMIT` (600) | `RATE_LIMIT_READ_WINDOW_SEC` (60) |
-| admin | everything under `/api/v1/admin/`, any method | per principal | `RATE_LIMIT_ADMIN_LIMIT` (120) | `RATE_LIMIT_ADMIN_WINDOW_SEC` (60) |
+| admin | everything under `/api/v1/admin/` and `/scim/v2`, any method | per principal | `RATE_LIMIT_ADMIN_LIMIT` (120) | `RATE_LIMIT_ADMIN_WINDOW_SEC` (60) |
 
 Unauthenticated requests key by IP. The login route additionally keeps its in-process per-email/per-IP attempt limits and timing-oracle protections.
 

@@ -96,12 +96,15 @@ export const principals = pgTable(
     ownerPrincipalId: uuid("owner_principal_id"),
     oidcIssuer: text("oidc_issuer"),
     oidcSubject: text("oidc_subject"),
+    /** IdP-assigned identifier (SCIM externalId) — the cross-system join key. */
+    externalId: text("external_id"),
     disabledAt: timestamp("disabled_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     uniqueIndex("principals_email_uq").on(t.email),
     uniqueIndex("principals_oidc_uq").on(t.oidcIssuer, t.oidcSubject),
+    uniqueIndex("principals_external_id_uq").on(t.externalId),
     check(
       "principals_agent_has_owner",
       sql`${t.kind} <> 'agent' OR ${t.ownerPrincipalId} IS NOT NULL`

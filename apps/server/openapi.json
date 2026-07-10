@@ -489,7 +489,8 @@
                         "requests:read",
                         "requests:write",
                         "facts:attest",
-                        "mcp"
+                        "mcp",
+                        "scim"
                       ]
                     },
                     "minItems": 1

@@ -53,6 +53,9 @@ export function classifyRoute(method: string, url: string): RouteClass | null {
     return "auth";
   }
   if (pathname.startsWith("/api/v1/admin/")) return "admin";
+  // SCIM provisioning is IdP-driven identity administration — admin class,
+  // keyed per principal (the scim token resolves to its minting admin).
+  if (pathname.startsWith("/scim/v2")) return "admin";
   if (method === "GET" || method === "HEAD" || method === "OPTIONS") return "read";
   return "mutation";
 }

@@ -7,6 +7,7 @@ export const AUDIT_EVENT_TYPES = [
   "principal.created",
   "principal.updated",
   "principal.disabled",
+  "principal.enabled",
   "role.granted",
   "role.revoked",
   "org_unit.created",

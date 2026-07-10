@@ -56,6 +56,13 @@ describe("route classifier", () => {
     expect(classifyRoute("POST", "/api/v1/admin/webhook-deliveries/x/redeliver")).toBe("admin");
   });
 
+  it("puts SCIM provisioning in the admin class, any method", () => {
+    expect(classifyRoute("GET", '/scim/v2/Users?filter=userName eq "a@b.c"')).toBe("admin");
+    expect(classifyRoute("POST", "/scim/v2/Users")).toBe("admin");
+    expect(classifyRoute("PATCH", "/scim/v2/Groups/admin")).toBe("admin");
+    expect(classifyRoute("GET", "/scim/v2/ServiceProviderConfig")).toBe("admin");
+  });
+
   it("splits the rest into read vs mutation by method", () => {
     expect(classifyRoute("GET", "/api/v1/requests")).toBe("read");
     expect(classifyRoute("GET", "/api/v1/requests?state=decided")).toBe("read");

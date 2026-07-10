@@ -27,6 +27,8 @@ export const API_KEY_SCOPES = [
   "requests:write",
   "facts:attest",
   "mcp",
+  /** IdP provisioning token — ONLY valid on /scim/v2, and exclusive at mint. */
+  "scim",
 ] as const;
 export type ApiKeyScope = (typeof API_KEY_SCOPES)[number];
 

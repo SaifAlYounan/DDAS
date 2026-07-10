@@ -40,6 +40,7 @@ import { registerRequestRoutes } from "./routes/requests.js";
 import { registerSimulationRoutes } from "./routes/simulations.js";
 import { registerMcpRoute } from "./routes/mcp.js";
 import { registerOidcRoutes } from "./routes/oidc.js";
+import { registerScimRoutes, scimKeyIsolationHook } from "./routes/scim.js";
 import { registerWebhookRoutes } from "./routes/webhooks.js";
 import { startWebhookWorker, WEBHOOK_DEFAULTS } from "./jobs/webhooks.js";
 
@@ -187,6 +188,9 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   await app.register(authPlugin, { pool });
   // After auth: the limiter keys authenticated traffic per principal.
   await app.register(rateLimitPlugin, { pool, config: rateLimitConfigFromEnv(env) });
+  // A "scim" token authenticates nothing outside /scim/v2 (and SCIM routes
+  // accept nothing else) — the provisioning credential is fully isolated.
+  app.addHook("onRequest", scimKeyIsolationHook);
 
   app.get("/healthz", async () => ({ ok: true }));
   app.get("/metrics", async (_request, reply) => {
@@ -195,6 +199,9 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   });
   app.get("/api/openapi.json", async () => app.swagger());
   registerMcpRoute(app as App, ctx);
+  // SCIM 2.0 provisioning — its own prefix, media type, and error envelope;
+  // hidden from the committed OpenAPI document (see docs/scim.md).
+  registerScimRoutes(app as App, ctx);
 
   await app.register(
     async (api) => {
