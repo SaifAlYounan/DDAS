@@ -29,6 +29,7 @@ import type { Env } from "./env.js";
 import { ApiError, toEnvelope } from "./errors.js";
 import { registerJobs } from "./jobs/index.js";
 import { authPlugin } from "./plugins/auth.js";
+import { rateLimitConfigFromEnv, rateLimitPlugin } from "./plugins/rate-limit.js";
 import { registerAdminRoutes } from "./routes/admin.js";
 import { registerApprovalRoutes } from "./routes/approvals.js";
 import { registerAuditRoutes } from "./routes/audit.js";
@@ -184,6 +185,8 @@ export async function buildApp(deps: AppDeps): Promise<App> {
     transform: jsonSchemaTransform,
   });
   await app.register(authPlugin, { pool });
+  // After auth: the limiter keys authenticated traffic per principal.
+  await app.register(rateLimitPlugin, { pool, config: rateLimitConfigFromEnv(env) });
 
   app.get("/healthz", async () => ({ ok: true }));
   app.get("/metrics", async (_request, reply) => {

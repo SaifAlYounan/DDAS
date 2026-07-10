@@ -8,6 +8,7 @@ export const ERROR_CODES = [
   "state_conflict",
   "routing_failed",
   "payload_too_large",
+  "rate_limited",
   "internal",
 ] as const;
 
@@ -22,6 +23,7 @@ const STATUS_BY_CODE: Record<ErrorCode, number> = {
   state_conflict: 409,
   routing_failed: 409,
   payload_too_large: 413,
+  rate_limited: 429,
   internal: 500,
 };
 

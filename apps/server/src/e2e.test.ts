@@ -222,6 +222,12 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
       LOG_LEVEL: "error",
       WEBHOOK_POLL_MS: "50",
       WEBHOOK_RETRY_BASE_MS: "10",
+      // This suite polls rapidly on purpose — rate limits get their own
+      // dedicated e2e (rate-limit.e2e.test.ts) with tight limits.
+      RATE_LIMIT_AUTH_LIMIT: "100000",
+      RATE_LIMIT_MUTATION_LIMIT: "100000",
+      RATE_LIMIT_READ_LIMIT: "100000",
+      RATE_LIMIT_ADMIN_LIMIT: "100000",
     });
     app = await buildApp({ pool, env, extractionProvider: provider });
     await bootstrapAdmin(pool, env);

@@ -195,6 +195,17 @@ Reject anything where `|now − t| > 300s`; use `X-DDAS-Delivery` for idempotenc
 
 **Metrics** — Prometheus at `GET /metrics` (`ddas_*` counters). Dashboard queries: [docs/dashboards.md](docs/dashboards.md).
 
+**Rate limits** — every route is rate-limited by class (fixed window, **Postgres-backed**, so the limits hold across every app node sharing the database). Over the limit → `429` with a `Retry-After` header and error code `rate_limited`. `/healthz` and `/metrics` are never limited. Configure per class (limit = max requests per window; `0` disables a class):
+
+| Class | Covers | Key | Limit (default) | Window (default) |
+|---|---|---|---|---|
+| auth | `POST /auth/login`, `/auth/oidc/*` | per IP | `RATE_LIMIT_AUTH_LIMIT` (30) | `RATE_LIMIT_AUTH_WINDOW_SEC` (60) |
+| mutation | any other POST/PUT/PATCH/DELETE (incl. `/mcp`) | per principal | `RATE_LIMIT_MUTATION_LIMIT` (120) | `RATE_LIMIT_MUTATION_WINDOW_SEC` (60) |
+| read | any other GET | per principal | `RATE_LIMIT_READ_LIMIT` (600) | `RATE_LIMIT_READ_WINDOW_SEC` (60) |
+| admin | everything under `/api/v1/admin/`, any method | per principal | `RATE_LIMIT_ADMIN_LIMIT` (120) | `RATE_LIMIT_ADMIN_WINDOW_SEC` (60) |
+
+Unauthenticated requests key by IP. The login route additionally keeps its in-process per-email/per-IP attempt limits and timing-oracle protections.
+
 **Backup / restore** — `ddas backup create --out <dir>` writes a `pg_dump` + blob tarball + a manifest carrying the audit-chain head; `ddas backup restore --in <dir>` refuses a non-empty database and **fails loudly** if the restored chain doesn't reproduce that head.
 
 **Tamper-evidence** — periodically `GET /api/v1/audit/checkpoint` and store the small JSON **outside** the deployment. Verifying against it later defeats even a database-level history rewrite.

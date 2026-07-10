@@ -15,6 +15,7 @@ import {
   jsonb,
   pgEnum,
   pgTable,
+  primaryKey,
   real,
   text,
   timestamp,
@@ -556,6 +557,28 @@ export const simulationResults = pgTable(
     changed: boolean("changed").notNull(),
   },
   (t) => [uniqueIndex("simulation_results_uq").on(t.runId, t.requestId)]
+);
+
+// ---------- rate limiting ----------
+
+/**
+ * Fixed-window rate-limit counters, shared by every app node (HA-safe).
+ * Operational data like sessions — mutable by design, no immutability
+ * triggers. Rows expire with their window; cleanup is opportunistic.
+ */
+export const rateLimitCounters = pgTable(
+  "rate_limit_counters",
+  {
+    /** "<class>:<principal-or-ip key>" */
+    bucket: text("bucket").notNull(),
+    windowStart: timestamp("window_start", { withTimezone: true }).notNull(),
+    count: integer("count").notNull().default(0),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.bucket, t.windowStart] }),
+    index("rate_limit_counters_expires_idx").on(t.expiresAt),
+  ]
 );
 
 // ---------- settings ----------

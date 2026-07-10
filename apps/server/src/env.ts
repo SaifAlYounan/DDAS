@@ -29,6 +29,19 @@ export const EnvSchema = z.object({
   /** Webhook delivery worker tuning (tests shrink these). */
   WEBHOOK_POLL_MS: z.coerce.number().int().positive().optional(),
   WEBHOOK_RETRY_BASE_MS: z.coerce.number().int().positive().optional(),
+  /**
+   * Per-route-class rate limits (fixed window, Postgres-backed so they hold
+   * across every app node). Limit = max requests per window; 0 disables the
+   * class. /healthz and /metrics are never rate-limited.
+   */
+  RATE_LIMIT_AUTH_LIMIT: z.coerce.number().int().nonnegative().default(30),
+  RATE_LIMIT_AUTH_WINDOW_SEC: z.coerce.number().int().positive().default(60),
+  RATE_LIMIT_MUTATION_LIMIT: z.coerce.number().int().nonnegative().default(120),
+  RATE_LIMIT_MUTATION_WINDOW_SEC: z.coerce.number().int().positive().default(60),
+  RATE_LIMIT_READ_LIMIT: z.coerce.number().int().nonnegative().default(600),
+  RATE_LIMIT_READ_WINDOW_SEC: z.coerce.number().int().positive().default(60),
+  RATE_LIMIT_ADMIN_LIMIT: z.coerce.number().int().nonnegative().default(120),
+  RATE_LIMIT_ADMIN_WINDOW_SEC: z.coerce.number().int().positive().default(60),
 });
 
 export type Env = z.infer<typeof EnvSchema>;

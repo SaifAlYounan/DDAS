@@ -132,6 +132,8 @@ describe.skipIf(!TEST_DATABASE_URL)("OIDC e2e", () => {
       OIDC_REDIRECT_URL: "http://127.0.0.1:3999/api/v1/auth/oidc/callback",
       OIDC_DEFAULT_ROLES: "requester,approver",
       OIDC_ALLOW_INSECURE: "true",
+      // Every request here is auth-class from one IP; don't trip the limiter.
+      RATE_LIMIT_AUTH_LIMIT: "100000",
     });
     app = await buildApp({ pool, env, extractionProvider: null, withJobs: false });
     await app.ready();

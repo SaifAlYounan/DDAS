@@ -29,6 +29,13 @@
       "when": 1783686072918,
       "tag": "0003_viewer_role",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1783686640747,
+      "tag": "0004_rate_limit_counters",
+      "breakpoints": true
     }
   ]
 }
