@@ -31,12 +31,51 @@ services:
       # DDAS_EXTRACTION_PROVIDER: anthropic
       # DDAS_EXTRACTION_MODEL: claude-sonnet-5
       # DDAS_EXTRACTION_API_KEY: sk-ant-...
+      # S3-compatible blob storage (default is the fs driver + the blobs
+      # volume below). Start MinIO with: docker compose --profile s3 up
+      # DDAS_BLOB_DRIVER: s3
+      # DDAS_S3_ENDPOINT: http://minio:9000
+      # DDAS_S3_BUCKET: ddas-blobs
+      # DDAS_S3_ACCESS_KEY_ID: ddas
+      # DDAS_S3_SECRET_ACCESS_KEY: change-me-minio-please
+      # DDAS_S3_FORCE_PATH_STYLE: "true"
     ports:
       # Override with DDAS_PORT when 3000 is taken (e.g. DDAS_PORT=3210 docker compose up)
       - "${DDAS_PORT:-3000}:3000"
     volumes:
       - blobs:/data/blobs
 
+  # Optional: S3-compatible blob storage, off by default.
+  # `docker compose --profile s3 up` starts MinIO + a one-shot bucket-create;
+  # point the app at it with the DDAS_BLOB_DRIVER/DDAS_S3_* env above.
+  minio:
+    image: minio/minio
+    profiles: ["s3"]
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ddas
+      MINIO_ROOT_PASSWORD: change-me-minio-please # change in production
+    volumes:
+      - minio:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/minio/health/live || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  minio-init:
+    image: minio/mc
+    profiles: ["s3"]
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ddas change-me-minio-please &&
+      mc mb --ignore-existing local/ddas-blobs
+      "
+
 volumes:
   pgdata:
   blobs:
+  minio:

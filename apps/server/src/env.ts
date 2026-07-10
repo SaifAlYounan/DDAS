@@ -4,8 +4,18 @@ export const EnvSchema = z.object({
   DATABASE_URL: z.string().min(1),
   PORT: z.coerce.number().int().positive().default(3000),
   HOST: z.string().default("0.0.0.0"),
-  /** Where content-addressed document blobs live. */
+  /** Blob storage driver: local filesystem (default) or any S3-compatible store. */
+  DDAS_BLOB_DRIVER: z.enum(["fs", "s3"]).default("fs"),
+  /** fs driver: where content-addressed document blobs live. */
   BLOB_DIR: z.string().default("/data/blobs"),
+  /** s3 driver: endpoint URL — leave unset for AWS itself; set for MinIO/R2/Ceph. */
+  DDAS_S3_ENDPOINT: z.string().optional(),
+  DDAS_S3_REGION: z.string().optional(),
+  DDAS_S3_BUCKET: z.string().optional(),
+  DDAS_S3_ACCESS_KEY_ID: z.string().optional(),
+  DDAS_S3_SECRET_ACCESS_KEY: z.string().optional(),
+  /** Path-style addressing — required by MinIO and most self-hosted stores. */
+  DDAS_S3_FORCE_PATH_STYLE: z.coerce.boolean().default(false),
   /** Built SPA directory; when set, the server hosts the web console. */
   WEB_DIST: z.string().optional(),
   /** Boot-time admin bootstrap: created iff no admin exists yet. */

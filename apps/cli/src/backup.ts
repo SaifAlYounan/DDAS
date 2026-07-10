@@ -6,10 +6,13 @@
  * backup.
  */
 import { spawn } from "node:child_process";
-import { existsSync } from "node:fs";
-import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
+import { createWriteStream } from "node:fs";
+import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
 import path from "node:path";
+import { pipeline } from "node:stream/promises";
 import { verifyChain, type Checkpoint } from "@ddas/audit";
+import type { BlobStore } from "@ddas/blob";
 import pg from "pg";
 import type { Output } from "./commands.js";
 
@@ -34,25 +37,32 @@ function run(command: string, args: string[], out: Output): Promise<void> {
 }
 
 export async function cmdBackupCreate(
-  opts: { databaseUrl: string; blobDir: string; out: string },
+  opts: { databaseUrl: string; blobs: BlobStore; out: string },
   out: Output
 ): Promise<number> {
   await mkdir(opts.out, { recursive: true });
   const dumpFile = path.join(opts.out, "db.dump");
   await run("pg_dump", ["-Fc", "--no-owner", "-d", opts.databaseUrl, "-f", dumpFile], out);
 
+  // Blobs come through the driver interface — the tarball layout (flat,
+  // filename = sha256) is identical whether they live on disk or in a bucket.
   let blobsTar: string | null = null;
   let blobCount = 0;
-  if (existsSync(opts.blobDir)) {
-    blobCount = (await readdir(opts.blobDir)).length;
+  const staging = await mkdtemp(path.join(tmpdir(), "ddas-backup-blobs-"));
+  try {
+    for await (const key of opts.blobs.list()) {
+      await pipeline(
+        await opts.blobs.getStream(key),
+        createWriteStream(path.join(staging, key))
+      );
+      blobCount += 1;
+    }
     if (blobCount > 0) {
       blobsTar = "blobs.tar.gz";
-      await run(
-        "tar",
-        ["-czf", path.join(opts.out, blobsTar), "-C", opts.blobDir, "."],
-        out
-      );
+      await run("tar", ["-czf", path.join(opts.out, blobsTar), "-C", staging, "."], out);
     }
+  } finally {
+    await rm(staging, { recursive: true, force: true });
   }
 
   const pool = new pg.Pool({ connectionString: opts.databaseUrl, max: 1 });
@@ -88,7 +98,7 @@ export async function cmdBackupCreate(
 }
 
 export async function cmdBackupRestore(
-  opts: { databaseUrl: string; blobDir: string; in: string },
+  opts: { databaseUrl: string; blobs: BlobStore; in: string },
   out: Output
 ): Promise<number> {
   const manifest = JSON.parse(
@@ -111,8 +121,17 @@ export async function cmdBackupRestore(
     out
   );
   if (manifest.blobsTar) {
-    await mkdir(opts.blobDir, { recursive: true });
-    await run("tar", ["-xzf", path.join(opts.in, manifest.blobsTar), "-C", opts.blobDir], out);
+    // Untar to a staging directory, then write every blob back through the
+    // driver — restore works the same onto a filesystem or into a bucket.
+    const staging = await mkdtemp(path.join(tmpdir(), "ddas-restore-blobs-"));
+    try {
+      await run("tar", ["-xzf", path.join(opts.in, manifest.blobsTar), "-C", staging], out);
+      for (const name of await readdir(staging)) {
+        await opts.blobs.put(name, await readFile(path.join(staging, name)));
+      }
+    } finally {
+      await rm(staging, { recursive: true, force: true });
+    }
   }
 
   const client = await pool.connect();

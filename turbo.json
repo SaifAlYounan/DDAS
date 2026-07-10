@@ -7,7 +7,13 @@
     },
     "test": {
       "dependsOn": ["^build"],
-      "env": ["TEST_DATABASE_URL", "DATABASE_URL"]
+      "env": [
+        "TEST_DATABASE_URL",
+        "DATABASE_URL",
+        "TEST_S3_ENDPOINT",
+        "TEST_S3_ACCESS_KEY_ID",
+        "TEST_S3_SECRET_ACCESS_KEY"
+      ]
     },
     "typecheck": {
       "dependsOn": ["^build"]

@@ -77,13 +77,21 @@ program
   .option("--out <file>", "write the extraction scoreboard JSON here")
   .action(async (opts) => process.exit(await cmdEval(opts, out)));
 
+/** Blob store for backup/restore: DDAS_BLOB_DRIVER=fs|s3 (+ the DDAS_S3_* vars). */
+async function backupBlobStore(blobDir?: string) {
+  const { blobStoreFromEnv } = await import("@ddas/blob");
+  const blobs = await blobStoreFromEnv(process.env, { dir: blobDir });
+  await blobs.probe(); // fail fast with a clear error, not mid-backup
+  return blobs;
+}
+
 const backup = program.command("backup").description("backup and restore the whole deployment");
 backup
   .command("create")
   .description("pg_dump + blob tarball + manifest with the audit-chain head")
   .requiredOption("--out <dir>", "output directory")
   .option("--database-url <url>", "Postgres connection string (default: DATABASE_URL env)")
-  .option("--blob-dir <dir>", "blob directory (default: BLOB_DIR env or /data/blobs)")
+  .option("--blob-dir <dir>", "fs-driver blob directory (default: BLOB_DIR env or /data/blobs)")
   .action(async (opts: { out: string; databaseUrl?: string; blobDir?: string }) => {
     const url = opts.databaseUrl ?? process.env["DATABASE_URL"];
     if (!url) {
@@ -95,7 +103,7 @@ backup
       await cmdBackupCreate(
         {
           databaseUrl: url,
-          blobDir: opts.blobDir ?? process.env["BLOB_DIR"] ?? "/data/blobs",
+          blobs: await backupBlobStore(opts.blobDir),
           out: opts.out,
         },
         out
@@ -107,7 +115,7 @@ backup
   .description("restore a backup into an EMPTY database; verifies the audit chain against the manifest")
   .requiredOption("--in <dir>", "backup directory")
   .option("--database-url <url>", "Postgres connection string (default: DATABASE_URL env)")
-  .option("--blob-dir <dir>", "blob directory (default: BLOB_DIR env or /data/blobs)")
+  .option("--blob-dir <dir>", "fs-driver blob directory (default: BLOB_DIR env or /data/blobs)")
   .action(async (opts: { in: string; databaseUrl?: string; blobDir?: string }) => {
     const url = opts.databaseUrl ?? process.env["DATABASE_URL"];
     if (!url) {
@@ -119,7 +127,7 @@ backup
       await cmdBackupRestore(
         {
           databaseUrl: url,
-          blobDir: opts.blobDir ?? process.env["BLOB_DIR"] ?? "/data/blobs",
+          blobs: await backupBlobStore(opts.blobDir),
           in: opts.in,
         },
         out

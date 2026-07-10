@@ -3,6 +3,7 @@
  * Tests hand in a pool pointed at a test database and a fake extraction
  * provider; main.ts hands in the real ones. No global state.
  */
+import { createBlobStore, type BlobStore } from "@ddas/blob";
 import { migrate, createDb, type Db } from "@ddas/db";
 import type { ExtractionProvider } from "@ddas/extraction";
 import cookie from "@fastify/cookie";
@@ -66,6 +67,7 @@ export interface AppContext {
   pool: pg.Pool;
   db: Db;
   env: Env;
+  blobs: BlobStore;
   boss: PgBoss | null;
   extractionProvider: ExtractionProvider | null;
   metrics: Registry;
@@ -83,6 +85,24 @@ export type App = FastifyInstance<
 
 export async function buildApp(deps: AppDeps): Promise<App> {
   const { pool, env } = deps;
+
+  // Blob storage first, fail-closed: with driver=s3 an unreachable bucket or
+  // bad credentials must stop the boot with a clear error, not surface as a
+  // failed upload later.
+  const blobs = await createBlobStore({
+    driver: env.DDAS_BLOB_DRIVER,
+    dir: env.BLOB_DIR,
+    s3: {
+      endpoint: env.DDAS_S3_ENDPOINT,
+      region: env.DDAS_S3_REGION,
+      bucket: env.DDAS_S3_BUCKET ?? "",
+      accessKeyId: env.DDAS_S3_ACCESS_KEY_ID ?? "",
+      secretAccessKey: env.DDAS_S3_SECRET_ACCESS_KEY ?? "",
+      forcePathStyle: env.DDAS_S3_FORCE_PATH_STYLE,
+    },
+  });
+  await blobs.probe();
+
   const db = createDb(pool);
   await migrate(db);
 
@@ -144,6 +164,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
     pool,
     db,
     env,
+    blobs,
     boss,
     extractionProvider: deps.extractionProvider,
     metrics,

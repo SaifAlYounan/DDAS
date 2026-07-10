@@ -208,7 +208,34 @@ Reject anything where `|now − t| > 300s`; use `X-DDAS-Delivery` for idempotenc
 
 Unauthenticated requests key by IP. The login route additionally keeps its in-process per-email/per-IP attempt limits and timing-oracle protections.
 
-**Backup / restore** — `ddas backup create --out <dir>` writes a `pg_dump` + blob tarball + a manifest carrying the audit-chain head; `ddas backup restore --in <dir>` refuses a non-empty database and **fails loudly** if the restored chain doesn't reproduce that head.
+**Backup / restore** — `ddas backup create --out <dir>` writes a `pg_dump` + blob tarball + a manifest carrying the audit-chain head; `ddas backup restore --in <dir>` refuses a non-empty database and **fails loudly** if the restored chain doesn't reproduce that head. Blobs flow through the configured blob driver, so backup and restore work identically whether documents live on disk or in a bucket.
+
+### S3-compatible blob storage
+
+Document blobs live on the local filesystem by default (`BLOB_DIR`, the compose `blobs` volume). Set `DDAS_BLOB_DRIVER=s3` to store them in any S3-compatible bucket instead — AWS S3, MinIO, Cloudflare R2, Ceph RGW. Keys mirror the filesystem layout (flat, key = the document's sha256), the server **refuses to boot** if the bucket is unreachable or the credentials are bad, and blob content still only ever leaves through the authenticated document routes: DDAS sets no public ACLs and mints no presigned URLs, so the bucket can (and should) stay fully private.
+
+| Variable | Meaning |
+|---|---|
+| `DDAS_BLOB_DRIVER` | `fs` (default) or `s3` |
+| `DDAS_S3_ENDPOINT` | Endpoint URL. **Leave unset for AWS itself**; set for MinIO/R2/Ceph (e.g. `http://minio:9000`) |
+| `DDAS_S3_REGION` | Bucket region (AWS); harmless default `us-east-1` elsewhere |
+| `DDAS_S3_BUCKET` | Bucket name (required) |
+| `DDAS_S3_ACCESS_KEY_ID` | Access key (required) |
+| `DDAS_S3_SECRET_ACCESS_KEY` | Secret key (required) |
+| `DDAS_S3_FORCE_PATH_STYLE` | `true` for MinIO and most self-hosted stores; leave unset for AWS/R2 |
+
+**MinIO quickstart** — the compose file ships an optional MinIO under the `s3` profile, with a one-shot bucket-create:
+
+```bash
+cd deploy
+docker compose --profile s3 up -d          # starts postgres + app + minio (+ bucket ddas-blobs)
+```
+
+then uncomment the `DDAS_BLOB_DRIVER`/`DDAS_S3_*` lines on the `app` service and `docker compose up -d app` again. (Change `MINIO_ROOT_PASSWORD` in production, and keep it in sync with `DDAS_S3_SECRET_ACCESS_KEY`.)
+
+**AWS** — leave `DDAS_S3_ENDPOINT` unset, set the region, bucket, and an IAM key whose policy allows `s3:HeadBucket`, `s3:GetObject`, `s3:PutObject`, `s3:ListBucket` on the bucket. Block all public access on the bucket — DDAS never needs it public. **Cloudflare R2** — endpoint `https://<account-id>.r2.cloudflarestorage.com`, any region value, an R2 API token as the key pair; path style is not needed.
+
+`ddas backup`/`restore` pick the driver from the same environment variables (plus `--blob-dir` for the fs driver), so a backup taken from a bucket restores onto a filesystem and vice versa — the tarball format is identical.
 
 **Tamper-evidence** — periodically `GET /api/v1/audit/checkpoint` and store the small JSON **outside** the deployment. Verifying against it later defeats even a database-level history rewrite.
 

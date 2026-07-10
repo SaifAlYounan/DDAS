@@ -3,7 +3,6 @@
  * request_authority tool — one pipeline regardless of who (or what) submits.
  */
 import { createHash } from "node:crypto";
-import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { appendAuditEvent, type AuditActor } from "@ddas/audit";
 import type { CompiledPolicy } from "@ddas/policy";
@@ -61,7 +60,6 @@ export async function createRequest(
     throw new ApiError("validation_failed", "at least one document is required");
   }
   for (const doc of args.documents) assertSupportedDocument(doc.name);
-  await mkdir(ctx.env.BLOB_DIR, { recursive: true });
 
   const requestId = await withTx(ctx.pool, async (client) => {
     const inserted = await client.query<{ id: string }>(
@@ -79,7 +77,7 @@ export async function createRequest(
 
     for (const [docIndex, doc] of args.documents.entries()) {
       const sha256 = createHash("sha256").update(doc.content).digest("hex");
-      await writeFile(path.join(ctx.env.BLOB_DIR, sha256), doc.content);
+      await ctx.blobs.put(sha256, doc.content);
       const documentRow = await client.query<{ id: string }>(
         `INSERT INTO documents (request_id, doc_index, name, sha256, content_type, size_bytes, extracted_text)
          VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
