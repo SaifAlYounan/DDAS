@@ -22,6 +22,13 @@
       "when": 1783527780289,
       "tag": "0002_webhook_fanout",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783686072918,
+      "tag": "0003_viewer_role",
+      "breakpoints": true
     }
   ]
 }

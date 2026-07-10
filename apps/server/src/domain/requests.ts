@@ -124,10 +124,11 @@ export type AccessMode = "read" | "write";
  * requester who owns it; the accountable HUMAN OWNER when the requester is an
  * agent (so the owner can attest the human-gated facts on the agent's
  * request); an admin (everything); approvers and auditors as trusted
- * reviewers (auditors read-only). A bare requester can therefore never reach
- * ANOTHER requester's facts, citations, derivation, or state — the hole the
- * MCP ownRequest guard already closed for agents, now closed on the REST side.
- * Returns the owning requester's id.
+ * reviewers (auditors read-only); viewers read-only (admin-wide read
+ * visibility, no writes of any kind). A bare requester can therefore never
+ * reach ANOTHER requester's facts, citations, derivation, or state — the hole
+ * the MCP ownRequest guard already closed for agents, now closed on the REST
+ * side. Returns the owning requester's id.
  */
 export async function assertRequestAccess(
   client: pg.ClientBase | pg.Pool,
@@ -148,7 +149,8 @@ export async function assertRequestAccess(
     row.rows[0].owner_principal_id === principal.id ||
     principal.roles.includes("admin") ||
     principal.roles.includes("approver") ||
-    (mode === "read" && principal.roles.includes("auditor"));
+    (mode === "read" &&
+      (principal.roles.includes("auditor") || principal.roles.includes("viewer")));
   if (!ok) throw new ApiError("forbidden", "you do not have access to this request");
   return requesterId;
 }

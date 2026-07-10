@@ -7,7 +7,14 @@ import { ApiError } from "../errors.js";
 import { newApiKey } from "../plugins/auth.js";
 import { ARGON2_OPTS } from "./auth.js";
 
-const RoleEnum = z.enum(["admin", "policy_author", "approver", "requester", "auditor"]);
+const RoleEnum = z.enum([
+  "admin",
+  "policy_author",
+  "approver",
+  "requester",
+  "auditor",
+  "viewer",
+]);
 
 const PrincipalRow = z.object({
   id: z.string(),

@@ -1,0 +1,1 @@
+ALTER TYPE "public"."role_name" ADD VALUE 'viewer';

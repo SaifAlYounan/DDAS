@@ -253,6 +253,7 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
     await mk("Bram", ["approver"]); // supervisory board
     await mk("Astrid", ["auditor"]);
     await mk("Mallory", ["requester"]); // a DIFFERENT requester — must not see Ruben's data
+    await mk("Vera", ["viewer"]); // read-only: sees everything, touches nothing
 
     const agent = await as("admin", {
       method: "POST",
@@ -331,6 +332,7 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
     await login("petra", "petra@kolvarra.test", "petra-password-123");
     await login("auditor", "astrid@kolvarra.test", "astrid-password-123");
     await login("mallory", "mallory@kolvarra.test", "mallory-password-123");
+    await login("viewer", "vera@kolvarra.test", "vera-password-123");
   }, 60_000);
 
   afterAll(async () => {
@@ -601,6 +603,238 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
         url: `/api/v1/requests/${requestId}`,
       });
       expect(ownerRead.statusCode).toBe(200);
+    }, 60_000);
+  });
+
+  describe("viewer role (read-only)", () => {
+    it("reads everything an admin can read — including other users' requests", async () => {
+      // Roles come back as a REAL array (regression: array_agg over the enum
+      // used to return an unparsed '{...}' string that broke role gates).
+      const me = await as("viewer", { method: "GET", url: "/api/v1/auth/me" });
+      expect(me.statusCode).toBe(200);
+      const body = me.json() as { roles: string[] };
+      expect(Array.isArray(body.roles)).toBe(true);
+      expect(body.roles).toEqual(["viewer"]);
+
+      // A request owned by Ruben, confirmed through to a classification.
+      const c = loadCase("routine-spares-po");
+      const { requestId, factSetId } = await submitCase(c, "human");
+      const confirm = await as("requester", {
+        method: "POST",
+        url: `/api/v1/fact-sets/${factSetId}/confirm`,
+        payload: {},
+      });
+      expect(confirm.statusCode).toBe(200);
+      const classificationId = (confirm.json() as { classificationId: string }).classificationId;
+
+      const list = await as("viewer", { method: "GET", url: "/api/v1/requests" });
+      expect(list.statusCode).toBe(200);
+      expect((list.json() as unknown[]).length).toBeGreaterThan(0);
+
+      const detail = await as("viewer", { method: "GET", url: `/api/v1/requests/${requestId}` });
+      expect(detail.statusCode).toBe(200);
+      const docs = (detail.json() as { documents: Array<{ id: string }> }).documents;
+
+      const text = await as("viewer", {
+        method: "GET",
+        url: `/api/v1/documents/${docs[0]!.id}/text`,
+      });
+      expect(text.statusCode).toBe(200);
+
+      const classification = await as("viewer", {
+        method: "GET",
+        url: `/api/v1/classifications/${classificationId}`,
+      });
+      expect(classification.statusCode).toBe(200);
+      expect((classification.json() as { derivation: unknown }).derivation).toBeDefined();
+
+      const policies = await as("viewer", { method: "GET", url: "/api/v1/policies" });
+      expect(policies.statusCode).toBe(200);
+      const versions = await as("viewer", {
+        method: "GET",
+        url: "/api/v1/policies/kolvarra-risk/versions",
+      });
+      expect(versions.statusCode).toBe(200);
+      const version = await as("viewer", {
+        method: "GET",
+        url: `/api/v1/policy-versions/${policyVersionId}`,
+      });
+      expect(version.statusCode).toBe(200);
+
+      const org = await as("viewer", { method: "GET", url: "/api/v1/org/tree" });
+      expect(org.statusCode).toBe(200);
+    }, 60_000);
+
+    it("gets 403 on every write class and on role-gated surfaces", async () => {
+      // A live target owned by Ruben, left in facts_review (draft fact set).
+      const c = loadCase("routine-spares-po");
+      const { requestId, factSetId } = await submitCase(c, "human");
+      const anyUuid = "00000000-0000-4000-8000-000000000000";
+
+      const expect403 = async (
+        label: string,
+        opts: { method: string; url: string; payload?: unknown; headers?: Record<string, string> }
+      ) => {
+        const response = await as("viewer", opts);
+        expect(response.statusCode, label).toBe(403);
+      };
+
+      // Requests / facts — no submit, attest, confirm, clone, or cancel.
+      const { payload, headers } = multipart(
+        { title: "viewer write probe", policySlug: "kolvarra-risk" },
+        [{ filename: "x.txt", content: "hello" }]
+      );
+      await expect403("submit", { method: "POST", url: "/api/v1/requests", payload, headers });
+      await expect403("attest", {
+        method: "PATCH",
+        url: `/api/v1/fact-sets/${factSetId}/facts/amount_base_total`,
+        payload: { status: "NOT_FOUND" },
+      });
+      await expect403("confirm", {
+        method: "POST",
+        url: `/api/v1/fact-sets/${factSetId}/confirm`,
+        payload: {},
+      });
+      await expect403("clone", { method: "POST", url: `/api/v1/fact-sets/${factSetId}/clone` });
+      await expect403("cancel", { method: "POST", url: `/api/v1/requests/${requestId}/cancel` });
+      await expect403("replay", {
+        method: "POST",
+        url: `/api/v1/classifications/${anyUuid}/replay`,
+        payload: {},
+      });
+
+      // Approvals — not even the read surfaces (that is approver/auditor work).
+      await expect403("inbox", { method: "GET", url: "/api/v1/approvals/inbox" });
+      await expect403("task detail", { method: "GET", url: `/api/v1/approval-tasks/${anyUuid}` });
+      await expect403("approve", {
+        method: "POST",
+        url: `/api/v1/approval-tasks/${anyUuid}/approve`,
+        payload: {},
+      });
+      await expect403("reject", {
+        method: "POST",
+        url: `/api/v1/approval-tasks/${anyUuid}/reject`,
+        payload: { comment: "no" },
+      });
+
+      // Policy authoring & simulation.
+      await expect403("lint", {
+        method: "POST",
+        url: "/api/v1/policies/lint",
+        payload: { sourceYaml: "x: 1" },
+      });
+      await expect403("draft version", {
+        method: "POST",
+        url: "/api/v1/policies/kolvarra-risk/versions",
+        payload: { sourceYaml: "x: 1" },
+      });
+      await expect403("activate", {
+        method: "POST",
+        url: `/api/v1/policy-versions/${anyUuid}/activate`,
+        payload: { overrideReason: "viewer must never activate" },
+      });
+      await expect403("retire", {
+        method: "POST",
+        url: `/api/v1/policy-versions/${anyUuid}/retire`,
+      });
+      await expect403("simulate", {
+        method: "POST",
+        url: "/api/v1/simulations",
+        payload: { baselinePolicyVersionId: anyUuid, candidateYaml: "x: 1" },
+      });
+
+      // Org writes.
+      await expect403("org unit", {
+        method: "POST",
+        url: "/api/v1/org/units",
+        payload: { name: "Viewer Unit" },
+      });
+      await expect403("org position", {
+        method: "POST",
+        url: "/api/v1/org/positions",
+        payload: { orgUnitId: anyUuid, title: "X", authorityTier: 1 },
+      });
+      await expect403("org assignment", {
+        method: "POST",
+        url: "/api/v1/org/position-assignments",
+        payload: {
+          positionId: anyUuid,
+          principalId: anyUuid,
+          validFrom: "2020-01-01T00:00:00.000Z",
+        },
+      });
+      await expect403("org delegation", {
+        method: "POST",
+        url: "/api/v1/org/delegations",
+        payload: {
+          fromPrincipalId: anyUuid,
+          toPrincipalId: anyUuid,
+          maxTier: 1,
+          validFrom: "2020-01-01T00:00:00.000Z",
+          reason: "nope",
+        },
+      });
+      await expect403("revoke delegation", {
+        method: "DELETE",
+        url: `/api/v1/org/delegations/${anyUuid}`,
+      });
+      await expect403("org import", {
+        method: "POST",
+        url: "/api/v1/org/import",
+        payload: { units: [], people: [], positions: [] },
+      });
+
+      // Audit-chain endpoints stay the auditor's job.
+      await expect403("audit events", { method: "GET", url: "/api/v1/audit/events" });
+      await expect403("audit verify", { method: "POST", url: "/api/v1/audit/verify", payload: {} });
+      await expect403("audit checkpoint", { method: "GET", url: "/api/v1/audit/checkpoint" });
+
+      // Admin surfaces (including the secrets: API keys, webhooks, SCIM-ish config).
+      await expect403("principals list", { method: "GET", url: "/api/v1/admin/principals" });
+      await expect403("principal create", {
+        method: "POST",
+        url: "/api/v1/admin/principals",
+        payload: { kind: "human", name: "X", email: "x@x.test" },
+      });
+      await expect403("role edit", {
+        method: "POST",
+        url: `/api/v1/admin/principals/${anyUuid}/roles`,
+        payload: { roles: ["viewer"] },
+      });
+      await expect403("api keys list", { method: "GET", url: "/api/v1/admin/api-keys" });
+      await expect403("api key mint", {
+        method: "POST",
+        url: "/api/v1/admin/api-keys",
+        payload: { principalId: anyUuid, scopes: ["requests:read"] },
+      });
+      await expect403("api key revoke", {
+        method: "DELETE",
+        url: `/api/v1/admin/api-keys/${anyUuid}`,
+      });
+      await expect403("settings read", { method: "GET", url: "/api/v1/admin/settings" });
+      await expect403("settings write", {
+        method: "PUT",
+        url: "/api/v1/admin/settings",
+        payload: { slaHoursByTier: { "1": 24 } },
+      });
+      await expect403("webhooks list", { method: "GET", url: "/api/v1/admin/webhooks" });
+      await expect403("webhook create", {
+        method: "POST",
+        url: "/api/v1/admin/webhooks",
+        payload: { url: "http://127.0.0.1:9/x", events: ["decision.recorded"] },
+      });
+      await expect403("webhook delete", {
+        method: "DELETE",
+        url: `/api/v1/admin/webhooks/${anyUuid}`,
+      });
+      await expect403("webhook deliveries", {
+        method: "GET",
+        url: `/api/v1/admin/webhooks/${anyUuid}/deliveries`,
+      });
+      await expect403("webhook redeliver", {
+        method: "POST",
+        url: `/api/v1/admin/webhook-deliveries/${anyUuid}/redeliver`,
+      });
     }, 60_000);
   });
 

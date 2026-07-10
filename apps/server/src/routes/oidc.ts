@@ -13,7 +13,14 @@ import { ApiError } from "../errors.js";
 import { newSessionToken, SESSION_COOKIE, SESSION_TTL_MS, type Role } from "../plugins/auth.js";
 
 const FLOW_COOKIE = "ddas_oidc_flow";
-const VALID_ROLES = new Set(["admin", "policy_author", "approver", "requester", "auditor"]);
+const VALID_ROLES = new Set([
+  "admin",
+  "policy_author",
+  "approver",
+  "requester",
+  "auditor",
+  "viewer",
+]);
 
 function oidcEnabled(ctx: AppContext): boolean {
   return Boolean(

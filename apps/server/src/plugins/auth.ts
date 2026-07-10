@@ -1,7 +1,9 @@
 /**
  * Session auth: opaque 32-byte token in an HttpOnly SameSite=Lax cookie;
- * only its sha256 is stored. 30-day sliding window. Five fixed roles;
- * admin passes every role gate.
+ * only its sha256 is stored. 30-day sliding window. Six fixed roles;
+ * admin passes every role gate. `viewer` is strictly read-only: it is
+ * deliberately named in NO requireRole gate, so it can only reach routes
+ * guarded by bare requireAuth (the shared read surface).
  */
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import type { FastifyReply, FastifyRequest } from "fastify";
@@ -12,7 +14,13 @@ import { ApiError } from "../errors.js";
 export const SESSION_COOKIE = "ddas_session";
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
 
-export type Role = "admin" | "policy_author" | "approver" | "requester" | "auditor";
+export type Role =
+  | "admin"
+  | "policy_author"
+  | "approver"
+  | "requester"
+  | "auditor"
+  | "viewer";
 
 export const API_KEY_SCOPES = [
   "requests:read",

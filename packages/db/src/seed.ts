@@ -21,7 +21,7 @@ export interface OrgSnapshot {
     email?: string;
     kind?: "human" | "agent";
     owner?: string;
-    roles?: Array<"admin" | "policy_author" | "approver" | "requester" | "auditor">;
+    roles?: Array<"admin" | "policy_author" | "approver" | "requester" | "auditor" | "viewer">;
   }>;
   positions: Array<{
     key: string;

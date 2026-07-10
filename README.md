@@ -63,7 +63,7 @@ DDAS routes to **positions in your org**, evaluated **as of the moment of the re
 
 ### 2a. People and roles — Admin
 
-Every person is a **principal**. There are five fixed roles; a principal can hold several. Admin implies all of them.
+Every person is a **principal**. There are six fixed roles; a principal can hold several. Admin implies all of them.
 
 | Role | Can |
 |---|---|
@@ -72,6 +72,7 @@ Every person is a **principal**. There are five fixed roles; a principal can hol
 | `requester` | submit requests, review facts |
 | `approver` | see the inbox, approve/reject, review facts |
 | `auditor` | read the audit log, verify the chain, replay classifications |
+| `viewer` | read-only: browse every request, classification, derivation, policy, and the org tree — no writes, no admin surfaces, no audit-chain endpoints |
 
 In **Admin → Principals → New**, create the people you need. Give at least one person `requester`, and enough people `approver` to cover every authority tier your policy uses. (You can also create **agents** here — an agent must name an accountable human owner; see [AI agents](#6-ai-agents-api-keys--mcp).)
 

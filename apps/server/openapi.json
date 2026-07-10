@@ -355,7 +355,8 @@
                         "policy_author",
                         "approver",
                         "requester",
-                        "auditor"
+                        "auditor",
+                        "viewer"
                       ]
                     },
                     "default": []
@@ -413,7 +414,8 @@
                         "policy_author",
                         "approver",
                         "requester",
-                        "auditor"
+                        "auditor",
+                        "viewer"
                       ]
                     }
                   }
@@ -941,7 +943,8 @@
                               "policy_author",
                               "approver",
                               "requester",
-                              "auditor"
+                              "auditor",
+                              "viewer"
                             ]
                           }
                         }

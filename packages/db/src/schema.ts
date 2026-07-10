@@ -31,6 +31,7 @@ export const roleName = pgEnum("role_name", [
   "approver",
   "requester",
   "auditor",
+  "viewer",
 ]);
 export const policyVersionStatus = pgEnum("policy_version_status", [
   "draft",

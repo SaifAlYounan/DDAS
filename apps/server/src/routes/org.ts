@@ -17,7 +17,9 @@ const OrgSnapshotSchema = z.object({
       kind: z.enum(["human", "agent"]).optional(),
       owner: z.string().optional(),
       roles: z
-        .array(z.enum(["admin", "policy_author", "approver", "requester", "auditor"]))
+        .array(
+          z.enum(["admin", "policy_author", "approver", "requester", "auditor", "viewer"])
+        )
         .optional(),
     })
   ),

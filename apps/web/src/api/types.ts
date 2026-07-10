@@ -4,8 +4,21 @@
  * truth — keep these in sync when the API changes.
  */
 
-export type Role = "admin" | "policy_author" | "approver" | "requester" | "auditor";
-export const ALL_ROLES: Role[] = ["admin", "policy_author", "approver", "requester", "auditor"];
+export type Role =
+  | "admin"
+  | "policy_author"
+  | "approver"
+  | "requester"
+  | "auditor"
+  | "viewer";
+export const ALL_ROLES: Role[] = [
+  "admin",
+  "policy_author",
+  "approver",
+  "requester",
+  "auditor",
+  "viewer",
+];
 
 export interface Me {
   id: string;
