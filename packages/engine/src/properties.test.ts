@@ -146,7 +146,12 @@ describe("engine properties", () => {
     );
   });
 
-  it("P5 unknown-dominance: NOT_FOUND below the conservative band never routes lower; escalated never self-approves", () => {
+  // P5 generates many precondition-rejected cases (escalate category + FOUND
+  // fact + below-conservative band), so its 300 runs draw far more samples
+  // than the other properties. Under a parallel `pnpm test` the default 5s
+  // vitest budget flakes; the property itself is untouched — it just gets the
+  // time it needs.
+  it("P5 unknown-dominance: NOT_FOUND below the conservative band never routes lower; escalated never self-approves", { timeout: 120_000 }, () => {
     fc.assert(
       fc.property(caseArb, fc.nat(10), ({ doc, factSet, subject }, catPick) => {
         const policy = compileCached(doc);
