@@ -52,7 +52,7 @@ export async function freshTestDb(suite = "shared"): Promise<TestDb> {
     "DROP SCHEMA public CASCADE; CREATE SCHEMA public; DROP SCHEMA IF EXISTS drizzle CASCADE; DROP SCHEMA IF EXISTS pgboss CASCADE;"
   );
   const db = createDb(pool);
-  await migrate(db);
+  await migrate(pool);
   return { db, pool, close: () => pool.end() };
 }
 

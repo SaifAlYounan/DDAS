@@ -1,3 +1,10 @@
+{{- $replicas := int .Values.replicaCount }}
+{{- $blobDriver := default "fs" (index .Values.env "DDAS_BLOB_DRIVER") }}
+{{- $fsBlobs := ne $blobDriver "s3" }}
+{{- $sharedFs := eq .Values.blobs.accessMode "ReadWriteMany" }}
+{{- if and (gt $replicas 1) $fsBlobs (not $sharedFs) }}
+{{- fail "replicaCount > 1 needs shared blob storage: set env.DDAS_BLOB_DRIVER=s3 (+ the DDAS_S3_* env vars, recommended) or blobs.accessMode=ReadWriteMany on an RWX-capable storage class. See docs/ha.md." }}
+{{- end }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -5,9 +12,13 @@ metadata:
   labels:
     {{- include "ddas.labels" . | nindent 4 }}
 spec:
-  replicas: 1
+  replicas: {{ $replicas }}
   strategy:
-    type: Recreate # single writer over the blob volume
+    {{- if and $fsBlobs (not $sharedFs) }}
+    type: Recreate # single writer over the RWO blob volume
+    {{- else }}
+    type: RollingUpdate
+    {{- end }}
   selector:
     matchLabels:
       app.kubernetes.io/name: ddas
@@ -17,6 +28,7 @@ spec:
       labels:
         {{- include "ddas.labels" . | nindent 8 }}
     spec:
+      terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
       containers:
         - name: ddas
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -30,8 +42,10 @@ spec:
                 secretKeyRef:
                   name: {{ include "ddas.databaseSecretName" . }}
                   key: {{ .Values.database.existingSecretKey }}
+            {{- if $fsBlobs }}
             - name: BLOB_DIR
               value: /data/blobs
+            {{- end }}
             {{- if and .Values.admin.email .Values.admin.password }}
             - name: DDAS_ADMIN_EMAIL
               value: {{ .Values.admin.email | quote }}
@@ -69,20 +83,32 @@ spec:
               path: /healthz
               port: http
             initialDelaySeconds: 5
+            periodSeconds: 10
           livenessProbe:
             httpGet:
               path: /healthz
               port: http
             initialDelaySeconds: 15
+            periodSeconds: 20
+          lifecycle:
+            preStop:
+              exec:
+                # Let endpoint removal propagate before the SIGTERM drain starts.
+                command: ["sleep", "5"]
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+          {{- if $fsBlobs }}
           volumeMounts:
             - name: blobs
               mountPath: /data/blobs
+          {{- end }}
+      {{- if $fsBlobs }}
       volumes:
         - name: blobs
           persistentVolumeClaim:
             claimName: {{ include "ddas.fullname" . }}-blobs
+      {{- end }}
+{{- if $fsBlobs }}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -91,10 +117,11 @@ metadata:
   labels:
     {{- include "ddas.labels" . | nindent 4 }}
 spec:
-  accessModes: [ReadWriteOnce]
+  accessModes: [{{ .Values.blobs.accessMode }}]
   {{- if .Values.blobs.storageClassName }}
   storageClassName: {{ .Values.blobs.storageClassName }}
   {{- end }}
   resources:
     requests:
       storage: {{ .Values.blobs.size }}
+{{- end }}

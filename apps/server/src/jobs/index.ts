@@ -15,13 +15,31 @@ import { transition } from "../domain/request-machine.js";
 import { runSimulation } from "../domain/simulation.js";
 import { bossDb, withTx } from "../domain/tx.js";
 
+/**
+ * Advisory-lock key for queue setup (distinct from the migration, bootstrap,
+ * and audit-chain keys). createQueue creates a partition of pg-boss's job
+ * table — DDL — and two replicas booting simultaneously deadlock doing it
+ * concurrently, so queue creation is serialized cluster-wide.
+ */
+const QUEUE_SETUP_LOCK_KEY = 7_474_103;
+
 export async function registerJobs(app: App, ctx: AppContext): Promise<void> {
   const boss = ctx.boss;
   if (!boss) return;
 
-  await boss.createQueue("extraction.run");
-  await boss.createQueue("sla.check");
-  await boss.createQueue("simulation.run");
+  const client = await ctx.pool.connect();
+  try {
+    await client.query("SELECT pg_advisory_lock($1)", [QUEUE_SETUP_LOCK_KEY]);
+    try {
+      await boss.createQueue("extraction.run");
+      await boss.createQueue("sla.check");
+      await boss.createQueue("simulation.run");
+    } finally {
+      await client.query("SELECT pg_advisory_unlock($1)", [QUEUE_SETUP_LOCK_KEY]);
+    }
+  } finally {
+    client.release();
+  }
 
   await boss.work<{ requestId: string }>(
     "extraction.run",

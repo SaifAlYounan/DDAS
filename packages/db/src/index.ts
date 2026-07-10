@@ -26,9 +26,31 @@ const MIGRATIONS_DIR = path.resolve(
 );
 
 /**
+ * Advisory-lock key serializing migrations (arbitrary constant, project-unique;
+ * the audit chain and admin bootstrap use their own keys).
+ */
+const MIGRATION_LOCK_KEY = 7_474_101;
+
+/**
  * Apply all pending migrations. The server refuses to boot on schema mismatch
  * by running this at startup; `ddas migrate` runs it explicitly.
+ *
+ * Safe under concurrent boots (replicas > 1): drizzle's migrator has no lock
+ * of its own, so two nodes starting together would race the same DDL. We take
+ * a session-level advisory lock on a dedicated connection and run the whole
+ * migrator on that same connection — the second node blocks, then finds the
+ * journal already advanced and applies nothing.
  */
-export async function migrate(db: Db, migrationsFolder = MIGRATIONS_DIR): Promise<void> {
-  await drizzleMigrate(db, { migrationsFolder });
+export async function migrate(pool: pg.Pool, migrationsFolder = MIGRATIONS_DIR): Promise<void> {
+  const client = await pool.connect();
+  try {
+    await client.query("SELECT pg_advisory_lock($1)", [MIGRATION_LOCK_KEY]);
+    try {
+      await drizzleMigrate(drizzle(client, { schema }), { migrationsFolder });
+    } finally {
+      await client.query("SELECT pg_advisory_unlock($1)", [MIGRATION_LOCK_KEY]);
+    }
+  } finally {
+    client.release();
+  }
 }

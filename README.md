@@ -239,7 +239,7 @@ then uncomment the `DDAS_BLOB_DRIVER`/`DDAS_S3_*` lines on the `app` service and
 
 **Tamper-evidence** — periodically `GET /api/v1/audit/checkpoint` and store the small JSON **outside** the deployment. Verifying against it later defeats even a database-level history rewrite.
 
-**Kubernetes** — a single-replica, bring-your-own-Postgres Helm chart is in [`deploy/helm/ddas`](deploy/helm/ddas).
+**Kubernetes** — a bring-your-own-Postgres Helm chart is in [`deploy/helm/ddas`](deploy/helm/ddas). Single replica by default; for HA set `replicaCount` > 1 with S3 blob storage — the supported multi-replica topology (what is shared where, scaling limits) is documented in [`docs/ha.md`](docs/ha.md).
 
 ### Extraction providers
 

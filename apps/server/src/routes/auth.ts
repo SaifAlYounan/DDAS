@@ -29,7 +29,10 @@ const PrincipalOut = z.object({
 
 export function registerAuthRoutes(app: App, ctx: AppContext): void {
   // Per-email limiter (guesses at one account) AND a coarser per-IP limiter
-  // (credential stuffing across many emails from one source).
+  // (credential stuffing across many emails from one source). Both are
+  // per-node on purpose — defense in depth under the Postgres-backed auth
+  // class limiter that holds across replicas (rationale in plugins/auth.ts
+  // and docs/ha.md).
   const perEmailLimiter = makeLoginRateLimiter(10, 60_000);
   const perIpLimiter = makeLoginRateLimiter(50, 60_000);
   // A fixed argon2id hash to verify against when no account matches, so the

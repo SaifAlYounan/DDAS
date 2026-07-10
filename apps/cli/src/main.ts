@@ -145,10 +145,10 @@ program
       out.error("DATABASE_URL is not set (or pass --database-url)");
       process.exit(2);
     }
-    const { createDb, createPool, migrate } = await import("@ddas/db");
+    const { createPool, migrate } = await import("@ddas/db");
     const pool = createPool(url);
     try {
-      await migrate(createDb(pool));
+      await migrate(pool);
       out.log("migrations applied — schema is current");
     } finally {
       await pool.end();

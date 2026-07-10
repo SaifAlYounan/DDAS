@@ -5,7 +5,19 @@ Console + API:
   open http://localhost:3000
 
 Migrations apply automatically at boot. First boot creates the admin from
-admin.email / admin.password (only if no admin exists yet).
+admin.email / admin.password (only if no admin exists yet). Both are safe
+under replicas > 1: migrations and the bootstrap take advisory locks.
+{{- if gt (int .Values.replicaCount) 1 }}
+
+HA mode: {{ .Values.replicaCount }} replicas over one Postgres. Sessions,
+rate limits, jobs, and webhook delivery are shared through the database;
+blobs MUST be on shared storage (env.DDAS_BLOB_DRIVER=s3 or an RWX volume —
+the chart refused to render otherwise). Details: docs/ha.md.
+{{- else }}
+
+Scaling out later: set replicaCount > 1 AND move blobs to shared storage
+(env.DDAS_BLOB_DRIVER=s3 recommended). See docs/ha.md.
+{{- end }}
 
 Remember: export an audit checkpoint (GET /api/v1/audit/checkpoint) and store
 it OUTSIDE the cluster — that is your defense against database-level history

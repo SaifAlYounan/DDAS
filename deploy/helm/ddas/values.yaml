@@ -1,6 +1,10 @@
-# DDAS reference values. Single replica by design: the SLA/webhook workers
-# claim work with SKIP LOCKED so replicas are safe, but HA is a Phase-4
-# concern — start simple.
+# DDAS reference values. Runs single-replica by default; set replicaCount > 1
+# for HA (N app replicas over one Postgres). With replicas > 1 the blob store
+# must be shared: set env.DDAS_BLOB_DRIVER=s3 (+ the DDAS_S3_* env vars) or
+# blobs.accessMode=ReadWriteMany on an RWX storage class — the chart refuses
+# to render otherwise. See docs/ha.md for the supported topology.
+replicaCount: 1
+
 image:
   repository: ghcr.io/saifalyounan/ddas
   tag: "" # defaults to appVersion
@@ -25,9 +29,24 @@ extraction:
   apiKey: ""
   baseUrl: ""
 
+# fs-driver blob volume (skipped entirely when env.DDAS_BLOB_DRIVER=s3).
 blobs:
   size: 10Gi
   storageClassName: ""
+  # ReadWriteOnce pins all pods to one node's volume. For replicaCount > 1
+  # on the fs driver, set ReadWriteMany and an RWX-capable storage class —
+  # but prefer the s3 driver (see docs/ha.md).
+  accessMode: ReadWriteOnce
+
+# Rendered only when replicaCount > 1: keeps at least minAvailable pod up
+# through voluntary disruptions (node drains, upgrades).
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+# SIGTERM → Fastify drains in-flight requests, then the pod exits; the preStop
+# sleep lets endpoint removal propagate before the drain starts.
+terminationGracePeriodSeconds: 30
 
 service:
   type: ClusterIP

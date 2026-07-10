@@ -104,7 +104,8 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   await blobs.probe();
 
   const db = createDb(pool);
-  await migrate(db);
+  // Advisory-locked inside @ddas/db — concurrent replica boots serialize here.
+  await migrate(pool);
 
   const app = Fastify({
     logger: { level: env.LOG_LEVEL },

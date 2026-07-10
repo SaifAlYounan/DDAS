@@ -197,12 +197,27 @@ export const authPlugin = fp(async (app, opts: { pool: pg.Pool }) => {
   });
 });
 
-/** Naive in-memory login rate limit: N attempts per key per window. */
+/**
+ * In-memory login rate limit: N attempts per key per window.
+ *
+ * PER-NODE BY DESIGN (see docs/ha.md). This is the inner, fine-grained layer
+ * (per email+IP) under the Postgres-backed auth-class limiter, which is the
+ * shared cross-replica backstop. It stays in memory deliberately: its keys
+ * embed attacker-controlled input (the attempted email), and mirroring them
+ * into the shared store would let an unauthenticated client mint rows there.
+ * With R replicas the effective per-email budget widens to at most R × limit,
+ * still far below the shared per-IP cap that holds cluster-wide.
+ */
 export function makeLoginRateLimiter(limit = 10, windowMs = 60_000) {
   const attempts = new Map<string, { count: number; resetAt: number }>();
+  const MAX_ENTRIES = 10_000;
   return {
     check(key: string): boolean {
       const now = Date.now();
+      // Bounded memory on long-lived nodes: shed expired entries once large.
+      if (attempts.size >= MAX_ENTRIES) {
+        for (const [k, v] of attempts) if (v.resetAt <= now) attempts.delete(k);
+      }
       const entry = attempts.get(key);
       if (!entry || entry.resetAt <= now) {
         attempts.set(key, { count: 1, resetAt: now + windowMs });
