@@ -20,6 +20,14 @@ export const ARGON2_OPTS: argon2.Options = {
   parallelism: 1,
 };
 
+/**
+ * The single password policy for every path that SETS a password (admin
+ * creation, self-service change). Min length 12 — one source of truth so
+ * the rule cannot drift between routes. Zod validation failures on a body
+ * field surface as 422 (validation_failed) via the global error mapper.
+ */
+export const passwordSchema = z.string().min(12);
+
 const PrincipalOut = z.object({
   id: z.string(),
   kind: z.enum(["human", "agent"]),
@@ -143,6 +151,81 @@ export function registerAuthRoutes(app: App, ctx: AppContext): void {
         });
       }
       reply.clearCookie(SESSION_COOKIE, { path: "/" });
+      return { ok: true };
+    }
+  );
+
+  // Self-service password change for a human principal with a local password.
+  //
+  // Rejected for accounts with no local password credential (agents, which
+  // authenticate by API key, and SCIM/OIDC-provisioned humans whose
+  // password_hash is null) — those are managed by the identity provider, so
+  // there is nothing to change here and we do NOT let them mint an initial
+  // password on this path (409, clear message).
+  //
+  // On success we revoke every OTHER session of the principal (a leaked
+  // session should not survive a password change) but KEEP the acting
+  // session — the caller stays logged in on the device they just used.
+  // API keys are a SEPARATE credential class (own lifecycle via /admin) and
+  // are deliberately left intact: a password change is not a key rotation.
+  app.post(
+    "/auth/password",
+    {
+      schema: {
+        tags: ["auth"],
+        body: z.object({
+          currentPassword: z.string().min(1),
+          newPassword: passwordSchema,
+        }),
+        response: { 200: z.object({ ok: z.boolean() }) },
+      },
+      preHandler: [app.requireAuth],
+    },
+    async (request) => {
+      const principal = request.principal!;
+
+      const row = await ctx.pool.query<{ password_hash: string | null }>(
+        "SELECT password_hash FROM principals WHERE id = $1",
+        [principal.id]
+      );
+      const passwordHash = row.rows[0]?.password_hash ?? null;
+      if (principal.kind !== "human" || passwordHash === null) {
+        throw new ApiError(
+          "conflict",
+          "this account has no password credential; it is managed via your identity provider"
+        );
+      }
+
+      // Constant-time verify (same argon2 path as login).
+      const valid = await argon2.verify(passwordHash, request.body.currentPassword);
+      if (!valid) throw new ApiError("unauthorized", "current password is incorrect");
+
+      const newHash = await argon2.hash(request.body.newPassword, ARGON2_OPTS);
+
+      // The session making this request (if any) — a cookie caller keeps it;
+      // an API-key caller has no session, so all sessions are revoked.
+      const currentToken = request.cookies[SESSION_COOKIE];
+      const keepSha = currentToken ? sha256hex(currentToken) : "";
+
+      await withTx(ctx.pool, async (client) => {
+        await client.query(
+          "UPDATE principals SET password_hash = $1 WHERE id = $2",
+          [newHash, principal.id]
+        );
+        // Revoke every OTHER session; empty keepSha matches no real token,
+        // so an API-key caller (no session) revokes all of them.
+        await client.query(
+          "DELETE FROM sessions WHERE principal_id = $1 AND token_sha256 <> $2",
+          [principal.id, keepSha]
+        );
+        await appendAuditEvent(client, {
+          actor: { kind: "principal", id: principal.id },
+          type: "principal.password_changed",
+          entity: { type: "principal", id: principal.id },
+          payload: {}, // never log the password
+        });
+      });
+
       return { ok: true };
     }
   );

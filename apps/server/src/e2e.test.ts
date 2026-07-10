@@ -18,6 +18,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { buildApp, type App } from "./app.js";
 import { bootstrapAdmin } from "./bootstrap.js";
 import { loadEnv } from "./env.js";
+import { newSessionToken, SESSION_COOKIE, SESSION_TTL_MS } from "./plugins/auth.js";
 
 const CORPUS_DIR = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -1495,6 +1496,174 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
 
       await mcp.close();
     }, 90_000);
+  });
+
+  describe("self-service password change", () => {
+    // A fresh human per test, so no test perturbs another's credential/sessions.
+    let seq = 0;
+    async function freshHuman(): Promise<{ id: string; email: string; password: string }> {
+      seq += 1;
+      const email = `pwuser${seq}@kolvarra.test`;
+      const password = `pwuser${seq}-password-1234`;
+      const created = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/principals",
+        payload: { kind: "human", name: `PwUser${seq}`, email, password, roles: ["requester"] },
+      });
+      expect(created.statusCode).toBe(200);
+      return { id: (created.json() as { id: string }).id, email, password };
+    }
+    async function loginCookie(email: string, password: string): Promise<string> {
+      const r = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/login",
+        payload: { email, password },
+      });
+      expect(r.statusCode).toBe(200);
+      const sc = r.headers["set-cookie"];
+      return (Array.isArray(sc) ? sc[0] : sc)!.split(";")[0]!;
+    }
+
+    it("changes it: old password fails, new works; other sessions die while the acting session and API keys survive", async () => {
+      const u = await freshHuman();
+      const acting = await loginCookie(u.email, u.password); // the device doing the change
+      const other = await loginCookie(u.email, u.password); // a second, older session
+
+      // An API key is a SEPARATE credential — it must survive a password change.
+      const keyResp = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/api-keys",
+        payload: { principalId: u.id, scopes: ["requests:read"] },
+      });
+      expect(keyResp.statusCode).toBe(200);
+      const apiKey = (keyResp.json() as { token: string }).token;
+
+      // Both sessions and the key are live before the change.
+      expect(
+        (await app.inject({ method: "GET", url: "/api/v1/auth/me", headers: { cookie: other } }))
+          .statusCode
+      ).toBe(200);
+
+      const newPassword = "pw-brand-new-password-9876";
+      const change = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/password",
+        headers: { cookie: acting },
+        payload: { currentPassword: u.password, newPassword },
+      });
+      expect(change.statusCode).toBe(200);
+      expect((change.json() as { ok: boolean }).ok).toBe(true);
+
+      // Old password no longer authenticates; the new one does.
+      const oldLogin = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/login",
+        payload: { email: u.email, password: u.password },
+      });
+      expect(oldLogin.statusCode).toBe(401);
+      const newLogin = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/login",
+        payload: { email: u.email, password: newPassword },
+      });
+      expect(newLogin.statusCode).toBe(200);
+
+      // Acting session survives; the other session is revoked.
+      expect(
+        (await app.inject({ method: "GET", url: "/api/v1/auth/me", headers: { cookie: acting } }))
+          .statusCode
+      ).toBe(200);
+      expect(
+        (await app.inject({ method: "GET", url: "/api/v1/auth/me", headers: { cookie: other } }))
+          .statusCode
+      ).toBe(401);
+
+      // The API key is untouched by a password change.
+      expect(
+        (await app.inject({
+          method: "GET",
+          url: "/api/v1/requests",
+          headers: { authorization: `Bearer ${apiKey}` },
+        })).statusCode
+      ).toBe(200);
+
+      // The change is on the audit chain (and carries no password material).
+      const events = await as("admin", {
+        method: "GET",
+        url: "/api/v1/audit/events?type=principal.password_changed&limit=100",
+      });
+      expect(events.statusCode).toBe(200);
+      const rows = events.json() as Array<{ entity: { id: string }; payload: Record<string, unknown> }>;
+      const mine = rows.find((e) => e.entity.id === u.id)!;
+      expect(mine).toBeTruthy();
+      expect(JSON.stringify(mine.payload)).not.toMatch(/password|pw-brand-new/i);
+    });
+
+    it("rejects a wrong current password (401) and leaves the credential unchanged", async () => {
+      const u = await freshHuman();
+      const cookie = await loginCookie(u.email, u.password);
+      const bad = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/password",
+        headers: { cookie },
+        payload: { currentPassword: "not-the-password-1", newPassword: "pw-brand-new-password-9876" },
+      });
+      expect(bad.statusCode).toBe(401);
+      // The original password still logs in — nothing changed.
+      const still = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/login",
+        payload: { email: u.email, password: u.password },
+      });
+      expect(still.statusCode).toBe(200);
+    });
+
+    it("rejects a too-short new password (422)", async () => {
+      const u = await freshHuman();
+      const cookie = await loginCookie(u.email, u.password);
+      const short = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/password",
+        headers: { cookie },
+        payload: { currentPassword: u.password, newPassword: "short" },
+      });
+      expect(short.statusCode).toBe(422);
+    });
+
+    it("rejects an agent — agents have no password credential (409)", async () => {
+      const resp = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/password",
+        headers: { authorization: `Bearer ${agentToken}` },
+        payload: { currentPassword: "irrelevant-1234", newPassword: "pw-brand-new-password-9876" },
+      });
+      expect(resp.statusCode).toBe(409);
+    });
+
+    it("rejects a SCIM/OIDC human with no local password (409)", async () => {
+      // A provisioned human has password_hash = null and logs in via the IdP,
+      // so we mint a session directly (there is no password to log in with).
+      const created = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/principals",
+        payload: { kind: "human", name: "Provisioned", email: "provisioned@kolvarra.test", roles: ["requester"] },
+      });
+      expect(created.statusCode).toBe(200);
+      const idpUserId = (created.json() as { id: string }).id;
+      const { token, tokenSha256 } = newSessionToken();
+      await pool.query(
+        "INSERT INTO sessions (principal_id, token_sha256, expires_at) VALUES ($1, $2, $3)",
+        [idpUserId, tokenSha256, new Date(Date.now() + SESSION_TTL_MS)]
+      );
+      const resp = await app.inject({
+        method: "POST",
+        url: "/api/v1/auth/password",
+        headers: { cookie: `${SESSION_COOKIE}=${token}` },
+        payload: { currentPassword: "irrelevant-1234", newPassword: "pw-brand-new-password-9876" },
+      });
+      expect(resp.statusCode).toBe(409);
+      expect((resp.json() as { error: { message: string } }).error.message).toMatch(/identity provider/i);
+    });
   });
 
   it("serves the OpenAPI document and matches the committed spec", async () => {

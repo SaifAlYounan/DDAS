@@ -49,7 +49,14 @@ export function rateLimitConfigFromEnv(env: Env): RateLimitConfig {
 export function classifyRoute(method: string, url: string): RouteClass | null {
   const pathname = url.split("?")[0]!;
   if (pathname === "/healthz" || pathname === "/metrics") return null;
-  if (pathname === "/api/v1/auth/login" || pathname.startsWith("/api/v1/auth/oidc/")) {
+  if (
+    pathname === "/api/v1/auth/login" ||
+    // Self-service password change verifies the CURRENT password → it is a
+    // credential-brute-force surface, so it belongs in the strict auth class
+    // (IP-keyed) alongside login rather than the generic mutation class.
+    pathname === "/api/v1/auth/password" ||
+    pathname.startsWith("/api/v1/auth/oidc/")
+  ) {
     return "auth";
   }
   if (pathname.startsWith("/api/v1/admin/")) return "admin";

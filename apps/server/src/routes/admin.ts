@@ -6,7 +6,7 @@ import { assertNotLastAdmin } from "../domain/principals.js";
 import { withTx } from "../domain/tx.js";
 import { ApiError } from "../errors.js";
 import { newApiKey } from "../plugins/auth.js";
-import { ARGON2_OPTS } from "./auth.js";
+import { ARGON2_OPTS, passwordSchema } from "./auth.js";
 
 const RoleEnum = z.enum([
   "admin",
@@ -77,7 +77,7 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
           kind: z.enum(["human", "agent"]).default("human"),
           name: z.string().min(1),
           email: z.string().email().optional(),
-          password: z.string().min(12).optional(),
+          password: passwordSchema.optional(),
           ownerPrincipalId: z.string().uuid().optional(),
           roles: z.array(RoleEnum).default([]),
         }),

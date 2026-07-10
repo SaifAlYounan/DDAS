@@ -43,6 +43,7 @@ describe("route classifier", () => {
     expect(classifyRoute("POST", "/api/v1/auth/login")).toBe("auth");
     expect(classifyRoute("GET", "/api/v1/auth/oidc/login")).toBe("auth");
     expect(classifyRoute("GET", "/api/v1/auth/oidc/callback?code=x&state=y")).toBe("auth");
+    expect(classifyRoute("POST", "/api/v1/auth/password")).toBe("auth");
     // …but not the session-check endpoints the SPA polls.
     expect(classifyRoute("GET", "/api/v1/auth/me")).toBe("read");
     expect(classifyRoute("GET", "/api/v1/auth/config")).toBe("read");

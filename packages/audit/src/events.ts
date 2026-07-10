@@ -29,6 +29,7 @@ export const AUDIT_EVENT_TYPES = [
   "session.login",
   "session.login_failed",
   "session.logout",
+  "principal.password_changed",
   "api_key.created",
   "api_key.revoked",
   "admin.bootstrap",
