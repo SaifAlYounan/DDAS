@@ -29,10 +29,16 @@ spec:
         {{- include "ddas.labels" . | nindent 8 }}
     spec:
       terminationGracePeriodSeconds: {{ .Values.terminationGracePeriodSeconds }}
+      serviceAccountName: {{ include "ddas.serviceAccountName" . }}
+      automountServiceAccountToken: {{ .Values.serviceAccount.automountServiceAccountToken }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
       containers:
         - name: ddas
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
           ports:
             - name: http
               containerPort: 3000
@@ -97,17 +103,23 @@ spec:
                 command: ["sleep", "5"]
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
-          {{- if $fsBlobs }}
           volumeMounts:
+            # Writable scratch — readOnlyRootFilesystem needs a real /tmp.
+            - name: tmp
+              mountPath: /tmp
+            {{- if $fsBlobs }}
             - name: blobs
               mountPath: /data/blobs
-          {{- end }}
-      {{- if $fsBlobs }}
+            {{- end }}
       volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 256Mi
+        {{- if $fsBlobs }}
         - name: blobs
           persistentVolumeClaim:
             claimName: {{ include "ddas.fullname" . }}-blobs
-      {{- end }}
+        {{- end }}
 {{- if $fsBlobs }}
 ---
 apiVersion: v1

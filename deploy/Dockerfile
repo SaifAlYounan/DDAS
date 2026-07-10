@@ -27,4 +27,7 @@ RUN mkdir -p /data/blobs && chown node:node /data /data/blobs
 USER node
 ENV PORT=3000 BLOB_DIR=/data/blobs WEB_DIST=/app/web
 EXPOSE 3000
+# Liveness via the app's own /healthz (node 24 has global fetch; no curl in slim).
+HEALTHCHECK --interval=30s --timeout=3s --start-period=20s --retries=3 \
+  CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||3000)+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
 CMD ["node", "dist/main.js"]

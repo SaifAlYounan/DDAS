@@ -12,6 +12,15 @@ import { ARGON2_OPTS } from "./routes/auth.js";
 /** Advisory-lock key for first-boot bootstrap (distinct from the audit chain's and @ddas/db's migration key). */
 const BOOTSTRAP_LOCK_KEY = 7_474_102;
 
+/**
+ * Known placeholder admin passwords (infra-C3). The documented default
+ * "change-me-please" clears the min-length(12) check, so without this guard a
+ * reference deploy left online ships with a public, trivially guessable admin.
+ */
+function isPlaceholderAdminPassword(password: string): boolean {
+  return /^change-me/i.test(password);
+}
+
 async function adminExists(q: pg.Pool | pg.PoolClient): Promise<boolean> {
   const existing = await q.query(
     `SELECT 1 FROM role_assignments r
@@ -25,6 +34,16 @@ export async function bootstrapAdmin(pool: pg.Pool, env: Env): Promise<string | 
   if (!env.DDAS_ADMIN_EMAIL || !env.DDAS_ADMIN_PASSWORD) return null;
   // Cheap unlocked fast path — every later boot of an initialized system.
   if (await adminExists(pool)) return null;
+
+  // infra-C3: refuse to create the FIRST admin with a placeholder password.
+  // Set a real password, or DDAS_ALLOW_INSECURE_ADMIN=true for a throwaway env.
+  if (isPlaceholderAdminPassword(env.DDAS_ADMIN_PASSWORD) && !env.DDAS_ALLOW_INSECURE_ADMIN) {
+    throw new Error(
+      'refusing to bootstrap the admin with a placeholder DDAS_ADMIN_PASSWORD ' +
+        '(e.g. "change-me-please"): set a real password, or DDAS_ALLOW_INSECURE_ADMIN=true ' +
+        "to override for a local/throwaway environment."
+    );
+  }
 
   const passwordHash = await argon2.hash(env.DDAS_ADMIN_PASSWORD, ARGON2_OPTS);
   return withTx(pool, async (client) => {

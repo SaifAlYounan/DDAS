@@ -56,7 +56,46 @@ resources:
   requests:
     cpu: 250m
     memory: 512Mi
+    ephemeral-storage: 256Mi
   limits:
     memory: 1Gi
+    # Cap node-local scratch (multipart temp, logs) so a runaway upload can't
+    # fill the node — matters most with the fs blob driver (infra-S3).
+    ephemeral-storage: 1Gi
+
+# Dedicated ServiceAccount; the app never calls the Kubernetes API, so its
+# token is not mounted (infra-C5).
+serviceAccount:
+  create: true
+  name: "" # defaults to the release fullname
+  annotations: {}
+  automountServiceAccountToken: false
+
+# Restricted pod-level security context (infra-C5). The image already runs as
+# the non-root `node` user (uid/gid 1000).
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000 # so the non-root process can write the fs-driver blob PVC
+  seccompProfile:
+    type: RuntimeDefault
+
+# Restricted container-level security context (infra-C5). readOnlyRootFilesystem
+# is compatible: the app writes only to the blob PVC and a /tmp emptyDir.
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop: ["ALL"]
+
+# Optional default-deny NetworkPolicy (infra-C5): denies all ingress except the
+# service port and all egress except DNS + Postgres. Off by default because it
+# needs a NetworkPolicy-capable CNI; enable once you've confirmed yours.
+networkPolicy:
+  enabled: false
+  # CIDR the database lives in (egress allow). Defaults to cluster-internal.
+  databaseCidr: "10.0.0.0/8"
+  databasePort: 5432
 
 env: {} # extra env vars, e.g. OIDC_* — see .env.example

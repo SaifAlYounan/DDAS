@@ -21,6 +21,9 @@ export const EnvSchema = z.object({
   /** Boot-time admin bootstrap: created iff no admin exists yet. */
   DDAS_ADMIN_EMAIL: z.string().email().optional(),
   DDAS_ADMIN_PASSWORD: z.string().min(12).optional(),
+  /** Escape hatch (infra-C3): permit bootstrapping the admin with a known
+   *  placeholder password (e.g. "change-me-please") — throwaway/local only. */
+  DDAS_ALLOW_INSECURE_ADMIN: z.coerce.boolean().default(false),
   /** Extraction provider is configured via the DDAS_EXTRACTION_* variables
    *  read by @ddas/extraction's providerFromEnv (provider/model/api key/base url). */
   DDAS_EXTRACTION_PROVIDER: z.string().optional(),
