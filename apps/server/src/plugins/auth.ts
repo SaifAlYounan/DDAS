@@ -1,15 +1,22 @@
 /**
  * Session auth: opaque 32-byte token in an HttpOnly SameSite=Lax cookie;
- * only its sha256 is stored. 30-day sliding window. Six fixed roles;
- * admin passes every role gate. `viewer` is strictly read-only: it is
- * deliberately named in NO requireRole gate, so it can only reach routes
- * guarded by bare requireAuth (the shared read surface).
+ * only its sha256 is stored. 30-day sliding window.
+ *
+ * AuthZ (ADR 0005): six built-in roles as immutable permission sets, plus
+ * admin-defined custom roles (stored sets over the fixed catalog). The
+ * effective permission set is resolved ONCE per request, in the same
+ * identity query the hook already ran — no cross-request cache, so role
+ * edits take effect on the next request on every HA node. Gates check
+ * permissions via requirePermission; `admin` holds the full catalog (the
+ * old requireRole admin bypass, preserved structurally). `viewer` holds
+ * only requests.read: strictly read-only by construction.
  */
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
-import type { FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyBaseLogger, FastifyReply, FastifyRequest } from "fastify";
 import fp from "fastify-plugin";
 import type pg from "pg";
 import { ApiError } from "../errors.js";
+import { resolvePermissions, type Permission } from "../permissions.js";
 
 export const SESSION_COOKIE = "ddas_session";
 export const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000;
@@ -38,6 +45,8 @@ export interface AuthedPrincipal {
   name: string;
   email: string | null;
   roles: Role[];
+  /** Resolved per request: built-in role sets ∪ custom-role stored grants. */
+  permissions: ReadonlySet<Permission>;
 }
 
 export interface AuthedApiKey {
@@ -53,8 +62,8 @@ declare module "fastify" {
   }
   interface FastifyInstance {
     requireAuth: (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
-    requireRole: (
-      ...roles: Role[]
+    requirePermission: (
+      ...permissions: Permission[]
     ) => (request: FastifyRequest, reply: FastifyReply) => Promise<void>;
     requireScope: (
       scope: ApiKeyScope
@@ -85,6 +94,27 @@ export function newSessionToken(): { token: string; tokenSha256: string } {
   return { token, tokenSha256: sha256hex(token) };
 }
 
+/**
+ * Correlated aggregate over the principal's custom-role grants — rides in
+ * the same identity query the auth hook already runs (the ADR 0005 "caching
+ * story": per-request join, no cross-node invalidation problem to have).
+ */
+const CUSTOM_PERMISSIONS_SQL = `
+  (SELECT array_agg(DISTINCT crp.permission)
+     FROM custom_role_assignments cra
+     JOIN custom_role_permissions crp ON crp.role_id = cra.role_id
+    WHERE cra.principal_id = p.id) AS custom_permissions`;
+
+function buildPermissions(
+  roles: readonly string[],
+  storedGrants: readonly string[] | null,
+  log: FastifyBaseLogger
+): ReadonlySet<Permission> {
+  return resolvePermissions(roles, storedGrants ?? [], (permission) =>
+    log.warn({ permission }, "ignoring unknown stored permission (fail-closed)")
+  );
+}
+
 export const authPlugin = fp(async (app, opts: { pool: pg.Pool }) => {
   const { pool } = opts;
 
@@ -107,9 +137,11 @@ export const authPlugin = fp(async (app, opts: { pool: pg.Pool }) => {
           name: string;
           email: string | null;
           roles: Role[] | null;
+          custom_permissions: string[] | null;
         }>(
           `SELECT k.id AS key_id, k.key_sha256, k.scopes, p.id, p.kind, p.name, p.email,
-                  array_agg(r.role::text) FILTER (WHERE r.role IS NOT NULL) AS roles
+                  array_agg(r.role::text) FILTER (WHERE r.role IS NOT NULL) AS roles,
+                  ${CUSTOM_PERMISSIONS_SQL}
            FROM api_keys k
            JOIN principals p ON p.id = k.principal_id
            LEFT JOIN role_assignments r ON r.principal_id = p.id
@@ -125,6 +157,7 @@ export const authPlugin = fp(async (app, opts: { pool: pg.Pool }) => {
             name: row.name,
             email: row.email,
             roles: row.roles ?? [],
+            permissions: buildPermissions(row.roles ?? [], row.custom_permissions, request.log),
           };
           request.apiKey = { id: row.key_id, scopes: row.scopes };
         }
@@ -142,9 +175,11 @@ export const authPlugin = fp(async (app, opts: { pool: pg.Pool }) => {
       name: string;
       email: string | null;
       roles: Role[] | null;
+      custom_permissions: string[] | null;
     }>(
       `SELECT p.id, s.id AS session_id, p.kind, p.name, p.email,
-              array_agg(r.role::text) FILTER (WHERE r.role IS NOT NULL) AS roles
+              array_agg(r.role::text) FILTER (WHERE r.role IS NOT NULL) AS roles,
+              ${CUSTOM_PERMISSIONS_SQL}
        FROM sessions s
        JOIN principals p ON p.id = s.principal_id
        LEFT JOIN role_assignments r ON r.principal_id = p.id
@@ -160,6 +195,7 @@ export const authPlugin = fp(async (app, opts: { pool: pg.Pool }) => {
       name: row.name,
       email: row.email,
       roles: row.roles ?? [],
+      permissions: buildPermissions(row.roles ?? [], row.custom_permissions, request.log),
     };
     // Sliding expiry (fire-and-forget; losing one slide is harmless).
     void pool
@@ -185,13 +221,18 @@ export const authPlugin = fp(async (app, opts: { pool: pg.Pool }) => {
     };
   });
 
-  app.decorate("requireRole", (...roles: Role[]) => {
+  // Any-of, like requireRole was. Deny-by-default: no permission, no route.
+  // There is no admin special case — the built-in admin role simply holds
+  // the full catalog (permissions.ts), which is the same bypass, made data.
+  app.decorate("requirePermission", (...permissions: Permission[]) => {
     return async (request: FastifyRequest) => {
       if (!request.principal) throw new ApiError("unauthorized", "authentication required");
-      const held = request.principal.roles;
-      if (held.includes("admin")) return;
-      if (!roles.some((role) => held.includes(role))) {
-        throw new ApiError("forbidden", `requires one of roles: ${roles.join(", ")}`);
+      const held = request.principal.permissions;
+      if (!permissions.some((permission) => held.has(permission))) {
+        throw new ApiError(
+          "forbidden",
+          `requires one of permissions: ${permissions.join(", ")}`
+        );
       }
     };
   });

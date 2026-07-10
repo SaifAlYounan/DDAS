@@ -844,6 +844,226 @@ describe.skipIf(!TEST_DATABASE_URL)("server e2e", () => {
     }, 60_000);
   });
 
+  describe("configurable RBAC (ADR 0005)", () => {
+    const anyUuid = "00000000-0000-4000-8000-000000000000";
+
+    it("lists built-ins read-only with their permission sets; viewer reads nothing here", async () => {
+      const list = await as("admin", { method: "GET", url: "/api/v1/admin/roles" });
+      expect(list.statusCode).toBe(200);
+      const roles = list.json() as Array<{
+        id: string;
+        name: string;
+        builtin: boolean;
+        permissions: string[];
+      }>;
+      const builtins = roles.filter((r) => r.builtin);
+      expect(builtins.map((r) => r.name).sort()).toEqual([
+        "admin",
+        "approver",
+        "auditor",
+        "policy_author",
+        "requester",
+        "viewer",
+      ]);
+      const approver = builtins.find((r) => r.name === "approver")!;
+      expect(approver.id).toBe("builtin:approver");
+      expect(approver.permissions).toContain("decisions.decide");
+      expect(approver.permissions).toContain("facts.attest");
+      const admin = builtins.find((r) => r.name === "admin")!;
+      expect(admin.permissions).toContain("admin.api_keys");
+
+      const asViewer = await as("viewer", { method: "GET", url: "/api/v1/admin/roles" });
+      expect(asViewer.statusCode).toBe(403);
+    });
+
+    it("refuses admin.* grants, unknown permissions, built-in names, and built-in edits", async () => {
+      const adminGrant = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/roles",
+        payload: { name: "Shadow Admin", permissions: ["admin.api_keys"] },
+      });
+      expect(adminGrant.statusCode).toBe(422);
+
+      const unknown = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/roles",
+        payload: { name: "Futurist", permissions: ["future.shiny"] },
+      });
+      expect(unknown.statusCode).toBe(422);
+
+      const builtinName = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/roles",
+        payload: { name: "approver", permissions: ["requests.read"] },
+      });
+      expect(builtinName.statusCode).toBe(422);
+
+      const editBuiltin = await as("admin", {
+        method: "PUT",
+        url: "/api/v1/admin/roles/builtin:approver",
+        payload: { permissions: ["requests.read"] },
+      });
+      expect(editBuiltin.statusCode).toBe(422);
+
+      const deleteBuiltin = await as("admin", {
+        method: "DELETE",
+        url: "/api/v1/admin/roles/builtin:approver",
+      });
+      expect(deleteBuiltin.statusCode).toBe(422);
+
+      const missing = await as("admin", {
+        method: "PUT",
+        url: `/api/v1/admin/roles/${anyUuid}`,
+        payload: { description: "x" },
+      });
+      expect(missing.statusCode).toBe(404);
+    });
+
+    it("runs the full custom-role lifecycle: create → assign → gate → widen → attest → revoke → audit", async () => {
+      // -- create: wide read only --
+      const created = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/roles",
+        payload: {
+          name: "External Reviewer",
+          description: "read-only reviewer from the audit firm",
+          permissions: ["requests.read"],
+        },
+      });
+      expect(created.statusCode).toBe(200);
+      const roleId = (created.json() as { id: string }).id;
+
+      const duplicate = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/roles",
+        payload: { name: "external reviewer", permissions: [] },
+      });
+      expect(duplicate.statusCode).toBe(409);
+
+      // -- a principal with NO built-in roles, only the custom role --
+      const principal = await as("admin", {
+        method: "POST",
+        url: "/api/v1/admin/principals",
+        payload: {
+          kind: "human",
+          name: "Nadia",
+          email: "nadia@kolvarra.test",
+          password: "nadia-password-123",
+          roles: [],
+        },
+      });
+      expect(principal.statusCode).toBe(200);
+      const nadiaId = (principal.json() as { id: string }).id;
+      const assigned = await as("admin", {
+        method: "POST",
+        url: `/api/v1/admin/principals/${nadiaId}/custom-roles`,
+        payload: { roleIds: [roleId] },
+      });
+      expect(assigned.statusCode).toBe(200);
+      expect((assigned.json() as { customRoles: Array<{ id: string }> }).customRoles).toEqual([
+        { id: roleId, name: "External Reviewer" },
+      ]);
+      await login("nadia", "nadia@kolvarra.test", "nadia-password-123");
+
+      // deleting a role that has members is refused (409) — documented in scim.md
+      const deleteWithMembers = await as("admin", {
+        method: "DELETE",
+        url: `/api/v1/admin/roles/${roleId}`,
+      });
+      expect(deleteWithMembers.statusCode).toBe(409);
+
+      // -- a live request owned by Ruben, in facts_review --
+      const c = loadCase("routine-spares-po");
+      const { requestId, factSetId } = await submitCase(c, "human");
+
+      // holder READS (wide visibility)…
+      const read = await as("nadia", { method: "GET", url: `/api/v1/requests/${requestId}` });
+      expect(read.statusCode).toBe(200);
+
+      // …but 403s everywhere else (deny-by-default over the catalog).
+      const { payload, headers } = multipart(
+        { title: "custom-role write probe", policySlug: "kolvarra-risk" },
+        [{ filename: "x.txt", content: "hello" }]
+      );
+      const probes: Array<[string, { method: string; url: string; payload?: unknown; headers?: Record<string, string> }]> = [
+        ["submit", { method: "POST", url: "/api/v1/requests", payload, headers }],
+        [
+          "attest",
+          {
+            method: "PATCH",
+            url: `/api/v1/fact-sets/${factSetId}/facts/amount_base_total`,
+            payload: { status: "MANUAL", value: 9500 },
+          },
+        ],
+        ["inbox", { method: "GET", url: "/api/v1/approvals/inbox" }],
+        ["audit", { method: "GET", url: "/api/v1/audit/events" }],
+        ["replay", { method: "POST", url: `/api/v1/classifications/${anyUuid}/replay`, payload: {} }],
+        ["roles admin", { method: "GET", url: "/api/v1/admin/roles" }],
+        ["principals", { method: "GET", url: "/api/v1/admin/principals" }],
+      ];
+      for (const [label, opts] of probes) {
+        const response = await as("nadia", opts);
+        expect(response.statusCode, label).toBe(403);
+      }
+
+      // -- widen the SAME role: + facts.attest — takes effect on next request --
+      const widened = await as("admin", {
+        method: "PUT",
+        url: `/api/v1/admin/roles/${roleId}`,
+        payload: { permissions: ["requests.read", "facts.attest"] },
+      });
+      expect(widened.statusCode).toBe(200);
+
+      const attest = await as("nadia", {
+        method: "PATCH",
+        url: `/api/v1/fact-sets/${factSetId}/facts/amount_base_total`,
+        payload: { status: "MANUAL", value: 9500 },
+      });
+      expect(attest.statusCode).toBe(200);
+
+      // -- revoke the assignment: everything 403s again --
+      const revoked = await as("admin", {
+        method: "POST",
+        url: `/api/v1/admin/principals/${nadiaId}/custom-roles`,
+        payload: { roleIds: [] },
+      });
+      expect(revoked.statusCode).toBe(200);
+      const readAfter = await as("nadia", {
+        method: "GET",
+        url: `/api/v1/requests/${requestId}`,
+      });
+      expect(readAfter.statusCode).toBe(403);
+      const attestAfter = await as("nadia", {
+        method: "PATCH",
+        url: `/api/v1/fact-sets/${factSetId}/facts/amount_base_total`,
+        payload: { status: "MANUAL", value: 9500 },
+      });
+      expect(attestAfter.statusCode).toBe(403);
+
+      // -- the definition + membership changes are all on the audit chain --
+      const expectAuditEvent = async (type: string) => {
+        const events = await as("auditor", {
+          method: "GET",
+          url: `/api/v1/audit/events?type=${encodeURIComponent(type)}&limit=500`,
+        });
+        expect(events.statusCode).toBe(200);
+        expect((events.json() as unknown[]).length, type).toBeGreaterThan(0);
+      };
+      await expectAuditEvent("role.created");
+      await expectAuditEvent("role.updated");
+      await expectAuditEvent("role.assigned");
+      await expectAuditEvent("role.revoked");
+
+      // -- with no members left, deletion succeeds and is audited --
+      const deleted = await as("admin", {
+        method: "DELETE",
+        url: `/api/v1/admin/roles/${roleId}`,
+      });
+      expect(deleted.statusCode).toBe(200);
+      await expectAuditEvent("role.deleted");
+    }, 60_000);
+  });
+
   describe("simulation activation gate (review regression)", () => {
     it("rejects a run whose candidate does not match the version being activated", async () => {
       // A completed run whose candidate is the CURRENT active policy (unchanged).

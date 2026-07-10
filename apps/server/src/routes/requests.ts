@@ -114,7 +114,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
     "/requests",
     {
       schema: { tags: ["requests"] },
-      preHandler: [app.requireRole("requester"), app.requireScope("requests:write")],
+      preHandler: [app.requirePermission("requests.submit"), app.requireScope("requests:write")],
     },
     async (request) => {
       // Multipart: fields title (required), policySlug (required), actionType?;
@@ -380,7 +380,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
         body: FactPatch,
         response: { 200: FactOut },
       },
-      preHandler: [app.requireRole("requester", "approver"), app.requireScope("facts:attest")],
+      preHandler: [app.requirePermission("facts.attest", "requests.submit"), app.requireScope("facts:attest")],
     },
     async (request) => {
       const { id, factId } = request.params;
@@ -504,7 +504,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
           }),
         },
       },
-      preHandler: [app.requireRole("requester", "approver"), app.requireScope("requests:write")],
+      preHandler: [app.requirePermission("facts.attest", "requests.submit"), app.requireScope("requests:write")],
     },
     async (request) => {
       const { id } = request.params;
@@ -563,7 +563,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
         params: z.object({ id: z.string().uuid() }),
         response: { 200: z.object({ id: z.string(), version: z.number() }) },
       },
-      preHandler: [app.requireRole("requester", "approver"), app.requireScope("requests:write")],
+      preHandler: [app.requirePermission("facts.attest", "requests.submit"), app.requireScope("requests:write")],
     },
     async (request) => {
       const actor = { kind: "principal" as const, id: request.principal!.id };
@@ -708,7 +708,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
           }),
         },
       },
-      preHandler: [app.requireRole("auditor", "approver", "policy_author")],
+      preHandler: [app.requirePermission("classifications.replay")],
     },
     async (request) => {
       const actor = { kind: "principal" as const, id: request.principal!.id };
@@ -804,7 +804,7 @@ export function registerRequestRoutes(app: App, ctx: AppContext): void {
         params: z.object({ id: z.string().uuid() }),
         response: { 200: z.object({ state: z.string() }) },
       },
-      preHandler: [app.requireRole("requester"), app.requireScope("requests:write")],
+      preHandler: [app.requirePermission("requests.submit"), app.requireScope("requests:write")],
     },
     async (request) => {
       const actor = { kind: "principal" as const, id: request.principal!.id };

@@ -26,7 +26,7 @@ export function registerApprovalRoutes(app: App, ctx: AppContext): void {
     "/approvals/inbox",
     {
       schema: { tags: ["approvals"], response: { 200: z.array(TaskOut) } },
-      preHandler: [app.requireRole("approver")],
+      preHandler: [app.requirePermission("decisions.decide")],
     },
     async (request) => {
       const rows = await ctx.pool.query<{
@@ -108,7 +108,7 @@ export function registerApprovalRoutes(app: App, ctx: AppContext): void {
           }),
         },
       },
-      preHandler: [app.requireRole("approver", "auditor")],
+      preHandler: [app.requirePermission("approvals.read")],
     },
     async (request) => {
       const tasks = await ctx.pool.query<{
@@ -263,7 +263,7 @@ export function registerApprovalRoutes(app: App, ctx: AppContext): void {
         body: z.object({ comment: z.string().optional() }).default({}),
         response: { 200: ActOut },
       },
-      preHandler: [app.requireRole("approver")],
+      preHandler: [app.requirePermission("decisions.decide")],
     },
     async (request) =>
       act(request.params.id, request.principal!.id, "approve", request.body.comment ?? null)
@@ -278,7 +278,7 @@ export function registerApprovalRoutes(app: App, ctx: AppContext): void {
         body: z.object({ comment: z.string().min(1, "a rejection requires a comment") }),
         response: { 200: ActOut },
       },
-      preHandler: [app.requireRole("approver")],
+      preHandler: [app.requirePermission("decisions.decide")],
     },
     async (request) =>
       act(request.params.id, request.principal!.id, "reject", request.body.comment)

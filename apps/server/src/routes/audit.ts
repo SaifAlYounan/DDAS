@@ -29,7 +29,7 @@ export function registerAuditRoutes(app: App, ctx: AppContext): void {
           ),
         },
       },
-      preHandler: [app.requireRole("auditor")],
+      preHandler: [app.requirePermission("audit.read")],
     },
     async (request) => {
       const params: unknown[] = [request.query.after, request.query.limit];
@@ -83,7 +83,7 @@ export function registerAuditRoutes(app: App, ctx: AppContext): void {
           ]),
         },
       },
-      preHandler: [app.requireRole("auditor")],
+      preHandler: [app.requirePermission("audit.verify")],
     },
     async () => {
       const client = await ctx.pool.connect();
@@ -108,7 +108,7 @@ export function registerAuditRoutes(app: App, ctx: AppContext): void {
           }),
         },
       },
-      preHandler: [app.requireRole("auditor")],
+      preHandler: [app.requirePermission("audit.read")],
     },
     async (request, reply) => {
       const actor = { kind: "principal" as const, id: request.principal!.id };

@@ -29,6 +29,7 @@ export function Layout({ me }: { me: Me }) {
     { label: "Org", to: "/org", visible: true },
     { label: "Audit", to: "/audit", visible: hasRole(me, "auditor") },
     { label: "Admin", to: "/admin", visible: hasRole(me, "admin") },
+    { label: "Roles", to: "/admin/roles", visible: hasRole(me, "admin") },
   ];
 
   const logout = async () => {

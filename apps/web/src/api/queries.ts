@@ -4,6 +4,7 @@ import { api } from "./client";
 import type {
   AdminPrincipal,
   AdminSettings,
+  RoleDef,
   ApprovalTask,
   ClassificationDetail,
   DocumentText,
@@ -96,4 +97,9 @@ export const principalsQuery = queryOptions({
 export const settingsQuery = queryOptions({
   queryKey: ["admin", "settings"],
   queryFn: () => api.get<AdminSettings>("/admin/settings"),
+});
+
+export const rolesQuery = queryOptions({
+  queryKey: ["admin", "roles"],
+  queryFn: () => api.get<RoleDef[]>("/admin/roles"),
 });

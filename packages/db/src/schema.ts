@@ -125,6 +125,65 @@ export const roleAssignments = pgTable(
   (t) => [uniqueIndex("role_assignments_uq").on(t.principalId, t.role)]
 );
 
+/**
+ * Admin-defined roles: named permission sets over the server's fixed,
+ * enumerated permission catalog (ADR 0005). The six built-in roles are NOT
+ * rows here — they are immutable sets defined in code; this table holds only
+ * the custom ones. Names may not collide with built-in role names (enforced
+ * at the API — the catalog lives in the server, not the schema).
+ */
+export const customRoles = pgTable(
+  "custom_roles",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    description: text("description"),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [uniqueIndex("custom_roles_name_uq").on(t.name)]
+);
+
+/**
+ * Additive-only grants (no deny rows; absence = deny). The CHECK enforces
+ * ADR 0005's hard invariant IN POSTGRES: admin.* permissions are never
+ * grantable to custom roles — admin stays exclusively the built-in role.
+ * Unknown permission strings are tolerated here (the catalog is a server-side
+ * union) and ignored, logged, at resolution time — fail-closed.
+ */
+export const customRolePermissions = pgTable(
+  "custom_role_permissions",
+  {
+    roleId: uuid("role_id")
+      .notNull()
+      .references(() => customRoles.id, { onDelete: "cascade" }),
+    permission: text("permission").notNull(),
+  },
+  (t) => [
+    primaryKey({ columns: [t.roleId, t.permission] }),
+    check("custom_role_permissions_no_admin", sql`${t.permission} NOT LIKE 'admin.%'`),
+  ]
+);
+
+/** Sibling of role_assignments (which keeps its enum column untouched). */
+export const customRoleAssignments = pgTable(
+  "custom_role_assignments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    principalId: uuid("principal_id")
+      .notNull()
+      .references(() => principals.id),
+    roleId: uuid("role_id")
+      .notNull()
+      .references(() => customRoles.id),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("custom_role_assignments_uq").on(t.principalId, t.roleId),
+    index("custom_role_assignments_role_idx").on(t.roleId),
+  ]
+);
+
 export const orgUnits = pgTable("org_units", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").notNull(),

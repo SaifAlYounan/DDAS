@@ -8,6 +8,13 @@
  * type) and outside the committed OpenAPI document (routes are hidden; the
  * surface is specified by the RFCs and documented in docs/scim.md).
  *
+ * ADR 0005: admin-defined CUSTOM ROLES surface as additional Groups next to
+ * the six fixed ones — id = the role's UUID, displayName = "DDAS Custom:
+ * <name>". Membership add/remove/replace = assignment grant/revoke, audited
+ * like everything else. SCIM can neither create nor delete groups (same as
+ * the fixed six); role definitions live in the admin API, and deleting a
+ * custom role that still has members is refused there with 409.
+ *
  * AuthN: a dedicated API key with the exclusive "scim" scope. SCIM accepts
  * ONLY that scope (session cookies and normal keys are refused), and the
  * scimKeyIsolationHook below keeps scim tokens out of every non-SCIM route.
@@ -81,6 +88,12 @@ interface PrincipalRow {
   disabled_at: Date | null;
   created_at: Date;
   roles: string[] | null;
+  custom_roles: Array<{ id: string; name: string }> | null;
+}
+
+/** displayName for a custom-role group (ADR 0005). */
+export function customGroupDisplayName(name: string): string {
+  return `DDAS Custom: ${name}`;
 }
 
 function toScimUser(row: PrincipalRow) {
@@ -93,14 +106,21 @@ function toScimUser(row: PrincipalRow) {
     name: { formatted: row.name },
     active: row.disabled_at === null,
     emails: row.email ? [{ value: row.email, primary: true }] : [],
-    groups: (row.roles ?? [])
-      .filter((role): role is Role => ROLE_GROUPS.some((g) => g.id === role))
-      .sort()
-      .map((role) => ({
-        value: role,
-        display: ROLE_GROUPS.find((g) => g.id === role)!.displayName,
-        $ref: `${BASE_PATH}/Groups/${role}`,
+    groups: [
+      ...(row.roles ?? [])
+        .filter((role): role is Role => ROLE_GROUPS.some((g) => g.id === role))
+        .sort()
+        .map((role) => ({
+          value: role as string,
+          display: ROLE_GROUPS.find((g) => g.id === role)!.displayName,
+          $ref: `${BASE_PATH}/Groups/${role}`,
+        })),
+      ...(row.custom_roles ?? []).map((customRole) => ({
+        value: customRole.id,
+        display: customGroupDisplayName(customRole.name),
+        $ref: `${BASE_PATH}/Groups/${customRole.id}`,
       })),
+    ],
     meta: {
       resourceType: "User",
       created: row.created_at.toISOString(),
@@ -149,7 +169,11 @@ function userFilterSql(filter: string): { clause: string; params: string[] } {
 
 const USER_SELECT = `
   SELECT p.id, p.name, p.email, p.external_id, p.disabled_at, p.created_at,
-         array_agg(r.role::text) FILTER (WHERE r.role IS NOT NULL) AS roles
+         array_agg(r.role::text) FILTER (WHERE r.role IS NOT NULL) AS roles,
+         (SELECT json_agg(json_build_object('id', cr.id, 'name', cr.name) ORDER BY cr.name)
+            FROM custom_role_assignments cra
+            JOIN custom_roles cr ON cr.id = cra.role_id
+           WHERE cra.principal_id = p.id) AS custom_roles
   FROM principals p
   LEFT JOIN role_assignments r ON r.principal_id = p.id`;
 
@@ -495,26 +519,78 @@ export function registerScimRoutes(app: App, ctx: AppContext): void {
         return sendScim(reply, 204);
       });
 
-      // ---------- Groups (the six fixed roles) ----------
+      // ---------- Groups (six fixed roles + custom roles, ADR 0005) ----------
 
       interface MemberRow {
         id: string;
         name: string;
       }
 
-      async function groupMembers(db: pg.Pool | pg.ClientBase, role: Role): Promise<MemberRow[]> {
+      /** One SCIM group = a built-in role OR a custom role. */
+      type GroupRef =
+        | { kind: "builtin"; role: Role; id: string; displayName: string }
+        | { kind: "custom"; roleId: string; id: string; displayName: string };
+
+      async function customGroups(db: pg.Pool | pg.ClientBase): Promise<GroupRef[]> {
+        const result = await db.query<{ id: string; name: string }>(
+          "SELECT id, name FROM custom_roles ORDER BY created_at"
+        );
+        return result.rows.map((r) => ({
+          kind: "custom" as const,
+          roleId: r.id,
+          id: r.id,
+          displayName: customGroupDisplayName(r.name),
+        }));
+      }
+
+      async function resolveGroup(db: pg.Pool | pg.ClientBase, id: string): Promise<GroupRef> {
+        const builtin = ROLE_GROUPS.find((g) => g.id === id);
+        if (builtin) {
+          return { kind: "builtin", role: builtin.id, id: builtin.id, displayName: builtin.displayName };
+        }
+        if (UUID_RE.test(id)) {
+          const result = await db.query<{ id: string; name: string }>(
+            "SELECT id, name FROM custom_roles WHERE id = $1",
+            [id]
+          );
+          const row = result.rows[0];
+          if (row) {
+            return {
+              kind: "custom",
+              roleId: row.id,
+              id: row.id,
+              displayName: customGroupDisplayName(row.name),
+            };
+          }
+        }
+        throw new ScimError(404, "group not found");
+      }
+
+      async function groupMembers(
+        db: pg.Pool | pg.ClientBase,
+        group: GroupRef
+      ): Promise<MemberRow[]> {
+        if (group.kind === "builtin") {
+          const result = await db.query<MemberRow>(
+            `SELECT p.id, p.name FROM role_assignments r
+             JOIN principals p ON p.id = r.principal_id
+             WHERE r.role = $1 AND p.kind = 'human'
+             ORDER BY p.created_at`,
+            [group.role]
+          );
+          return result.rows;
+        }
         const result = await db.query<MemberRow>(
-          `SELECT p.id, p.name FROM role_assignments r
-           JOIN principals p ON p.id = r.principal_id
-           WHERE r.role = $1 AND p.kind = 'human'
+          `SELECT p.id, p.name FROM custom_role_assignments cra
+           JOIN principals p ON p.id = cra.principal_id
+           WHERE cra.role_id = $1 AND p.kind = 'human'
            ORDER BY p.created_at`,
-          [role]
+          [group.roleId]
         );
         return result.rows;
       }
 
-      function toScimGroup(role: Role, members: MemberRow[] | null) {
-        const group = ROLE_GROUPS.find((g) => g.id === role)!;
+      function toScimGroup(group: GroupRef, members: MemberRow[] | null) {
         return {
           schemas: [SCIM_URN.group],
           id: group.id,
@@ -532,12 +608,6 @@ export function registerScimRoutes(app: App, ctx: AppContext): void {
         };
       }
 
-      function roleOf(id: string): Role {
-        const group = ROLE_GROUPS.find((g) => g.id === id);
-        if (!group) throw new ScimError(404, "group not found");
-        return group.id;
-      }
-
       scim.get("/Groups", HIDE, async (request, reply) => {
         const query = request.query as Record<string, unknown>;
         const { startIndex, count } = pagination(query);
@@ -547,7 +617,15 @@ export function registerScimRoutes(app: App, ctx: AppContext): void {
             .split(",")
             .map((a) => a.trim().toLowerCase())
             .includes("members");
-        let groups = [...ROLE_GROUPS];
+        let groups: GroupRef[] = [
+          ...ROLE_GROUPS.map((g) => ({
+            kind: "builtin" as const,
+            role: g.id,
+            id: g.id as string,
+            displayName: g.displayName,
+          })),
+          ...(await customGroups(ctx.pool)),
+        ];
         if (typeof query["filter"] === "string" && query["filter"].length > 0) {
           const parsed = parseFilter(query["filter"]);
           if (parsed.attr !== "displayname" || parsed.op !== "eq") {
@@ -560,23 +638,19 @@ export function registerScimRoutes(app: App, ctx: AppContext): void {
         const page = groups.slice(startIndex - 1, startIndex - 1 + count);
         const resources = await Promise.all(
           page.map(async (g) =>
-            toScimGroup(g.id, excludeMembers ? null : await groupMembers(ctx.pool, g.id))
+            toScimGroup(g, excludeMembers ? null : await groupMembers(ctx.pool, g))
           )
         );
         return sendScim(reply, 200, listResponse(resources, groups.length, startIndex));
       });
 
       scim.get("/Groups/:id", HIDE, async (request, reply) => {
-        const role = roleOf((request.params as { id: string }).id);
-        return sendScim(reply, 200, toScimGroup(role, await groupMembers(ctx.pool, role)));
+        const group = await resolveGroup(ctx.pool, (request.params as { id: string }).id);
+        return sendScim(reply, 200, toScimGroup(group, await groupMembers(ctx.pool, group)));
       });
 
-      async function grantRole(
-        client: pg.ClientBase,
-        role: Role,
-        memberId: string,
-        actor: AuditActor
-      ): Promise<void> {
+      /** Shared human-only member check (agents are invisible to SCIM). */
+      async function assertHumanMember(client: pg.ClientBase, memberId: string): Promise<void> {
         if (!UUID_RE.test(memberId)) {
           throw new ScimError(400, `no such user: ${memberId}`, "invalidValue");
         }
@@ -588,87 +662,128 @@ export function registerScimRoutes(app: App, ctx: AppContext): void {
           // agents are not SCIM-managed — same answer as a missing user
           throw new ScimError(400, `no such user: ${memberId}`, "invalidValue");
         }
+      }
+
+      async function grantMembership(
+        client: pg.ClientBase,
+        group: GroupRef,
+        memberId: string,
+        actor: AuditActor
+      ): Promise<void> {
+        await assertHumanMember(client, memberId);
+        if (group.kind === "builtin") {
+          const inserted = await client.query(
+            `INSERT INTO role_assignments (principal_id, role) VALUES ($1, $2)
+             ON CONFLICT (principal_id, role) DO NOTHING`,
+            [memberId, group.role]
+          );
+          if ((inserted.rowCount ?? 0) > 0) {
+            await appendAuditEvent(client, {
+              actor,
+              type: "role.granted",
+              entity: { type: "principal", id: memberId },
+              payload: { role: group.role, via: "scim" },
+            });
+          }
+          return;
+        }
         const inserted = await client.query(
-          `INSERT INTO role_assignments (principal_id, role) VALUES ($1, $2)
-           ON CONFLICT (principal_id, role) DO NOTHING`,
-          [memberId, role]
+          `INSERT INTO custom_role_assignments (principal_id, role_id) VALUES ($1, $2)
+           ON CONFLICT (principal_id, role_id) DO NOTHING`,
+          [memberId, group.roleId]
         );
         if ((inserted.rowCount ?? 0) > 0) {
           await appendAuditEvent(client, {
             actor,
-            type: "role.granted",
+            type: "role.assigned",
             entity: { type: "principal", id: memberId },
-            payload: { role, via: "scim" },
+            payload: { customRoleId: group.roleId, displayName: group.displayName, via: "scim" },
           });
         }
       }
 
-      async function revokeRole(
+      async function revokeMembership(
         client: pg.ClientBase,
-        role: Role,
+        group: GroupRef,
         memberId: string,
         actor: AuditActor
       ): Promise<void> {
         if (!UUID_RE.test(memberId)) return;
-        if (role === "admin") {
-          await assertNotLastAdmin(client, memberId, "remove the admin role from");
+        if (group.kind === "builtin") {
+          if (group.role === "admin") {
+            await assertNotLastAdmin(client, memberId, "remove the admin role from");
+          }
+          const deleted = await client.query(
+            "DELETE FROM role_assignments WHERE principal_id = $1 AND role = $2",
+            [memberId, group.role]
+          );
+          if ((deleted.rowCount ?? 0) > 0) {
+            await appendAuditEvent(client, {
+              actor,
+              type: "role.revoked",
+              entity: { type: "principal", id: memberId },
+              payload: { role: group.role, via: "scim" },
+            });
+          }
+          return;
         }
+        // custom roles can never carry admin.* — no last-admin concern here
         const deleted = await client.query(
-          "DELETE FROM role_assignments WHERE principal_id = $1 AND role = $2",
-          [memberId, role]
+          "DELETE FROM custom_role_assignments WHERE principal_id = $1 AND role_id = $2",
+          [memberId, group.roleId]
         );
         if ((deleted.rowCount ?? 0) > 0) {
           await appendAuditEvent(client, {
             actor,
             type: "role.revoked",
             entity: { type: "principal", id: memberId },
-            payload: { role, via: "scim" },
+            payload: { customRoleId: group.roleId, displayName: group.displayName, via: "scim" },
           });
         }
       }
 
       async function applyMembership(
         request: FastifyRequest,
-        role: Role,
+        group: GroupRef,
         actions: ReturnType<typeof applyGroupPatch>
       ): Promise<MemberRow[]> {
         const actor = actorOf(request);
         return withTx(ctx.pool, async (client) => {
           for (const action of actions) {
             if (action.kind === "add") {
-              for (const id of action.ids) await grantRole(client, role, id, actor);
+              for (const id of action.ids) await grantMembership(client, group, id, actor);
             } else if (action.kind === "remove") {
-              for (const id of action.ids) await revokeRole(client, role, id, actor);
+              for (const id of action.ids) await revokeMembership(client, group, id, actor);
             } else if (action.kind === "removeAll") {
-              const members = await groupMembers(client, role);
-              for (const member of members) await revokeRole(client, role, member.id, actor);
+              const members = await groupMembers(client, group);
+              for (const member of members) await revokeMembership(client, group, member.id, actor);
             } else {
               const wanted = new Set(action.ids);
-              const current = await groupMembers(client, role);
+              const current = await groupMembers(client, group);
               const held = new Set(current.map((m) => m.id));
               // adds BEFORE removes, so replacing the admin set never
               // passes through a zero-admin state.
               for (const id of action.ids) {
-                if (!held.has(id)) await grantRole(client, role, id, actor);
+                if (!held.has(id)) await grantMembership(client, group, id, actor);
               }
               for (const member of current) {
-                if (!wanted.has(member.id)) await revokeRole(client, role, member.id, actor);
+                if (!wanted.has(member.id)) await revokeMembership(client, group, member.id, actor);
               }
             }
           }
-          return groupMembers(client, role);
+          return groupMembers(client, group);
         });
       }
 
       scim.patch("/Groups/:id", HIDE, async (request, reply) => {
-        const role = roleOf((request.params as { id: string }).id);
+        const group = await resolveGroup(ctx.pool, (request.params as { id: string }).id);
         const actions = applyGroupPatch(parsePatchBody(request.body));
-        const members = await applyMembership(request, role, actions);
-        return sendScim(reply, 200, toScimGroup(role, members));
+        const members = await applyMembership(request, group, actions);
+        return sendScim(reply, 200, toScimGroup(group, members));
       });
 
       scim.put("/Groups/:id", HIDE, async (request, reply) => {
-        const role = roleOf((request.params as { id: string }).id);
+        const group = await resolveGroup(ctx.pool, (request.params as { id: string }).id);
         const body = (request.body ?? {}) as Record<string, unknown>;
         const raw = body["members"] ?? [];
         if (!Array.isArray(raw)) {
@@ -681,8 +796,8 @@ export function registerScimRoutes(app: App, ctx: AppContext): void {
           }
           return value;
         });
-        const members = await applyMembership(request, role, [{ kind: "replace", ids }]);
-        return sendScim(reply, 200, toScimGroup(role, members));
+        const members = await applyMembership(request, group, [{ kind: "replace", ids }]);
+        return sendScim(reply, 200, toScimGroup(group, members));
       });
     },
     { prefix: BASE_PATH }

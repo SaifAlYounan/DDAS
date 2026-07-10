@@ -121,17 +121,18 @@ export type AccessMode = "read" | "write";
  * Multi-tenant confinement for a single request. Access is granted to: the
  * requester who owns it; the accountable HUMAN OWNER when the requester is an
  * agent (so the owner can attest the human-gated facts on the agent's
- * request); an admin (everything); approvers and auditors as trusted
- * reviewers (auditors read-only); viewers read-only (admin-wide read
- * visibility, no writes of any kind). A bare requester can therefore never
- * reach ANOTHER requester's facts, citations, derivation, or state — the hole
- * the MCP ownRequest guard already closed for agents, now closed on the REST
- * side. Returns the owning requester's id.
+ * request); and otherwise by PERMISSION (ADR 0005) — `facts.attest` is the
+ * trusted-reviewer wide-write capability (built-in: approver, admin) and
+ * `requests.read` the wide-read one (built-in: approver, auditor, viewer,
+ * admin). A bare requester holds neither and can therefore never reach
+ * ANOTHER requester's facts, citations, derivation, or state — the hole the
+ * MCP ownRequest guard already closed for agents, closed on the REST side.
+ * Returns the owning requester's id.
  */
 export async function assertRequestAccess(
   client: pg.ClientBase | pg.Pool,
   requestId: string,
-  principal: { id: string; roles: readonly string[] },
+  principal: { id: string; permissions: ReadonlySet<string> },
   mode: AccessMode
 ): Promise<string> {
   const row = await client.query<{ requester_id: string; owner_principal_id: string | null }>(
@@ -145,10 +146,8 @@ export async function assertRequestAccess(
   const ok =
     requesterId === principal.id ||
     row.rows[0].owner_principal_id === principal.id ||
-    principal.roles.includes("admin") ||
-    principal.roles.includes("approver") ||
-    (mode === "read" &&
-      (principal.roles.includes("auditor") || principal.roles.includes("viewer")));
+    principal.permissions.has("facts.attest") ||
+    (mode === "read" && principal.permissions.has("requests.read"));
   if (!ok) throw new ApiError("forbidden", "you do not have access to this request");
   return requesterId;
 }

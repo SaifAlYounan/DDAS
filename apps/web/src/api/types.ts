@@ -464,6 +464,22 @@ export interface AdminPrincipal {
   ownerPrincipalId: string | null;
   disabled: boolean;
   roles: string[];
+  customRoles: Array<{ id: string; name: string }>;
+}
+
+/**
+ * A role definition (ADR 0005): the six built-ins (immutable, `builtin`
+ * true, id "builtin:<role>") plus admin-defined custom permission sets.
+ * The grantable-permission catalog is derived at runtime from the built-in
+ * admin row (which holds the full catalog) minus admin.* — nothing to drift.
+ */
+export interface RoleDef {
+  id: string;
+  name: string;
+  description: string | null;
+  builtin: boolean;
+  permissions: string[];
+  members: number;
 }
 
 export interface AdminSettings {

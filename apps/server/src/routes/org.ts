@@ -174,7 +174,7 @@ export function registerOrgRoutes(app: App, ctx: AppContext): void {
           }),
         },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("org.manage")],
     },
     async (request) => {
       const snapshot = request.body as OrgSnapshot;
@@ -228,7 +228,7 @@ export function registerOrgRoutes(app: App, ctx: AppContext): void {
         body: z.object({ name: z.string().min(1), parentId: z.string().uuid().optional() }),
         response: { 200: z.object({ id: z.string() }) },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("org.manage")],
     },
     async (request) => {
       const actor = { kind: "principal" as const, id: request.principal!.id };
@@ -260,7 +260,7 @@ export function registerOrgRoutes(app: App, ctx: AppContext): void {
         }),
         response: { 200: z.object({ id: z.string() }) },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("org.manage")],
     },
     async (request) => {
       const actor = { kind: "principal" as const, id: request.principal!.id };
@@ -293,7 +293,7 @@ export function registerOrgRoutes(app: App, ctx: AppContext): void {
         }),
         response: { 200: z.object({ id: z.string() }) },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("org.manage")],
     },
     async (request) => {
       const actor = { kind: "principal" as const, id: request.principal!.id };
@@ -335,7 +335,7 @@ export function registerOrgRoutes(app: App, ctx: AppContext): void {
         }),
         response: { 200: z.object({ id: z.string() }) },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("org.manage")],
     },
     async (request) => {
       const body = request.body;
@@ -375,7 +375,7 @@ export function registerOrgRoutes(app: App, ctx: AppContext): void {
         params: z.object({ id: z.string().uuid() }),
         response: { 200: z.object({ ok: z.boolean() }) },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("org.manage")],
     },
     async (request) => {
       const { id } = request.params;

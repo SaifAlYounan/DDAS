@@ -103,7 +103,7 @@ export function registerPolicyRoutes(app: App, ctx: AppContext): void {
           }),
         },
       },
-      preHandler: [app.requireRole("policy_author")],
+      preHandler: [app.requirePermission("policies.author")],
     },
     async (request) => {
       try {
@@ -168,7 +168,7 @@ export function registerPolicyRoutes(app: App, ctx: AppContext): void {
         body: z.object({ sourceYaml: z.string().min(1) }),
         response: { 200: VersionOut },
       },
-      preHandler: [app.requireRole("policy_author")],
+      preHandler: [app.requirePermission("policies.author")],
     },
     async (request) => {
       const { slug } = request.params;
@@ -340,7 +340,7 @@ export function registerPolicyRoutes(app: App, ctx: AppContext): void {
           }),
         response: { 200: VersionOut },
       },
-      preHandler: [app.requireRole("policy_author")],
+      preHandler: [app.requirePermission("policies.activate")],
     },
     async (request) => {
       const { id } = request.params;
@@ -440,7 +440,7 @@ export function registerPolicyRoutes(app: App, ctx: AppContext): void {
         params: z.object({ id: z.string().uuid() }),
         response: { 200: VersionOut },
       },
-      preHandler: [app.requireRole("policy_author")],
+      preHandler: [app.requirePermission("policies.activate")],
     },
     async (request) => {
       const actor = { kind: "principal" as const, id: request.principal!.id };

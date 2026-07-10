@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { api } from "../api/client";
-import { principalsQuery, settingsQuery } from "../api/queries";
+import { principalsQuery, rolesQuery, settingsQuery } from "../api/queries";
 import { ALL_ROLES, type AdminPrincipal, type AdminSettings, type Role } from "../api/types";
 import { ErrorNote, Loading, errorMessage } from "../components/Loading";
 import { useMe } from "../components/MeContext";
@@ -40,10 +40,17 @@ export function AdminPage() {
               <Td className="text-gray-500">{p.email ?? "—"}</Td>
               <Td>
                 <span className="flex flex-wrap gap-1">
-                  {p.roles.length === 0 && <span className="text-xs text-gray-400">none</span>}
+                  {p.roles.length === 0 && p.customRoles.length === 0 && (
+                    <span className="text-xs text-gray-400">none</span>
+                  )}
                   {p.roles.map((r) => (
                     <Badge key={r} tone="indigo">
                       {r}
+                    </Badge>
+                  ))}
+                  {p.customRoles.map((r) => (
+                    <Badge key={r.id} tone="blue">
+                      {r.name}
                     </Badge>
                   ))}
                 </span>
@@ -210,19 +217,33 @@ function RoleEditorDialog({
 }) {
   const toast = useToast();
   const queryClient = useQueryClient();
+  const roleDefs = useQuery(rolesQuery);
+  const customRoleOptions = (roleDefs.data ?? []).filter((r) => !r.builtin);
   const [roles, setRoles] = useState<Role[]>(
     principal.roles.filter((r): r is Role => (ALL_ROLES as string[]).includes(r))
+  );
+  const [customRoleIds, setCustomRoleIds] = useState<string[]>(
+    principal.customRoles.map((r) => r.id)
   );
 
   const toggle = (role: Role) =>
     setRoles((prev) => (prev.includes(role) ? prev.filter((r) => r !== role) : [...prev, role]));
+  const toggleCustom = (id: string) =>
+    setCustomRoleIds((prev) =>
+      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id]
+    );
 
   const save = useMutation({
-    mutationFn: () =>
-      api.post<{ roles: string[] }>(`/admin/principals/${principal.id}/roles`, { roles }),
+    mutationFn: async () => {
+      await api.post<{ roles: string[] }>(`/admin/principals/${principal.id}/roles`, { roles });
+      await api.post(`/admin/principals/${principal.id}/custom-roles`, {
+        roleIds: customRoleIds,
+      });
+    },
     onSuccess: () => {
       toast.push(`Roles updated for ${principal.name}`, "success");
       void queryClient.invalidateQueries({ queryKey: ["admin", "principals"] });
+      void queryClient.invalidateQueries({ queryKey: ["admin", "roles"] });
       onClose();
     },
     onError: (err) => toast.push(errorMessage(err), "error"),
@@ -244,7 +265,33 @@ function RoleEditorDialog({
         </>
       }
     >
-      <RoleCheckboxes roles={roles} onToggle={toggle} />
+      <div className="space-y-4">
+        <Field label="Built-in roles">
+          <RoleCheckboxes roles={roles} onToggle={toggle} />
+        </Field>
+        <Field
+          label="Custom roles"
+          hint="Named permission sets defined on the Roles page. Additive with the built-ins."
+        >
+          {customRoleOptions.length === 0 ? (
+            <p className="text-xs text-gray-400">No custom roles defined.</p>
+          ) : (
+            <div className="grid grid-cols-2 gap-2">
+              {customRoleOptions.map((role) => (
+                <label key={role.id} className="flex items-center gap-2 text-sm text-gray-700">
+                  <input
+                    type="checkbox"
+                    checked={customRoleIds.includes(role.id)}
+                    onChange={() => toggleCustom(role.id)}
+                    className="accent-indigo-600"
+                  />
+                  {role.name}
+                </label>
+              ))}
+            </div>
+          )}
+        </Field>
+      </div>
     </Dialog>
   );
 }
@@ -415,8 +462,9 @@ function ScimSection() {
         <p className="text-sm text-gray-600">
           Point your identity provider at{" "}
           <code className="rounded bg-gray-100 px-1 font-mono text-xs">{baseUrl}</code> with a
-          bearer token minted here. Users sync to principals; the six “DDAS …” groups grant and
-          revoke roles. Deactivating a user kills their sessions and API keys immediately. Setup
+          bearer token minted here. Users sync to principals; the “DDAS …” groups (six built-in
+          roles plus one per custom role) grant and revoke roles. Deactivating a user kills their
+          sessions and API keys immediately. Setup
           steps: <code className="font-mono text-xs">docs/scim.md</code>.
         </p>
         {mintedToken && (

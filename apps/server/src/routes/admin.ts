@@ -25,6 +25,7 @@ const PrincipalRow = z.object({
   ownerPrincipalId: z.string().nullable(),
   disabled: z.boolean(),
   roles: z.array(z.string()),
+  customRoles: z.array(z.object({ id: z.string(), name: z.string() })),
 });
 
 export function registerAdminRoutes(app: App, ctx: AppContext): void {
@@ -32,7 +33,7 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
     "/admin/principals",
     {
       schema: { tags: ["admin"], response: { 200: z.array(PrincipalRow) } },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("admin.principals")],
     },
     async () => {
       const rows = await ctx.pool.query<{
@@ -43,9 +44,14 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
         owner_principal_id: string | null;
         disabled_at: Date | null;
         roles: string[] | null;
+        custom_roles: Array<{ id: string; name: string }> | null;
       }>(
         `SELECT p.id, p.kind, p.name, p.email, p.owner_principal_id, p.disabled_at,
-                array_agg(r.role::text) FILTER (WHERE r.role IS NOT NULL) AS roles
+                array_agg(r.role::text) FILTER (WHERE r.role IS NOT NULL) AS roles,
+                (SELECT json_agg(json_build_object('id', cr.id, 'name', cr.name) ORDER BY cr.name)
+                   FROM custom_role_assignments cra
+                   JOIN custom_roles cr ON cr.id = cra.role_id
+                  WHERE cra.principal_id = p.id) AS custom_roles
          FROM principals p LEFT JOIN role_assignments r ON r.principal_id = p.id
          GROUP BY p.id ORDER BY p.created_at`
       );
@@ -57,6 +63,7 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
         ownerPrincipalId: r.owner_principal_id,
         disabled: r.disabled_at !== null,
         roles: r.roles ?? [],
+        customRoles: r.custom_roles ?? [],
       }));
     }
   );
@@ -76,7 +83,7 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
         }),
         response: { 200: z.object({ id: z.string() }) },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("admin.principals")],
     },
     async (request) => {
       const body = request.body;
@@ -123,7 +130,7 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
         body: z.object({ roles: z.array(RoleEnum) }),
         response: { 200: z.object({ roles: z.array(z.string()) }) },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("admin.principals")],
     },
     async (request) => {
       const { id } = request.params;
@@ -194,7 +201,7 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
           }),
         },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("admin.api_keys")],
     },
     async (request) => {
       const { principalId, scopes } = request.body;
@@ -250,7 +257,7 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
           ),
         },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("admin.api_keys")],
     },
     async () => {
       const rows = await ctx.pool.query<{
@@ -286,7 +293,7 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
         params: z.object({ id: z.string().uuid() }),
         response: { 200: z.object({ ok: z.boolean() }) },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("admin.api_keys")],
     },
     async (request) => {
       const actor = { kind: "principal" as const, id: request.principal!.id };
@@ -315,7 +322,7 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
     "/admin/settings",
     {
       schema: { tags: ["admin"], response: { 200: Settings } },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("admin.settings")],
     },
     async () => {
       const row = await ctx.pool.query<{ sla_hours_by_tier: Record<string, number> }>(
@@ -329,7 +336,7 @@ export function registerAdminRoutes(app: App, ctx: AppContext): void {
     "/admin/settings",
     {
       schema: { tags: ["admin"], body: Settings, response: { 200: Settings } },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("admin.settings")],
     },
     async (request) => {
       const actor = { kind: "principal" as const, id: request.principal!.id };

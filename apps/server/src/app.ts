@@ -32,6 +32,7 @@ import { registerJobs } from "./jobs/index.js";
 import { authPlugin } from "./plugins/auth.js";
 import { rateLimitConfigFromEnv, rateLimitPlugin } from "./plugins/rate-limit.js";
 import { registerAdminRoutes } from "./routes/admin.js";
+import { registerAdminRoleRoutes } from "./routes/admin-roles.js";
 import { registerApprovalRoutes } from "./routes/approvals.js";
 import { registerAuditRoutes } from "./routes/audit.js";
 import { registerAuthRoutes } from "./routes/auth.js";
@@ -230,6 +231,7 @@ export async function buildApp(deps: AppDeps): Promise<App> {
       registerAuthRoutes(api as unknown as App, ctx);
       registerOidcRoutes(api as unknown as App, ctx);
       registerAdminRoutes(api as unknown as App, ctx);
+      registerAdminRoleRoutes(api as unknown as App, ctx);
       registerOrgRoutes(api as unknown as App, ctx);
       registerPolicyRoutes(api as unknown as App, ctx);
       registerRequestRoutes(api as unknown as App, ctx);

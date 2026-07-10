@@ -10,6 +10,12 @@ export const AUDIT_EVENT_TYPES = [
   "principal.enabled",
   "role.granted",
   "role.revoked",
+  // custom roles (ADR 0005) — definition lifecycle + membership grant.
+  // Membership revocation reuses "role.revoked" (payload carries customRoleId).
+  "role.created",
+  "role.updated",
+  "role.deleted",
+  "role.assigned",
   "org_unit.created",
   "org_unit.updated",
   "position.created",

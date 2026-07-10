@@ -589,4 +589,80 @@ describe.skipIf(!TEST_DATABASE_URL)("SCIM e2e", () => {
       "role.revoked",
     ]);
   });
+
+  it("surfaces custom roles as additional groups (ADR 0005)", async () => {
+    // Created through the admin API — SCIM can neither create nor delete groups.
+    const created = await asAdmin({
+      method: "POST",
+      url: "/api/v1/admin/roles",
+      payload: { name: "Contractors", permissions: ["requests.read"] },
+    });
+    expect(created.statusCode).toBe(200);
+    const roleId = (created.json() as { id: string }).id;
+
+    // Listed next to the six fixed groups, with the "DDAS Custom:" prefix.
+    const groups = await scim("GET", "/Groups?excludedAttributes=members");
+    const body = groups.json() as { totalResults: number; Resources: Array<{ id: string; displayName: string }> };
+    expect(body.totalResults).toBe(7);
+    const custom = body.Resources.find((g) => g.id === roleId)!;
+    expect(custom.displayName).toBe("DDAS Custom: Contractors");
+
+    const filtered = await scim(
+      "GET",
+      `/Groups?filter=${encodeURIComponent('displayName eq "DDAS Custom: Contractors"')}`
+    );
+    expect((filtered.json() as { totalResults: number }).totalResults).toBe(1);
+
+    // Membership add = assignment grant, visible on the user's groups.
+    const add = await scim(
+      "PATCH",
+      `/Groups/${roleId}`,
+      patchBody([{ op: "add", path: "members", value: [{ value: rubenId }] }])
+    );
+    expect(add.statusCode).toBe(200);
+    expect(
+      (add.json() as { members: Array<{ value: string }> }).members.map((m) => m.value)
+    ).toEqual([rubenId]);
+    const user = await scim("GET", `/Users/${rubenId}`);
+    const userGroups = (user.json() as { groups: Array<{ value: string; display: string }> }).groups;
+    expect(userGroups.some((g) => g.value === roleId && g.display === "DDAS Custom: Contractors")).toBe(
+      true
+    );
+    const assignment = await pool.query(
+      "SELECT 1 FROM custom_role_assignments WHERE principal_id = $1 AND role_id = $2",
+      [rubenId, roleId]
+    );
+    expect(assignment.rows.length).toBe(1);
+
+    // Deleting a role that still has members is refused — 409 (docs/scim.md).
+    // (Plain inject: DELETE carries no body, so no content-type header.)
+    const blocked = await app.inject({
+      method: "DELETE",
+      url: `/api/v1/admin/roles/${roleId}`,
+      headers: { cookie: adminCookie },
+    });
+    expect(blocked.statusCode).toBe(409);
+
+    // Membership remove = assignment revoke; then deletion goes through.
+    const emptied = await scim("PUT", `/Groups/${roleId}`, { members: [] });
+    expect(emptied.statusCode).toBe(200);
+    expect(((emptied.json() as { members?: unknown[] }).members ?? []).length).toBe(0);
+    const deleted = await app.inject({
+      method: "DELETE",
+      url: `/api/v1/admin/roles/${roleId}`,
+      headers: { cookie: adminCookie },
+    });
+    expect(deleted.statusCode).toBe(200);
+    const gone = await scim("GET", `/Groups/${roleId}`);
+    expect(gone.statusCode).toBe(404);
+
+    // Both membership changes rode the audit chain with the SCIM actor.
+    const audited = await pool.query<{ type: string }>(
+      `SELECT type FROM audit_events
+       WHERE actor->>'kind' = 'api_key' AND payload->>'customRoleId' = $1
+       ORDER BY seq`,
+      [roleId]
+    );
+    expect(audited.rows.map((r) => r.type)).toEqual(["role.assigned", "role.revoked"]);
+  });
 });

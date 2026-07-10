@@ -11,6 +11,7 @@ import { Layout } from "./components/Layout";
 import { Loading } from "./components/Loading";
 import { MeContext } from "./components/MeContext";
 import { AdminPage } from "./pages/Admin";
+import { AdminRolesPage } from "./pages/AdminRoles";
 import { AuditPage } from "./pages/Audit";
 import { InboxPage } from "./pages/Inbox";
 import { LoginPage } from "./pages/Login";
@@ -158,6 +159,12 @@ const adminRoute = createRoute({
   component: AdminPage,
 });
 
+const adminRolesRoute = createRoute({
+  getParentRoute: () => authedRoute,
+  path: "/admin/roles",
+  component: AdminRolesPage,
+});
+
 const routeTree = rootRoute.addChildren([
   loginRoute,
   authedRoute.addChildren([
@@ -174,6 +181,7 @@ const routeTree = rootRoute.addChildren([
     orgRoute,
     auditRoute,
     adminRoute,
+    adminRolesRoute,
   ]),
 ]);
 

@@ -18,7 +18,7 @@ export function registerSimulationRoutes(app: App, ctx: AppContext): void {
         }),
         response: { 200: z.object({ id: z.string(), status: z.string() }) },
       },
-      preHandler: [app.requireRole("policy_author")],
+      preHandler: [app.requirePermission("simulations.run")],
     },
     async (request) => {
       const { baselinePolicyVersionId, candidateYaml } = request.body;

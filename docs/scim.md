@@ -46,7 +46,7 @@ SCIM uses a dedicated long-lived bearer token — a DDAS API key with the
 | `PUT /scim/v2/Users/:id` | replaces userName/displayName/active; an **omitted `externalId` is preserved** (never silently unlinked) |
 | `PATCH /scim/v2/Users/:id` | ops `add`/`replace`/`remove` on `userName`, `displayName`, `name.formatted`, `externalId`, `active` (also the path-less value-object form); unsupported attributes are ignored per RFC 7644 §3.5.2; Entra's string booleans (`"True"`/`"False"`) accepted |
 | `DELETE /scim/v2/Users/:id` | **soft** — deactivates, never erases (audit history stays intact) |
-| `GET /scim/v2/Groups[/:id]` | the six fixed role groups; `filter=displayName eq "…"`, `excludedAttributes=members` |
+| `GET /scim/v2/Groups[/:id]` | the six fixed role groups **plus one group per custom role** (ADR 0005); `filter=displayName eq "…"`, `excludedAttributes=members` |
 | `PATCH /scim/v2/Groups/:id` | membership `add` / `remove` (incl. `members[value eq "<id>"]`) / `replace` |
 | `PUT /scim/v2/Groups/:id` | wholesale membership replace |
 
@@ -75,6 +75,17 @@ multi-clause filters. `meta.version` is absent; conditional requests are not hon
   Adding a user to a group grants the role; removing revokes it. Group
   displayName is immutable (400 `mutability`).
 
+- **Custom roles surface as additional groups** (ADR 0005): each
+  admin-defined role appears as a group with id = the role's UUID and
+  `displayName "DDAS Custom: <name>"`. Membership add/remove/replace =
+  assignment grant/revoke, audit-chained (`role.assigned` /
+  `role.revoked` with `payload.customRoleId`). SCIM can neither create nor
+  delete groups — role definitions live in the admin API
+  (`/api/v1/admin/roles`), and **deleting a custom role that still has
+  members is refused with 409**: empty its membership (via SCIM or the
+  console) first, then delete. Custom roles can never carry `admin.*`
+  permissions, so no last-admin concern arises through them.
+
 ## Deprovisioning
 
 `active: false` (or `DELETE`) deactivates the principal and — in the same
@@ -89,8 +100,9 @@ deprovisioned user is locked out on their very next request. Reactivating
   group's members applies adds before removes, so a handover never passes
   through a zero-admin state.
 - **Audit**: every SCIM mutation lands on the tamper-evident audit chain
-  (`principal.created/updated/disabled/enabled`, `role.granted/revoked`)
-  with the SCIM token as the actor and `payload.via = "scim"`.
+  (`principal.created/updated/disabled/enabled`, `role.granted/revoked`,
+  `role.assigned`/`role.revoked` for custom roles) with the SCIM token as
+  the actor and `payload.via = "scim"`.
 
 ## Interop with OIDC SSO (no duplicate accounts)
 

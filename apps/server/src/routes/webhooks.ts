@@ -21,7 +21,7 @@ export function registerWebhookRoutes(app: App, ctx: AppContext): void {
           200: z.object({ id: z.string(), secret: z.string() }),
         },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("admin.webhooks")],
     },
     async (request) => {
       const { url, events } = request.body;
@@ -67,7 +67,7 @@ export function registerWebhookRoutes(app: App, ctx: AppContext): void {
           ),
         },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("admin.webhooks")],
     },
     async () => {
       const rows = await ctx.pool.query<{
@@ -95,7 +95,7 @@ export function registerWebhookRoutes(app: App, ctx: AppContext): void {
         params: z.object({ id: z.string().uuid() }),
         response: { 200: z.object({ ok: z.boolean() }) },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("admin.webhooks")],
     },
     async (request) => {
       const actor = { kind: "principal" as const, id: request.principal!.id };
@@ -143,7 +143,7 @@ export function registerWebhookRoutes(app: App, ctx: AppContext): void {
           ),
         },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("admin.webhooks")],
     },
     async (request) => {
       const rows = await ctx.pool.query<{
@@ -185,7 +185,7 @@ export function registerWebhookRoutes(app: App, ctx: AppContext): void {
         params: z.object({ id: z.string().uuid() }),
         response: { 200: z.object({ ok: z.boolean() }) },
       },
-      preHandler: [app.requireRole("admin")],
+      preHandler: [app.requirePermission("admin.webhooks")],
     },
     async (request) => {
       const updated = await ctx.pool.query(
