@@ -71,6 +71,9 @@ helm install ddas deploy/helm/ddas \
   --set env.DDAS_S3_SECRET_ACCESS_KEY=…
 ```
 
+- The chart pulls the released image
+  `ghcr.io/legalquants/lqgovernance-ddas` by default (tag = the chart's
+  `appVersion`); published multi-arch (amd64 + arm64) on every `v*` tag.
 - `replicaCount > 1` **requires** shared blob storage. The chart fails at
   render time unless `env.DDAS_BLOB_DRIVER=s3` or
   `blobs.accessMode=ReadWriteMany` (RWX storage class) is set. Prefer s3.

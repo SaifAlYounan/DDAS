@@ -241,6 +241,15 @@ then uncomment the `DDAS_BLOB_DRIVER`/`DDAS_S3_*` lines on the `app` service and
 
 **Kubernetes** — a bring-your-own-Postgres Helm chart is in [`deploy/helm/ddas`](deploy/helm/ddas). Single replica by default; for HA set `replicaCount` > 1 with S3 blob storage — the supported multi-replica topology (what is shared where, scaling limits) is documented in [`docs/ha.md`](docs/ha.md).
 
+**Published images** — every release tag `v<version>` publishes a multi-arch (linux/amd64 + linux/arm64) image to GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/legalquants/lqgovernance-ddas:2.0.0    # a specific release
+docker pull ghcr.io/legalquants/lqgovernance-ddas:latest   # the newest release
+```
+
+The Helm chart already defaults to this image (`image.repository`; the tag defaults to the chart's `appVersion`). The compose quickstart builds from source; to run the published image instead, replace the `build:` block of the `app` service in `deploy/docker-compose.yml` with `image: ghcr.io/legalquants/lqgovernance-ddas:latest`.
+
 ### Extraction providers
 
 Set these to wire a real model (the only place DDAS talks to an LLM):

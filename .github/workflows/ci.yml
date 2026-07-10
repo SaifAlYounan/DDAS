@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+    tags: ["v*"]
   pull_request:
 
 jobs:
@@ -81,6 +82,42 @@ jobs:
       - run: pnpm build
       - run: pnpm --filter @ddas/web exec playwright install --with-deps chromium
       - run: pnpm --filter @ddas/web e2e
+
+  # Release: pushing a tag v<version> builds the production image from
+  # deploy/Dockerfile (repo-root context, multi-arch) and publishes it to
+  # GHCR as ghcr.io/legalquants/lqgovernance-ddas:<version> and :latest.
+  # The registry path is DELIBERATELY hardcoded lowercase: the repo is being
+  # transferred to the LegalQuants org and renamed LQGovernance-DDAS before
+  # any tag is pushed, and deriving it from github.repository would both
+  # break on the rename timing and violate GHCR's lowercase requirement.
+  publish-image:
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: [build-test, helm-lint]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Derive version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ghcr.io/legalquants/lqgovernance-ddas:${{ steps.version.outputs.version }}
+            ghcr.io/legalquants/lqgovernance-ddas:latest
 
   dco:
     if: github.event_name == 'pull_request'
