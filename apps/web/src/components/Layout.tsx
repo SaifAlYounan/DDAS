@@ -50,7 +50,7 @@ export function Layout({ me }: { me: Me }) {
             D
           </span>
           <span className="text-sm font-semibold tracking-tight text-gray-900">
-            DDAS Console
+            LQGovernance - DDAS Console
           </span>
         </div>
         <nav className="flex flex-1 flex-col gap-0.5 px-3">

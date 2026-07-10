@@ -33,7 +33,7 @@ export function LoginPage() {
           <span className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-600 text-base font-bold text-white">
             D
           </span>
-          <h1 className="text-xl font-semibold tracking-tight text-gray-900">DDAS Console</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-gray-900">LQGovernance - DDAS Console</h1>
           <p className="mt-1 text-sm text-gray-500">Dynamic Delegation of Authority System</p>
         </div>
         <form
