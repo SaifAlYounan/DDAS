@@ -6,6 +6,11 @@ on:
     tags: ["v*"]
   pull_request:
 
+# Least privilege by default (C6): read-only token for every job. The one job
+# that needs more (publish-image) re-declares its own `packages: write`.
+permissions:
+  contents: read
+
 jobs:
   build-test:
     runs-on: ubuntu-latest
@@ -29,7 +34,7 @@ jobs:
       TEST_S3_ACCESS_KEY_ID: test
       TEST_S3_SECRET_ACCESS_KEY: testtest123
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       # MinIO for the s3 blob-driver suites (the minio image needs a command,
       # which GitHub service containers can't set — hence plain docker run).
       - name: Start MinIO
@@ -37,8 +42,8 @@ jobs:
           docker run -d --name minio \
             -e MINIO_ROOT_USER=test -e MINIO_ROOT_PASSWORD=testtest123 \
             -p 127.0.0.1:9000:9000 minio/minio server /data
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
           cache: pnpm
@@ -49,7 +54,7 @@ jobs:
   helm-lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - run: helm lint deploy/helm/ddas --set database.url=postgres://x:x@db:5432/ddas
       - run: helm template ddas deploy/helm/ddas --set database.url=postgres://x:x@db:5432/ddas > /dev/null
 
@@ -72,9 +77,9 @@ jobs:
     env:
       SMOKE_DATABASE_URL: postgres://postgres:postgres@localhost:5432/ddas_smoke
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4.3.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version: 24
           cache: pnpm
@@ -98,32 +103,43 @@ jobs:
       contents: read
       packages: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3
-      - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3.7.0
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3.12.0
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3.7.0
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
       - name: Derive version from tag
         id: version
-        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-      - uses: docker/build-push-action@v6
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          # :latest only moves for a real release (infra-S1): a prerelease tag
+          # (v1.2.3-alpha / -rc.1 — anything with a hyphen) must not clobber it.
+          if [[ "$version" == *-* ]]; then
+            echo "latest_tag=" >> "$GITHUB_OUTPUT"
+          else
+            echo "latest_tag=ghcr.io/legalquants/lqgovernance-ddas:latest" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6.19.2
         with:
           context: .
           file: deploy/Dockerfile
           platforms: linux/amd64,linux/arm64
           push: true
+          # Blank latest_tag lines are trimmed by the action (a prerelease
+          # publishes only the version tag).
           tags: |
             ghcr.io/legalquants/lqgovernance-ddas:${{ steps.version.outputs.version }}
-            ghcr.io/legalquants/lqgovernance-ddas:latest
+            ${{ steps.version.outputs.latest_tag }}
 
   dco:
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
       - name: Check DCO sign-off
