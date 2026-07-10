@@ -31,6 +31,8 @@ describe.skipIf(!TEST_DATABASE_URL)("OIDC e2e", () => {
       OIDC_REDIRECT_URL: "http://127.0.0.1:3999/api/v1/auth/oidc/callback",
       OIDC_DEFAULT_ROLES: "requester,approver",
       OIDC_ALLOW_INSECURE: "true",
+      // Exercise the signed flow cookie (authn-S1).
+      COOKIE_SECRET: "test-cookie-secret-at-least-32-chars-long",
       // Every request here is auth-class from one IP; don't trip the limiter.
       RATE_LIMIT_AUTH_LIMIT: "100000",
     });
@@ -54,6 +56,8 @@ describe.skipIf(!TEST_DATABASE_URL)("OIDC e2e", () => {
     const authorizeUrl = login.headers.location!;
     expect(authorizeUrl).toContain(`${idp.issuer}/authorize`);
     expect(authorizeUrl).toContain("code_challenge_method=S256");
+    // A nonce is present on the authorization request (authn-S1).
+    expect(new URL(authorizeUrl).searchParams.get("nonce")).toBeTruthy();
 
     const idpResponse = await fetch(authorizeUrl, { redirect: "manual" });
     expect(idpResponse.status).toBe(302);
@@ -105,12 +109,17 @@ describe.skipIf(!TEST_DATABASE_URL)("OIDC e2e", () => {
     expect((me.json() as { email: string }).email).toBe("sso.user@kolvarra.test");
   });
 
-  it("links an existing password account by email instead of duplicating it", async () => {
+  it("links an existing password account by VERIFIED email instead of duplicating it", async () => {
     const existing = await pool.query<{ id: string }>(
       `INSERT INTO principals (kind, name, email, password_hash)
        VALUES ('human', 'Petra Local', 'petra.local@kolvarra.test', 'x') RETURNING id`
     );
-    idp.nextUser = { sub: "sso-user-2", email: "petra.local@kolvarra.test", name: "Petra SSO" };
+    idp.nextUser = {
+      sub: "sso-user-2",
+      email: "petra.local@kolvarra.test",
+      name: "Petra SSO",
+      emailVerified: true,
+    };
 
     const { sessionCookie } = await ssoLogin();
     const me = await app.inject({
@@ -125,6 +134,43 @@ describe.skipIf(!TEST_DATABASE_URL)("OIDC e2e", () => {
       [existing.rows[0]!.id]
     );
     expect(linked.rows[0]!.oidc_subject).toBe("sso-user-2");
+  });
+
+  it("does NOT link (or authenticate as) an existing account on an UNVERIFIED email", async () => {
+    // authn-C1: an IdP asserting an unverified email must never take over an
+    // existing principal — admin or otherwise.
+    const victim = await pool.query<{ id: string }>(
+      `INSERT INTO principals (kind, name, email, password_hash)
+       VALUES ('human', 'Victim Admin', 'victim.admin@kolvarra.test', 'x') RETURNING id`
+    );
+    idp.nextUser = {
+      sub: "sso-attacker-1",
+      email: "victim.admin@kolvarra.test",
+      name: "Not The Victim",
+      emailVerified: false,
+    };
+
+    // Drive login → IdP → callback by hand; we expect the callback to fail.
+    const login = await app.inject({ method: "GET", url: "/api/v1/auth/oidc/login" });
+    const flowCookieHeader = login.headers["set-cookie"];
+    const flowCookie = (Array.isArray(flowCookieHeader) ? flowCookieHeader[0] : flowCookieHeader)!
+      .split(";")[0]!;
+    const idpResponse = await fetch(login.headers.location!, { redirect: "manual" });
+    const callbackUrl = new URL(idpResponse.headers.get("location")!);
+    const callback = await app.inject({
+      method: "GET",
+      url: callbackUrl.pathname + callbackUrl.search,
+      headers: { cookie: flowCookie },
+    });
+    // No takeover: the unverified email cannot claim the existing account, and
+    // the duplicate email is refused rather than shadow-provisioned.
+    expect(callback.statusCode).toBe(409);
+
+    const still = await pool.query<{ oidc_subject: string | null }>(
+      "SELECT oidc_subject FROM principals WHERE id = $1",
+      [victim.rows[0]!.id]
+    );
+    expect(still.rows[0]!.oidc_subject).toBeNull();
   });
 
   it("rejects a callback with a tampered state", async () => {

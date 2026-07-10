@@ -26,6 +26,23 @@ export const EnvSchema = z.object({
   DDAS_EXTRACTION_PROVIDER: z.string().optional(),
   DDAS_EXTRACTION_MODEL: z.string().optional(),
   LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
+  /** Node runtime mode. In "production" cookies are forced Secure even if a
+   *  proxy header is missing (authn-C2 belt-and-suspenders). */
+  NODE_ENV: z.string().optional(),
+  /**
+   * Trust the reverse proxy's X-Forwarded-* headers (authn-C2): behind a
+   * TLS-terminating proxy this makes request.protocol reflect the real
+   * client scheme (so session cookies keep Secure) and request.ip the real
+   * client IP (so per-IP rate limits don't collapse to one bucket).
+   * "true"/"false" or a comma-separated IP/CIDR allowlist of trusted hops.
+   */
+  TRUST_PROXY: z.string().default("true"),
+  /**
+   * Secret (>=32 chars) for signing the OIDC login-flow cookie (authn-S1).
+   * Set in production/HA — it must be shared across replicas so any node can
+   * validate the flow cookie. When unset the flow cookie is unsigned (dev).
+   */
+  COOKIE_SECRET: z.string().min(32).optional(),
   /** OIDC/SSO — set all three to enable; JIT-provisions on first login. */
   OIDC_ISSUER_URL: z.string().url().optional(),
   OIDC_CLIENT_ID: z.string().optional(),

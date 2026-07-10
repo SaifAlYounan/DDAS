@@ -2,6 +2,7 @@ import argon2 from "argon2";
 import { z } from "zod";
 import { appendAuditEvent } from "@ddas/audit";
 import type { App, AppContext } from "../app.js";
+import { secureCookie } from "../cookies.js";
 import { withTx } from "../domain/tx.js";
 import { ApiError } from "../errors.js";
 import {
@@ -108,7 +109,7 @@ export function registerAuthRoutes(app: App, ctx: AppContext): void {
         path: "/",
         httpOnly: true,
         sameSite: "lax",
-        secure: request.protocol === "https",
+        secure: secureCookie(request),
         maxAge: SESSION_TTL_MS / 1000,
       });
       return {

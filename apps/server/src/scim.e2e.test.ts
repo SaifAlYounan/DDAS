@@ -390,7 +390,12 @@ describe.skipIf(!TEST_DATABASE_URL)("SCIM e2e", () => {
 
   it("dedup, direction 1: an OIDC login binds to the SCIM-provisioned principal", async () => {
     const before = await principalCount();
-    idp.nextUser = { sub: "sso-ruben", email: "ruben.finance@kolvarra.test", name: "Ruben SSO" };
+    idp.nextUser = {
+      sub: "sso-ruben",
+      email: "ruben.finance@kolvarra.test",
+      name: "Ruben SSO",
+      emailVerified: true,
+    };
     const { sessionCookie } = await ssoLogin();
     const me = await app.inject({
       method: "GET",
@@ -403,7 +408,12 @@ describe.skipIf(!TEST_DATABASE_URL)("SCIM e2e", () => {
   });
 
   it("dedup, direction 2: SCIM adopts a JIT-provisioned principal via userName match", async () => {
-    idp.nextUser = { sub: "sso-petra", email: "petra.jit@kolvarra.test", name: "Petra JIT" };
+    idp.nextUser = {
+      sub: "sso-petra",
+      email: "petra.jit@kolvarra.test",
+      name: "Petra JIT",
+      emailVerified: true,
+    };
     await ssoLogin(); // JIT-provisions the principal
     const before = await principalCount();
 

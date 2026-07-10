@@ -29,6 +29,7 @@ import { ZodError } from "zod";
 import type { Env } from "./env.js";
 import { ApiError, toEnvelope } from "./errors.js";
 import { registerJobs } from "./jobs/index.js";
+import { parseTrustProxy } from "./cookies.js";
 import { authPlugin } from "./plugins/auth.js";
 import { rateLimitConfigFromEnv, rateLimitPlugin } from "./plugins/rate-limit.js";
 import { registerAdminRoutes } from "./routes/admin.js";
@@ -111,6 +112,9 @@ export async function buildApp(deps: AppDeps): Promise<App> {
   const app = Fastify({
     logger: { level: env.LOG_LEVEL },
     bodyLimit: 10 * 1024 * 1024,
+    // Behind the HA TLS-terminating proxy: honor X-Forwarded-Proto/For so
+    // request.protocol and request.ip reflect the real client (authn-C2).
+    trustProxy: parseTrustProxy(env.TRUST_PROXY),
   }).withTypeProvider<ZodTypeProvider>();
   app.setValidatorCompiler(validatorCompiler);
   app.setSerializerCompiler(serializerCompiler);
@@ -193,7 +197,8 @@ export async function buildApp(deps: AppDeps): Promise<App> {
       .send({ error: { code: "internal", message: "internal server error" } });
   });
 
-  await app.register(cookie);
+  // Cookie signing keys the OIDC login-flow cookie (authn-S1); unset = unsigned (dev).
+  await app.register(cookie, env.COOKIE_SECRET ? { secret: env.COOKIE_SECRET } : {});
   await app.register(multipart, { limits: { fileSize: 10 * 1024 * 1024, files: 10 } });
   await app.register(swagger, {
     openapi: {

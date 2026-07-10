@@ -10,6 +10,7 @@ import * as oidc from "openid-client";
 import { z } from "zod";
 import { appendAuditEvent } from "@ddas/audit";
 import type { App, AppContext } from "../app.js";
+import { secureCookie } from "../cookies.js";
 import { withTx } from "../domain/tx.js";
 import { ApiError } from "../errors.js";
 import { newSessionToken, SESSION_COOKIE, SESSION_TTL_MS, type Role } from "../plugins/auth.js";
@@ -63,25 +64,34 @@ export function registerOidcRoutes(app: App, ctx: AppContext): void {
     async () => ({ oidcEnabled: oidcEnabled(ctx) })
   );
 
+  const signFlowCookie = Boolean(ctx.env.COOKIE_SECRET);
+
   app.get("/auth/oidc/login", async (request, reply) => {
     if (!oidcEnabled(ctx)) throw new ApiError("not_found", "OIDC is not configured");
     const config = await discover();
 
     const codeVerifier = oidc.randomPKCECodeVerifier();
     const state = oidc.randomState();
+    // Nonce binds the id_token to THIS login flow — replay/injection defense
+    // alongside state (authn-S1). Verified in the callback via expectedNonce.
+    const nonce = oidc.randomNonce();
     const authorizationUrl = oidc.buildAuthorizationUrl(config, {
       redirect_uri: ctx.env.OIDC_REDIRECT_URL!,
       scope: "openid email profile",
       state,
+      nonce,
       code_challenge: await oidc.calculatePKCECodeChallenge(codeVerifier),
       code_challenge_method: "S256",
     });
 
-    reply.setCookie(FLOW_COOKIE, JSON.stringify({ codeVerifier, state }), {
+    // Signed (when COOKIE_SECRET is set) so the browser cannot forge/replay
+    // flow state — this is the login-CSRF binding (authn-S1).
+    reply.setCookie(FLOW_COOKIE, JSON.stringify({ codeVerifier, state, nonce }), {
       path: "/api/v1/auth/oidc",
       httpOnly: true,
       sameSite: "lax",
-      secure: request.protocol === "https",
+      secure: secureCookie(request),
+      signed: signFlowCookie,
       maxAge: 600,
     });
     return reply.redirect(authorizationUrl.href);
@@ -89,11 +99,20 @@ export function registerOidcRoutes(app: App, ctx: AppContext): void {
 
   app.get("/auth/oidc/callback", async (request, reply) => {
     if (!oidcEnabled(ctx)) throw new ApiError("not_found", "OIDC is not configured");
-    const flowCookie = request.cookies[FLOW_COOKIE];
-    if (!flowCookie) throw new ApiError("unauthorized", "missing OIDC flow state — restart login");
-    const { codeVerifier, state } = JSON.parse(flowCookie) as {
+    const rawFlowCookie = request.cookies[FLOW_COOKIE];
+    if (!rawFlowCookie)
+      throw new ApiError("unauthorized", "missing OIDC flow state — restart login");
+    let flowCookie = rawFlowCookie;
+    if (signFlowCookie) {
+      const unsigned = request.unsignCookie(rawFlowCookie);
+      if (!unsigned.valid || unsigned.value === null)
+        throw new ApiError("unauthorized", "OIDC flow cookie failed its signature — restart login");
+      flowCookie = unsigned.value;
+    }
+    const { codeVerifier, state, nonce } = JSON.parse(flowCookie) as {
       codeVerifier: string;
       state: string;
+      nonce?: string;
     };
 
     const config = await discover();
@@ -104,10 +123,14 @@ export function registerOidcRoutes(app: App, ctx: AppContext): void {
 
     let tokens: oidc.TokenEndpointResponse & oidc.TokenEndpointResponseHelpers;
     try {
-      tokens = await oidc.authorizationCodeGrant(config, currentUrl, {
+      const checks: oidc.AuthorizationCodeGrantChecks = {
         pkceCodeVerifier: codeVerifier,
         expectedState: state,
-      });
+      };
+      // Present on every flow we mint; guarded only for a cookie set before this
+      // deploy. When set, the id_token's nonce must match exactly (authn-S1).
+      if (nonce !== undefined) checks.expectedNonce = nonce;
+      tokens = await oidc.authorizationCodeGrant(config, currentUrl, checks);
     } catch (err) {
       throw new ApiError("unauthorized", `OIDC token exchange failed: ${String(err)}`);
     }
@@ -116,6 +139,12 @@ export function registerOidcRoutes(app: App, ctx: AppContext): void {
     const issuer = String(claims.iss);
     const subject = String(claims.sub);
     const email = typeof claims["email"] === "string" ? claims["email"] : null;
+    // Only a VERIFIED email may claim an existing principal (authn-C1). An IdP
+    // that issues an unverified email — or an attacker who registered a victim's
+    // address at a lax IdP — must not be able to take over an account by email,
+    // admin included. RFC-standard boolean claim; treat anything but `true` as
+    // unverified.
+    const emailVerified = claims["email_verified"] === true;
     const name =
       typeof claims["name"] === "string" ? claims["name"] : (email ?? `sso:${subject}`);
 
@@ -129,8 +158,10 @@ export function registerOidcRoutes(app: App, ctx: AppContext): void {
         if (linked.rows[0].disabled_at) throw new ApiError("forbidden", "account is disabled");
         return linked.rows[0].id;
       }
-      // 2. Existing human by email → link.
-      if (email) {
+      // 2. Existing human by VERIFIED email → link. (issuer, sub) is tried
+      //    first above; email is only a fallback and only when the IdP asserts
+      //    the address is verified (authn-C1).
+      if (email && emailVerified) {
         const byEmail = await client.query<{ id: string; disabled_at: Date | null }>(
           "SELECT id, disabled_at FROM principals WHERE lower(email) = lower($1) AND kind = 'human'",
           [email]
@@ -150,12 +181,26 @@ export function registerOidcRoutes(app: App, ctx: AppContext): void {
           return byEmail.rows[0].id;
         }
       }
-      // 3. JIT provision with the default roles.
-      const created = await client.query<{ id: string }>(
-        `INSERT INTO principals (kind, name, email, oidc_issuer, oidc_subject)
-         VALUES ('human', $1, $2, $3, $4) RETURNING id`,
-        [name, email, issuer, subject]
-      );
+      // 3. JIT provision with the default roles. If the email collides with an
+      //    existing principal we deliberately did NOT link (an unverified email
+      //    over a real account, or a race), the unique index rejects it — turn
+      //    that into a clean 409 rather than an opaque 500, and never a takeover.
+      let created: { rows: Array<{ id: string }> };
+      try {
+        created = await client.query<{ id: string }>(
+          `INSERT INTO principals (kind, name, email, oidc_issuer, oidc_subject)
+           VALUES ('human', $1, $2, $3, $4) RETURNING id`,
+          [name, email, issuer, subject]
+        );
+      } catch (err) {
+        if ((err as { code?: string }).code === "23505") {
+          throw new ApiError(
+            "conflict",
+            "an account with this email already exists; a verified email is required to link it via SSO"
+          );
+        }
+        throw err;
+      }
       const id = created.rows[0]!.id;
       for (const role of defaultRoles(ctx)) {
         await client.query(
@@ -191,7 +236,7 @@ export function registerOidcRoutes(app: App, ctx: AppContext): void {
       path: "/",
       httpOnly: true,
       sameSite: "lax",
-      secure: request.protocol === "https",
+      secure: secureCookie(request),
       maxAge: SESSION_TTL_MS / 1000,
     });
     return reply.redirect("/");

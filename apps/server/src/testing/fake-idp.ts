@@ -12,7 +12,7 @@ export interface FakeIdp {
   issuer: string;
   close: () => Promise<void>;
   /** claims returned in the next id_token */
-  nextUser: { sub: string; email: string; name: string };
+  nextUser: { sub: string; email: string; name: string; emailVerified?: boolean };
 }
 
 export async function startFakeIdp(clientId: string): Promise<FakeIdp> {
@@ -21,11 +21,16 @@ export async function startFakeIdp(clientId: string): Promise<FakeIdp> {
   jwk.kid = "test-key";
   jwk.alg = "RS256";
 
-  const pendingCodes = new Map<string, { challenge: string }>();
+  const pendingCodes = new Map<string, { challenge: string; nonce: string | null }>();
   const state: FakeIdp = {
     issuer: "",
     close: async () => undefined,
-    nextUser: { sub: "sso-user-1", email: "sso.user@kolvarra.test", name: "SSO User" },
+    nextUser: {
+      sub: "sso-user-1",
+      email: "sso.user@kolvarra.test",
+      name: "SSO User",
+      emailVerified: true,
+    },
   };
 
   const server = http.createServer((request, response) => {
@@ -55,7 +60,10 @@ export async function startFakeIdp(clientId: string): Promise<FakeIdp> {
     if (url.pathname === "/authorize") {
       // "The user authenticates" — immediately bounce back with a code.
       const code = `code-${Math.random().toString(36).slice(2)}`;
-      pendingCodes.set(code, { challenge: url.searchParams.get("code_challenge") ?? "" });
+      pendingCodes.set(code, {
+        challenge: url.searchParams.get("code_challenge") ?? "",
+        nonce: url.searchParams.get("nonce"),
+      });
       const redirect = new URL(url.searchParams.get("redirect_uri")!);
       redirect.searchParams.set("code", code);
       redirect.searchParams.set("state", url.searchParams.get("state") ?? "");
@@ -79,7 +87,10 @@ export async function startFakeIdp(clientId: string): Promise<FakeIdp> {
           pendingCodes.delete(code);
           const idToken = await new jose.SignJWT({
             email: state.nextUser.email,
+            email_verified: state.nextUser.emailVerified ?? false,
             name: state.nextUser.name,
+            // Echo the flow nonce so the client's expectedNonce check passes.
+            ...(pending.nonce ? { nonce: pending.nonce } : {}),
           })
             .setProtectedHeader({ alg: "RS256", kid: "test-key" })
             .setIssuer(state.issuer)
