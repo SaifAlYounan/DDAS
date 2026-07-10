@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/SaifAlYounan/DDAS/main/packages/testkit/schema/golden-set.v1.schema.json",
+  "$id": "https://raw.githubusercontent.com/LegalQuants/LQGovernance-DDAS/main/packages/testkit/schema/golden-set.v1.schema.json",
   "title": "DDAS golden-set case v1",
   "description": "One labeled case in the golden corpus. Drives four harnesses: extraction eval (labels vs extractor output: precision/recall, value accuracy, citation fidelity, abstention quality), engine snapshots, end-to-end expected routings, and demo seeding.",
   "type": "object",

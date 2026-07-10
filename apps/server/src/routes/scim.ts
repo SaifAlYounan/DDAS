@@ -239,7 +239,7 @@ export function registerScimRoutes(app: App, ctx: AppContext): void {
       scim.get("/ServiceProviderConfig", HIDE, async (_request, reply) =>
         sendScim(reply, 200, {
           schemas: [SCIM_URN.serviceProviderConfig],
-          documentationUri: "https://github.com/SaifAlYounan/DDAS/blob/main/docs/scim.md",
+          documentationUri: "https://github.com/LegalQuants/LQGovernance-DDAS/blob/main/docs/scim.md",
           patch: { supported: true },
           bulk: { supported: false, maxOperations: 0, maxPayloadSize: 0 },
           filter: { supported: true, maxResults: 200 },

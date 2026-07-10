@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/SaifAlYounan/DDAS/main/packages/policy/schema/policy.v1.schema.json",
+  "$id": "https://raw.githubusercontent.com/LegalQuants/LQGovernance-DDAS/main/packages/policy/schema/policy.v1.schema.json",
   "title": "DDAS RiskPolicy v1",
   "description": "A company's registered risk posture, as code. Authored in YAML, stored as RFC 8785 canonical JSON; the sha256 content hash is the policy's identity in every classification derivation. Band rules use the DDAS rule DSL: comparisons (fact op literal, op in == != < <= > >=), list membership (fact in list_name, or literal in fact), boolean combinations (and/or/not, parentheses), and the literal 'else' as the final catch-all band. The DSL is deliberately not Turing-complete: no loops, no function calls. Structural validity is this schema; semantic validity (monotone appetites, matrices monotone on both axes, exhaustive ordered bands, every referenced fact declared) is enforced by the policy compiler at registration.",
   "type": "object",

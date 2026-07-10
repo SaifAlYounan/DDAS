@@ -7,7 +7,7 @@
   "author": "Alexios van der Slikke-Kirillov",
   "repository": {
     "type": "git",
-    "url": "https://github.com/SaifAlYounan/DDAS.git"
+    "url": "https://github.com/LegalQuants/LQGovernance-DDAS.git"
   },
   "engines": {
     "node": ">=24"
